@@ -8,6 +8,7 @@
 
 ### pydev ###
 .pydevproject
+*.pyc
 
 # End of https://www.gitignore.io/api/pydev
 

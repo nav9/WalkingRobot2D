@@ -1,5 +1,6 @@
 import sys
 
+from WalkingRobot import RobotBody
 import pygame
 from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_s, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
 from pygame.color import THECOLORS
@@ -61,71 +62,7 @@ class Simulator(object):
 
         # Create the spider
         chassisXY = Vec2d(self.display_size[0]/2, self.ground_y+100)
-        chWd = 70; chHt = 50
-        chassisMass = 10
-        
-        legWd_a = 50; legHt_a = 5
-        legWd_b = 100; legHt_b = 5
-        legMass = 1
-        relativeAnguVel = 0
-
-        #---chassis
-        chassis_b = pymunk.Body(chassisMass, pymunk.moment_for_box(chassisMass, (chWd, chHt)))
-        chassis_b.position = chassisXY
-        chassis_shape = pymunk.Poly.create_box(chassis_b, (chWd, chHt))
-        chassis_shape.color = 200, 200, 200
-        print("chassis position");print(chassis_b.position)
-
-        #---first left leg a
-        leftLeg_1a_body = pymunk.Body(legMass, pymunk.moment_for_box(legMass, (legWd_a, legHt_a)))
-        leftLeg_1a_body.position = chassisXY - ((chWd/2)+(legWd_a/2), 0)
-        leftLeg_1a_shape = pymunk.Poly.create_box(leftLeg_1a_body, (legWd_a, legHt_a))        
-        leftLeg_1a_shape.color = 255, 0, 0
-        
-        #---first left leg b
-        leftLeg_1b_body = pymunk.Body(legMass, pymunk.moment_for_box(legMass, (legWd_b, legHt_b)))
-        leftLeg_1b_body.position = leftLeg_1a_body.position - ((legWd_a/2)+(legWd_b/2), 0)
-        leftLeg_1b_shape = pymunk.Poly.create_box(leftLeg_1b_body, (legWd_b, legHt_b))        
-        leftLeg_1b_shape.color = 0, 255, 0        
-        
-        #---first right leg a
-        rightLeg_1a_body = pymunk.Body(legMass, pymunk.moment_for_box(legMass, (legWd_a, legHt_a)))
-        rightLeg_1a_body.position = chassisXY + ((chWd/2)+(legWd_a/2), 0)
-        rightLeg_1a_shape = pymunk.Poly.create_box(rightLeg_1a_body, (legWd_a, legHt_a))        
-        rightLeg_1a_shape.color = 255, 0, 0        
-        
-        #---first right leg b
-        rightLeg_1b_body = pymunk.Body(legMass, pymunk.moment_for_box(legMass, (legWd_b, legHt_b)))
-        rightLeg_1b_body.position = rightLeg_1a_body.position + ((legWd_a/2)+(legWd_b/2), 0)
-        rightLeg_1b_shape = pymunk.Poly.create_box(rightLeg_1b_body, (legWd_b, legHt_b))        
-        rightLeg_1b_shape.color = 0, 255, 0     
-        
-        #---link left leg b with left leg a       
-        pj_ba1left = pymunk.PinJoint(leftLeg_1b_body, leftLeg_1a_body, (legWd_b/2,0), (-legWd_a/2,0))#anchor point coordinates are wrt the body; not the space
-        motor_ba1Left = pymunk.SimpleMotor(leftLeg_1b_body, leftLeg_1a_body, relativeAnguVel)
-        #---link left leg a with chassis
-        pj_ac1left = pymunk.PinJoint(leftLeg_1a_body, chassis_b, (legWd_a/2,0), (-chWd/2, 0))
-        motor_ac1Left = pymunk.SimpleMotor(leftLeg_1a_body, chassis_b, relativeAnguVel)
-        #---link right leg b with right leg a       
-        pj_ba1Right = pymunk.PinJoint(rightLeg_1b_body, rightLeg_1a_body, (-legWd_b/2,0), (legWd_a/2,0))#anchor point coordinates are wrt the body; not the space
-        motor_ba1Right = pymunk.SimpleMotor(rightLeg_1b_body, rightLeg_1a_body, relativeAnguVel)
-        #---link right leg a with chassis
-        pj_ac1Right = pymunk.PinJoint(rightLeg_1a_body, chassis_b, (-legWd_a/2,0), (chWd/2, 0))
-        motor_ac1Right = pymunk.SimpleMotor(rightLeg_1a_body, chassis_b, relativeAnguVel)              
-        
-        self.space.add(chassis_b, chassis_shape) 
-        self.space.add(leftLeg_1a_body, leftLeg_1a_shape, rightLeg_1a_body, rightLeg_1a_shape) 
-        self.space.add(leftLeg_1b_body, leftLeg_1b_shape, rightLeg_1b_body, rightLeg_1b_shape) 
-        self.space.add(pj_ba1left, motor_ba1Left, pj_ac1left, motor_ac1Left)  
-        self.space.add(pj_ba1Right, motor_ba1Right, pj_ac1Right, motor_ac1Right)      
-        
-        #---prevent collisions with ShapeFilter
-        shape_filter = pymunk.ShapeFilter(group=1)
-        chassis_shape.filter = shape_filter
-        leftLeg_1a_shape.filter = shape_filter
-        rightLeg_1a_shape.filter = shape_filter
-        leftLeg_1b_shape.filter = shape_filter
-        rightLeg_1b_shape.filter = shape_filter        
+        robot1 = RobotBody(self.space, chassisXY)        
                     
 
         simulate = False
@@ -142,17 +79,17 @@ class Simulator(object):
                     # Reset.
                     # simulate = False
                     self.reset_bodies()
-                elif event.type == KEYDOWN and event.key == K_UP:
-                    motor_ba1Left.rate = rotationRate
-                elif event.type == KEYDOWN and event.key == K_DOWN:
-                    motor_ba1Left.rate = -rotationRate
-                elif event.type == KEYDOWN and event.key == K_LEFT:
-                    motor_ac1Left.rate = rotationRate
-                elif event.type == KEYDOWN and event.key == K_RIGHT:
-                    motor_ac1Left.rate = -rotationRate                    
-                elif event.type == KEYUP:
-                    motor_ba1Left.rate = 0
-                    motor_ac1Left.rate = 0
+#                 elif event.type == KEYDOWN and event.key == K_UP:
+#                     motor_ba1Left.rate = rotationRate
+#                 elif event.type == KEYDOWN and event.key == K_DOWN:
+#                     motor_ba1Left.rate = -rotationRate
+#                 elif event.type == KEYDOWN and event.key == K_LEFT:
+#                     motor_ac1Left.rate = rotationRate
+#                 elif event.type == KEYDOWN and event.key == K_RIGHT:
+#                     motor_ac1Left.rate = -rotationRate                    
+#                 elif event.type == KEYUP:
+#                     motor_ba1Left.rate = 0
+#                     motor_ac1Left.rate = 0
 
             self.draw()
 
