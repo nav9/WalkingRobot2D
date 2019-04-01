@@ -10,17 +10,18 @@ from pymunk import Vec2d
 import pymunk.pygame_util
 
 class Simulator(object):
+    focusRobotXY = Vec2d(0,0)#will be overridden below
 
     def __init__(self):
         self.display_flags = 0
         self.display_size = (600, 600)
 
         self.space = pymunk.Space()
-        self.space.gravity = (0.0, -900.0)
-        #self.space.damping = 0.999 # to prevent it from blowing up.
+        self.space.gravity = (0.0, -1900.0)
+        #self.space.damping = 0.999 
 
         # Pymunk physics coordinates start from the lower right-hand corner of the screen.
-        self.ground_y = 100
+        self.ground_y = 200#increasing this value makes it ground get positioned higher
         ground = pymunk.Segment(self.space.static_body, (5, self.ground_y), (595, self.ground_y), 1.0)
         ground.friction = 1.0
         self.space.add(ground)
@@ -47,6 +48,7 @@ class Simulator(object):
 
     def main(self):
         pygame.init()
+        pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
         self.screen = pygame.display.set_mode(self.display_size, self.display_flags)
         width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
@@ -62,21 +64,20 @@ class Simulator(object):
         running = True
         font = pygame.font.Font(None, 16)
 
-        # Create the spider
-        chassisXY = Vec2d(self.display_size[0]/2, self.ground_y+100)
-        robot1 = RobotBody(self.space, chassisXY)        
-                    
-
-        simulate = False
+        # Create the spider robot
+        self.focusRobotXY = Vec2d(self.display_size[0]/2, self.ground_y+50)
+        robot1 = RobotBody(self.space, self.focusRobotXY)
+                
+        #simulate = False
         rotationRate = 2
         while running:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
                     #running = False
                     sys.exit(0)
-                elif event.type == KEYDOWN and event.key == K_s:
-                    # Start/stop simulation.
-                    simulate = not simulate
+#                 elif event.type == KEYDOWN and event.key == K_s:
+#                     # Start/stop simulation.
+#                     simulate = not simulate
                 elif event.type == KEYDOWN and event.key == K_r:
                     # Reset.
                     # simulate = False
@@ -104,19 +105,16 @@ class Simulator(object):
                 body.angle = body.startAngle
                 #print(body.position)
                 break
-            #print('--------')
-            
-            self.draw()
 
             ### Update physics
             fps = 50
             iterations = 25
             dt = 1.0/float(fps)/float(iterations)
-            if simulate:
-                for x in range(iterations): # 10 iterations to get a more stable simulation
-                    self.space.step(dt)
+            #if simulate:
+            for x in range(iterations): # 10 iterations to get a more stable simulation
+                self.space.step(dt)
 
-            pygame.display.flip()
+            self.draw()
             clock.tick(fps)
 
 if __name__ == '__main__':
