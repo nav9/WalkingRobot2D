@@ -124,10 +124,10 @@ class RobotBody:
         self.chassis_shape.friction = 10.0
         self.space.add(self.chassis_body, self.chassis_shape)
         # print("chassis position");print(self.chassis_body.position)
-        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, 5))
-        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, 0))        
-        #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
-        #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
+        #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, 5))
+        #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, 0))        
+        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
+        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
         #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
         #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))        
 
