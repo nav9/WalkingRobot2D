@@ -1,5 +1,6 @@
 import pymunk
 from pymunk import Vec2d
+import random
 
 class Directions:
     UP = 1
@@ -103,6 +104,7 @@ class RobotBody:
     chassisMass = 10
     chassis_body = None  # chassis body
     chassis_shape = None  # chassis shape
+    maxMotorRate = 5
     legs = []
     
     def __init__(self, pymunkSpace, chassisCenterPoint):
@@ -121,10 +123,10 @@ class RobotBody:
         self.chassis_shape.friction = 10.0
         self.space.add(self.chassis_body, self.chassis_shape)
         # print("chassis position");print(self.chassis_body.position)
-        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, 5))
-        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, 0))
-        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, 5))
-        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, 0))        
+        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
+        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
+        #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
+        #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))        
 
     def updatePosition(self, xOffset, yOffset):
         self.chassis_body.position = self.chassis_body.position + (xOffset, yOffset) 
