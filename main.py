@@ -5,30 +5,42 @@ import pygame
 from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_s, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
 from pygame.color import THECOLORS
 
-import pymunk
+#import pymunk
 from pymunk import Vec2d
 import pymunk.pygame_util
-from IPython.nbformat import current
+#from IPython.nbformat import current
 
 class World:
+    ground = []
+    
     def __init__(self, space):
         # Pymunk physics coordinates start from the lower right-hand corner of the screen.
         groundX = 10; groundLen = 600
-        groundY = 200#increasing this value makes it ground get positioned higher
-        ground = pymunk.Segment(space.static_body, (groundX, groundY), (groundX+groundLen, groundY), 1.0)
-        ground.friction = 1.0
-        space.add(ground)        
+        groundY = 200#increasing this value makes it ground_shape get positioned higher
+        ground_shape = pymunk.Segment(pymunk.Body(body_type=pymunk.Body.KINEMATIC), (groundX, groundY), (groundX+groundLen, groundY), 1.0)
+        ground_shape.friction = 1.0        
+        space.add(ground_shape)
+        self.ground.append(ground_shape)      
         
+    def updatePosition(self, cameraXY):
+        print(cameraXY)
+        for gr in self.ground:
+            gr.body.position += cameraXY
+#             pv1 = gr.body.position + gr.a.rotated(gr.body.angle)
+#             pv2 = gr.body.position + gr.b.rotated(gr.body.angle)
+#             p1 = pv1.x+cameraXY[0], pv1.y+cameraXY[1]
+#             p2 = pv2.x+cameraXY[0], pv2.y+cameraXY[1]
+#             pygame.draw.lines(screen, THECOLORS["lightgray"],False,[p1,p2])
 
 class Simulator(object):
     focusRobotXY = Vec2d(0,0)#will be overridden below
     robots = []
-    numRobots = 5
+    numRobots = 2
 
     def __init__(self):
         self.screenWidth = 800; self.screenHeight = 640
         self.display_flags = 0
-        self.minViewX = 50
+        self.minViewX = 300
         self.maxViewX = self.screenWidth - self.minViewX
         self.minViewY = 100
         self.maxViewY = self.screenHeight - 50
@@ -68,6 +80,7 @@ class Simulator(object):
 
     def getUpdateBy(self, currentXY):
         updateBy = Vec2d(0,0)
+        #print("x:"+str(currentXY[0])+" minX:"+str(self.minViewX))
         if currentXY[0] < self.minViewX or currentXY[0] > self.maxViewX or currentXY[1] < self.minViewY or currentXY[1] > self.maxViewY:
             updateBy = -1 * Vec2d(currentXY - self.focusRobotXY) 
         return updateBy
@@ -92,7 +105,7 @@ class Simulator(object):
 
         # Create the spider robot
         self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
-        for i in range(1,self.numRobots,1):
+        for i in range(0,self.numRobots,1):
             self.robots.append(RobotBody(self.space, self.focusRobotXY))
             
         
@@ -140,9 +153,11 @@ class Simulator(object):
                 self.space.step(dt)
             updateBy = self.getUpdateBy(self.robots[self.focusRobotID].chassis_body.position)
             if updateBy != (0, 0):
-                self.draw()
-            else:
-                self.draw()
+                for obj in self.robots:
+                    obj.updatePosition(updateBy)
+                self.world.updatePosition(updateBy)
+            self.draw()
+            self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position
             clock.tick(self.fps)
 
 if __name__ == '__main__':

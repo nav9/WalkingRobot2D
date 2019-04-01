@@ -1,6 +1,7 @@
 import pymunk
 from pymunk import Vec2d
 import random
+from Tkconstants import OFF
 
 class Directions:
     UP = 1
@@ -90,9 +91,9 @@ class RobotLeg:
         self.space.add(self.pinJ_LegAChassis, self.motor_LegAChassis)
         self.motor_LegAChassis.rate = rate
     
-    def updatePosition(self, xOffset, yOffset):
-        self.legA_body.position = self.legA_body.position + (xOffset, yOffset) 
-        self.legB_body.position = self.legB_body.position + (xOffset, yOffset) 
+    def updatePosition(self, offsetXY):
+        self.legA_body.position = self.legA_body.position + offsetXY 
+        self.legB_body.position = self.legB_body.position + offsetXY 
 
     
 class RobotBody:
@@ -123,13 +124,15 @@ class RobotBody:
         self.chassis_shape.friction = 10.0
         self.space.add(self.chassis_body, self.chassis_shape)
         # print("chassis position");print(self.chassis_body.position)
-        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
-        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
+        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, 5))
+        self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, 0))        
+        #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
+        #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
         #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))
         #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, random.choice(range(-self.maxMotorRate, self.maxMotorRate,2))))        
 
-    def updatePosition(self, xOffset, yOffset):
-        self.chassis_body.position = self.chassis_body.position + (xOffset, yOffset) 
+    def updatePosition(self, offsetXY):
+        self.chassis_body.position = self.chassis_body.position + offsetXY 
         for leg in self.legs:
-            leg.updatePosition(xOffset, yOffset)
+            leg.updatePosition(offsetXY)
         
