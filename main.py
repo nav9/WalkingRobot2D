@@ -16,7 +16,7 @@ class Simulator(object):
         self.display_size = (600, 600)
 
         self.space = pymunk.Space()
-        self.space.gravity = (0.0, -1900.0)
+        self.space.gravity = (0.0, -900.0)
         #self.space.damping = 0.999 # to prevent it from blowing up.
 
         # Pymunk physics coordinates start from the lower right-hand corner of the screen.
@@ -31,14 +31,14 @@ class Simulator(object):
 
     def reset_bodies(self):
         for body in self.space.bodies:
-            if not hasattr(body, 'start_position'):
+            if not hasattr(body, 'startPosition'):
                 continue
-            body.position = Vec2d(body.start_position)
+            body.position = Vec2d(body.startPosition)
             body.force = 0, 0
             body.torque = 0
             body.velocity = 0, 0
             body.angular_velocity = 0
-            body.angle = body.start_angle
+            body.angle = body.startAngle
 
     def draw(self):        
         self.screen.fill(THECOLORS["white"])### Clear the screen        
@@ -50,6 +50,8 @@ class Simulator(object):
         self.screen = pygame.display.set_mode(self.display_size, self.display_flags)
         width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
+        self.draw_options.constraint_color = 200,200,200, 50
+        
 
         def to_pygame(p):            
             return int(p.x), int(-p.y+height) #Small hack to convert pymunk to pygame coordinates
@@ -91,6 +93,19 @@ class Simulator(object):
 #                     motor_ba1Left.rate = 0
 #                     motor_ac1Left.rate = 0
 
+            for body in self.space.bodies:
+                if not hasattr(body, 'startPosition'):
+                    continue
+                #body.position = Vec2d(body.startPosition)
+                body.force = 0, 0
+                body.torque = 0
+                body.velocity = 0, 0
+                body.angular_velocity = 0
+                body.angle = body.startAngle
+                #print(body.position)
+                break
+            #print('--------')
+            
             self.draw()
 
             ### Update physics
