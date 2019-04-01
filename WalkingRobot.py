@@ -12,7 +12,7 @@ class RobotLeg:
     shapeFilter = None
     ori = Directions()
     legPosition = ori.LEFT  # default. Will be overridden in ctor. Whether the leg is at the right of the chassis or the left
-    chassisXY = 0
+    focusRobotXY = 0
     chWd = 0  # chassis width
     chHt = 0  # chassis height
     legWd_a = 15 #leg thickness (width)
@@ -33,7 +33,7 @@ class RobotLeg:
     def __init__(self, pymunkSpace, ownBodyShapeFilter, chassisBody, chassisCenterPosition, chassisWidth, chassisHeight, leftOrRight, rate):
         self.space = pymunkSpace
         self.shapeFilter = ownBodyShapeFilter
-        self.chassisXY = chassisCenterPosition
+        self.focusRobotXY = chassisCenterPosition
         self.chWd = chassisWidth
         self.chHt = chassisHeight
         self.legPosition = leftOrRight
@@ -44,9 +44,9 @@ class RobotLeg:
     def __createLegA__(self):
         self.legA_body = pymunk.Body(self.legMass, pymunk.moment_for_box(self.legMass, (self.legWd_a, self.legHt_a)))
         if self.legPosition == self.ori.LEFT:
-            self.legA_body.position = self.chassisXY - ((self.chWd / 2) + (self.legWd_a / 2), 0)
+            self.legA_body.position = self.focusRobotXY - ((self.chWd / 2) + (self.legWd_a / 2), 0)
         if self.legPosition == self.ori.RIGHT:
-            self.legA_body.position = self.chassisXY + ((self.chWd / 2) + (self.legWd_a / 2), 0)
+            self.legA_body.position = self.focusRobotXY + ((self.chWd / 2) + (self.legWd_a / 2), 0)
         self.legA_body.startPosition = Vec2d(self.legA_body.position)
         self.legA_body.startAngle = self.legA_body.angle
         self.legA_shape = pymunk.Poly.create_box(self.legA_body, (self.legWd_a, self.legHt_a))        
@@ -89,6 +89,11 @@ class RobotLeg:
         self.space.add(self.pinJ_LegAChassis, self.motor_LegAChassis)
         self.motor_LegAChassis.rate = rate
     
+    def updatePosition(self, xOffset, yOffset):
+        self.legA_body.position = self.legA_body.position + (xOffset, yOffset) 
+        self.legB_body.position = self.legB_body.position + (xOffset, yOffset) 
+
+    
 class RobotBody:
     space = None
     ownBodyShapeFilter = pymunk.ShapeFilter(group=1)#to prevent collisions between robot body parts
@@ -120,3 +125,9 @@ class RobotBody:
         self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, 0))
         self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.LEFT, 5))
         self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, chassisXY, self.chWd, self.chHt, self.ori.RIGHT, 0))        
+
+    def updatePosition(self, xOffset, yOffset):
+        self.chassis_body.position = self.chassis_body.position + (xOffset, yOffset) 
+        for leg in self.legs:
+            leg.updatePosition(xOffset, yOffset)
+        
