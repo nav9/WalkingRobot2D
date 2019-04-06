@@ -53,30 +53,20 @@ class RobotLeg:#This is one leg. Legs may consist of multiple parts. PartA is co
     legLeftOrRight = ori.LEFT  # default. Will be overridden in ctor. Whether the leg is at the right of the chassis or the left
     prevBodyXY = 0
     chassisWd = 0  # chassis width
-    #chHt = 0  # chassis height
     legWd = 20 #leg thickness (width)
     legHt = 2 #leg height
-    #legWd = 20
-    #legHt_b = 2
     legMass = 1
     relativeAnguVel = 0
     leg_body = None
     leg_shape = None
-    #legB_body = None
-    #legB_shape = None
     pinJoint = None
     motor = None
-    #LegAChassis_pinJoint = None
-    #LegAChassis_motor = None
-    #---actions
-    #legAction = []#stores action object for each leg part
     
     def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight):
         self.space = pymunkSpace
         self.shapeFilter = ownBodyShapeFilter
         self.prevBodyXY = prevBody.position
         self.chassisWd = prevBodyWidth
-#        self.chHt = chassisHeight
         self.legLeftOrRight = leftOrRight
         self.__createLegPart__()
         self.__linkLegPartWithPrevBodyPart__(prevBody)
@@ -91,52 +81,13 @@ class RobotLeg:#This is one leg. Legs may consist of multiple parts. PartA is co
         self.leg_body.startAngle = self.leg_body.angle
         self.leg_shape = pymunk.Poly.create_box(self.leg_body, (self.legWd, self.legHt))        
         self.leg_shape.filter = self.shapeFilter
-        self.leg_shape.color = 255, 0, 0  
+        self.leg_shape.color = 100, 100, 100  
         self.leg_shape.friction = 10.0 
         self.space.add(self.leg_body, self.leg_shape)   
-
-        
-#         self.legA_body = pymunk.Body(self.legMass, pymunk.moment_for_box(self.legMass, (self.legWd_a, self.legHt_a)))
-#         if self.legLeftOrRight == self.ori.LEFT:
-#             self.legA_body.position = self.focusRobotXY - ((self.chassisWd / 2) + (self.legWd_a / 2), 0)
-#         if self.legLeftOrRight == self.ori.RIGHT:
-#             self.legA_body.position = self.focusRobotXY + ((self.chassisWd / 2) + (self.legWd_a / 2), 0)
-#         self.legA_body.startPosition = Vec2d(self.legA_body.position)
-#         self.legA_body.startAngle = self.legA_body.angle
-#         self.legA_shape = pymunk.Poly.create_box(self.legA_body, (self.legWd_a, self.legHt_a))        
-#         self.legA_shape.filter = self.shapeFilter
-#         self.legA_shape.color = 255, 0, 0  
-#         self.legA_shape.friction = 10.0 
-#         self.space.add(self.legA_body, self.legA_shape)        
-        
-#     def __createLegB__(self):
-#         self.legB_body = pymunk.Body(self.legMass, pymunk.moment_for_box(self.legMass, (self.legWd_b, self.legHt_b)))
-#         if self.legLeftOrRight == self.ori.LEFT:
-#             self.legB_body.position = self.legA_body.position - ((self.legWd_a / 2) + (self.legWd_b / 2), 0)
-#         if self.legLeftOrRight == self.ori.RIGHT:
-#             self.legB_body.position = self.legA_body.position + ((self.legWd_a / 2) + (self.legWd_b / 2), 0)
-#         self.legB_body.startPosition = Vec2d(self.legB_body.position)
-#         self.legB_body.startAngle = self.legB_body.angle
-#         self.legB_shape = pymunk.Poly.create_box(self.legB_body, (self.legWd_b, self.legHt_b))
-#         self.legB_shape.filter = self.shapeFilter        
-#         self.legB_shape.color = 0, 255, 0 
-#         self.legB_shape.friction = 10.0 
-#         self.space.add(self.legB_body, self.legB_shape)
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
         maxMotorRate = 5
         motorRateRangeStep = 2
-#         #---link left leg B with left leg A       
-#         if self.legLeftOrRight == self.ori.LEFT:
-#             self.pinJoint = pymunk.PinJoint(self.leg_body, self.leg_body, (self.legWd / 2, 0), (-self.legWd / 2, 0))  # anchor point coordinates are wrt the body; not the space
-#         if self.legLeftOrRight == self.ori.RIGHT:
-#             self.pinJoint = pymunk.PinJoint(self.leg_body, self.leg_body, (-self.legWd / 2, 0), (self.legWd / 2, 0))  # anchor point coordinates are wrt the body; not the space                        
-#         self.motor = pymunk.SimpleMotor(self.leg_body, self.leg_body, self.relativeAnguVel)
-#         self.space.add(self.pinJoint, self.motor)
-#         self.motor.rate = 0
-#         self.motor.max_force = 10000000
-#         self.motor.legRateRange = range(-maxMotorRate, maxMotorRate, motorRateRangeStep)#range(start,stop,step) 
-        
         #---link left leg A with Chassis
         if self.legLeftOrRight == self.ori.LEFT:
             self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (self.legWd / 2, 0), (-self.chassisWd / 2, 0))
@@ -176,7 +127,6 @@ class RobotBody:
     
     def __init__(self, pymunkSpace, chassisCenterPoint):
         self.space = pymunkSpace
-        #self.chassisXY = chassisCenterPoint
         self.__createBody__(chassisCenterPoint)
         
     def __createBody__(self, chassisXY):
@@ -198,8 +148,6 @@ class RobotBody:
             legB = RobotLeg(self.space, self.ownBodyShapeFilter, legA.leg_body, legA.legWd, self.ori.RIGHT)
             self.legs.append(legA)
             self.legs.append(legB)            
-        #self.legs.append(RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori.RIGHT))
-        #def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight):
 
     def updatePosition(self, offsetXY):
         self.chassis_body.position = self.chassis_body.position + offsetXY 
@@ -208,8 +156,6 @@ class RobotBody:
 
     def arbiterCallback(self, arbiter, shapes):
         pass
-        #print(arbiter.shapes)
-        #print(arbiter.contact_point_set.points)
                 
     def getCollission(self):
         a = self.chassis_body.each_arbiter(self.arbiterCallback, shapes)
