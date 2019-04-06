@@ -30,14 +30,15 @@ class Simulator(object):
     focusRobotXY = Vec2d(0,0)#will be overridden below
     robots = []
     numRobots = 2
+    collHand = []#collision handler
 
     def __init__(self):
         self.screenWidth = 800; self.screenHeight = 640
         self.display_flags = 0
-        self.minViewX = 300
+        self.minViewX = 100
         self.maxViewX = self.screenWidth - self.minViewX
         self.minViewY = 100
-        self.maxViewY = self.screenHeight - 50
+        self.maxViewY = self.screenHeight - self.minViewY
 
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
@@ -50,16 +51,16 @@ class Simulator(object):
         self.draw_options = None
         self.focusRobotID = 0#the first robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
 
-    def reset_bodies(self):
-        for body in self.space.bodies:
-            if not hasattr(body, 'startPosition'):
-                continue
-            body.position = Vec2d(body.startPosition)
-            body.force = 0, 0
-            body.torque = 0
-            body.velocity = 0, 0
-            body.angular_velocity = 0
-            body.angle = body.startAngle
+#     def reset_bodies(self):
+#         for body in self.space.bodies:
+#             if not hasattr(body, 'startPosition'):
+#                 continue
+#             body.position = Vec2d(body.startPosition)
+#             body.force = 0, 0
+#             body.torque = 0
+#             body.velocity = 0, 0
+#             body.angular_velocity = 0
+#             body.angle = body.startAngle
 
     def draw(self):        
         self.screen.fill(THECOLORS["white"])# Clear screen        
@@ -74,6 +75,13 @@ class Simulator(object):
             updateBy = -1 * Vec2d(0, currentXY[1] - self.focusRobotXY[1])
         return updateBy
     
+#     def __drawCollision__(self, arbiter, space, data):        
+#         for c in arbiter.contact_point_set.points:
+#             r = max( 3, abs(c.distance*5) )
+#             r = int(r)
+#             p = tuple(map(int, c.point_a))
+#             pygame.draw.circle(data["surface"], THECOLORS["red"], p, r, 0)        
+    
     def main(self):
         pygame.init()
         pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
@@ -85,6 +93,11 @@ class Simulator(object):
         clock = pygame.time.Clock()
         running = True
         font = pygame.font.Font(None, 16)
+        
+#         #---collission handler
+#         self.collHand = self.space.add_collision_handler(0, 0)
+#         self.collHand.data["surface"] = self.screen
+#         self.collHand.post_solve = self.__drawCollision__
 
         #---Create the spider robots
         self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
@@ -125,6 +138,9 @@ class Simulator(object):
                 for obj in self.robots:#update all robot positions
                     obj.updatePosition(updateBy)
                 self.world.updatePosition(updateBy)
+            #---iterate robots
+            for r in self.robots:
+                r.getCollission()
             #---draw all objects
             self.draw()
             
