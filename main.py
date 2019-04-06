@@ -29,7 +29,7 @@ class World:
 class Simulator(object):
     focusRobotXY = Vec2d(0,0)#will be overridden below
     robots = []
-    numRobots = 2
+    numRobots = 1
     collHand = []#collision handler
 
     def __init__(self):
