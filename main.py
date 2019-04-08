@@ -115,7 +115,7 @@ class Simulator(object):
  
         #---Create the spider robots
         self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
-        for i in range(0,self.numRobots,1):
+        for i in range(0, self.numRobots, 1):
             self.robots.append(RobotBody(self.space, self.focusRobotXY, self.actionNetwork))
  
         while running:
@@ -154,7 +154,7 @@ class Simulator(object):
                 self.world.updatePosition(updateBy)
             #---iterate robots
             for r in self.robots:
-                r.getCollission()
+                r.brainActivity()
             #---draw all objects
             self.draw()
              

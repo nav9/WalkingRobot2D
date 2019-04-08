@@ -44,6 +44,16 @@ class TactileCortex:
     body = None
     def __init__(self, bodyRef):
         self.body = bodyRef
+    def getTactileInputs(self):
+        self.body.chassis_body.each_arbiter(self.contactInfo)
+    def contactInfo(self, arbiter):    
+        print(arbiter.shapes)#gives the type of objects that are colliding [chassis,line seg]
+#         print(arbiter.contact_point_set.normal)#direction of contact
+#         print(arbiter.contact_point_set.points[0].distance)#distance is the penetration distance of the two shapes. Overlapping means it will be negative. This value is calculated as dot(point2 - point1), normal) and is ignored when you set the Arbiter.contact_point_set.
+#         print(arbiter.total_impulse)#Returns the impulse that was applied this step to resolve the collision Vec2d(xImpulse, yImpulse)
+#         print(arbiter.contact_point_set.points[0].point_a)#point_a and point_b are the contact position on the surface of each shape.
+#         print(arbiter.contact_point_set.points[0].point_b)
+        
     
 class ActionsCortex:
     actionSeq = defaultdict(list)
@@ -51,7 +61,7 @@ class ActionsCortex:
     def __init__(self, bodyRef):
         self.body = bodyRef
         for leg in self.body.legs:
-            leg.motor.rate = 1
+            leg.motor.rate = -5
 
 class Brain:
     motorCortex = None
@@ -59,6 +69,9 @@ class Brain:
     def __init__(self, bodyRef):
         self.motorCortex = ActionsCortex(bodyRef)
         self.tactileCortex = TactileCortex(bodyRef)
+        
+    def getSensoryInputs(self):
+        self.tactileCortex.getTactileInputs()
     
 class Directions:
     UP = 1
@@ -116,7 +129,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.motor = pymunk.SimpleMotor(self.leg_body, prevBody, self.relativeAnguVel) 
         self.space.add(self.pinJoint, self.motor)
         self.motor.rate = 0
-        self.motor.max_force = 100000000
+        self.motor.max_force = 100000
         self.motor.legRateRange = range(-maxMotorRate, maxMotorRate, motorRateRangeStep)#range(start,stop,step)         
         
     def updatePosition(self, offsetXY):
@@ -175,17 +188,15 @@ class RobotBody:
     def __activateBrain__(self):
         self.brain = Brain(self)
         
-
+    def brainActivity(self):
+        self.brain.getSensoryInputs()
+        
     def updatePosition(self, offsetXY):
         self.chassis_body.position = self.chassis_body.position + offsetXY 
         for leg in self.legs:
             leg.updatePosition(offsetXY)
 
-    def arbiterCallback(self, arbiter, shapes):
-        pass
-                
-    def getCollission(self):
-        a = self.chassis_body.each_arbiter(self.arbiterCallback, shapes)
+
         
     def getFullBodyStatesAndMotorRates(self):
         bodyStates = []; motorRates = []
