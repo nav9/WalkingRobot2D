@@ -3,42 +3,62 @@ from pymunk import Vec2d, shapes
 import random
 from collections import defaultdict
 import hashlib
-from abc import ABCMeta, abstractmethod
+#from threading import Thread, Lock
 
-class AbstractActions:
-    __metaclass__ = ABCMeta
-    @abstractmethod
-    def setValues(self):#The force applied by the action
-        pass    
-    @abstractmethod
-    def getValues(self):#The force applied by the action
-        pass
-    @abstractmethod
-    def setRange(self):#The range of values the action can perform
-        pass    
-    @abstractmethod
-    def getRange(self):#The range of values the action can perform
-        pass
-    
+#from abc import ABCMeta, abstractmethod
+# class AbstractActionsNetwork:
+#     __metaclass__ = ABCMeta
+#     hashID = {}
+#     IdHash = {}
+#         
+#     @abstractmethod
+#     def setValues(self):#The force applied by the action
+#         pass    
 # class LegActions(AbstractActions):    
 #     legRate = 0
 #     max_force = 10000000
 #     legRateRange = []
-#     
-#     def __init__(self, legMotor):
-#         maxMotorRate = 5; motorRateRangeStep = 2
-#         self.legRateRange = range(-maxMotorRate, maxMotorRate, motorRateRangeStep)#range(start,stop,step) 
-#         legMotor.max_force = 10000000
-#         legMotor.rate = 0
 
-#     def getHash(self):
-#         # Assumes the default UTF-8
-#         mystring = ""
-#         hash_object = hashlib.md5(mystring.encode()) #hash_object = hashlib.sha1(b'Hello World')
-#         print(hash_object.hexdigest())
+
+class ActionsNetwork:#For now, a single instance of this is created which all walking robots can contribute to and access
+    #mutex = Lock()
+    hashID = {}
+    IdHash = {}
+    actionID = 0
+    def __init__(self):
+        pass
+    def addAction(self, actionList):#expects a list of numbers of strings or a combination of both
+        actionStr = ''.join(str(x) for x in actionList)
+        hashedStr = hashlib.md5(actionStr.encode()) #hash_object = hashlib.sha1(b'Hello World')
+#         self.mutex.acquire()
+#         try:
+#             self.actionID += 1
+#         finally:
+#             self.mutex.release()        
+        self.actionID += 1 #should be protected by mutex if using threads
+        self.hashID[hashedStr] = self.actionID
+        self.IdHash[self.actionID] = hashedStr
+    
+
+class TactileCortex:
+    body = None
+    def __init__(self, bodyRef):
+        self.body = bodyRef
     
 class ActionsCortex:
     actionSeq = defaultdict(list)
+    body = None    
+    def __init__(self, bodyRef):
+        self.body = bodyRef
+        for leg in self.body.legs:
+            leg.motor.rate = 1
+
+class Brain:
+    motorCortex = None
+    tactileCortex = None
+    def __init__(self, bodyRef):
+        self.motorCortex = ActionsCortex(bodyRef)
+        self.tactileCortex = TactileCortex(bodyRef)
     
 class Directions:
     UP = 1
@@ -46,7 +66,7 @@ class Directions:
     LEFT = 3    
     RIGHT = 4
 
-class RobotLeg:#This is one leg. Legs may consist of multiple parts. PartA is connected to the chassis. part B is connected to partA
+class LegPart:#This is one leg part. Could be part A that's connected to the chassis or part B that's connected to part A
     space = pymunk.Space()
     shapeFilter = None
     ori = Directions()
@@ -81,7 +101,7 @@ class RobotLeg:#This is one leg. Legs may consist of multiple parts. PartA is co
         self.leg_body.startAngle = self.leg_body.angle
         self.leg_shape = pymunk.Poly.create_box(self.leg_body, (self.legWd, self.legHt))        
         self.leg_shape.filter = self.shapeFilter
-        self.leg_shape.color = 100, 100, 100  
+        self.leg_shape.color = 200, 200, 200  
         self.leg_shape.friction = 10.0 
         self.space.add(self.leg_body, self.leg_shape)   
     
@@ -95,13 +115,12 @@ class RobotLeg:#This is one leg. Legs may consist of multiple parts. PartA is co
             self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (-self.legWd / 2, 0), (self.chassisWd / 2, 0))            
         self.motor = pymunk.SimpleMotor(self.leg_body, prevBody, self.relativeAnguVel) 
         self.space.add(self.pinJoint, self.motor)
-        self.motor.rate = -5
-        self.motor.max_force = 10000000
+        self.motor.rate = 0
+        self.motor.max_force = 100000000
         self.motor.legRateRange = range(-maxMotorRate, maxMotorRate, motorRateRangeStep)#range(start,stop,step)         
         
     def updatePosition(self, offsetXY):
         self.leg_body.position = self.leg_body.position + offsetXY 
-        #self.legB_body.position = self.legB_body.position + offsetXY 
 
 #     def getLegStatesAndMotorRates(self):
 #         bodyStates = []; motorRates = []
@@ -124,10 +143,14 @@ class RobotBody:
     chassis_shape = None  #chassis shape    
     legs = []
     numLegs = 1
+    actionNetwork = None
+    brain = None
     
-    def __init__(self, pymunkSpace, chassisCenterPoint):
+    def __init__(self, pymunkSpace, chassisCenterPoint, globalActionNetwork):
         self.space = pymunkSpace
         self.__createBody__(chassisCenterPoint)
+        self.actionNetwork = globalActionNetwork
+        self.__activateBrain__()
         
     def __createBody__(self, chassisXY):
         self.chassis_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.chassisWd, self.chHt)))
@@ -140,14 +163,18 @@ class RobotBody:
         self.chassis_shape.friction = 10.0
         self.space.add(self.chassis_body, self.chassis_shape)  
         for i in range(0, self.numLegs, 1):
-            legA = RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori.LEFT)
-            legB = RobotLeg(self.space, self.ownBodyShapeFilter, legA.leg_body, legA.legWd, self.ori.LEFT)
-            self.legs.append(legA)
-            self.legs.append(legB)
-            legA = RobotLeg(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori.RIGHT)
-            legB = RobotLeg(self.space, self.ownBodyShapeFilter, legA.leg_body, legA.legWd, self.ori.RIGHT)
-            self.legs.append(legA)
-            self.legs.append(legB)            
+            leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori.LEFT)
+            leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT)
+            self.legs.append(leftLegA)
+            self.legs.append(leftLegB)
+            rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori.RIGHT)
+            rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT)
+            self.legs.append(rightLegA)
+            self.legs.append(rightLegB)   
+            
+    def __activateBrain__(self):
+        self.brain = Brain(self)
+        
 
     def updatePosition(self, offsetXY):
         self.chassis_body.position = self.chassis_body.position + offsetXY 

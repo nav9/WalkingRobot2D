@@ -1,6 +1,6 @@
 import sys
 
-from WalkingRobot import RobotBody
+from WalkingRobot import RobotBody, ActionsNetwork
 import pygame
 from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_s, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
 from pygame.color import THECOLORS
@@ -8,6 +8,16 @@ from pygame.color import THECOLORS
 #import pymunk
 from pymunk import Vec2d
 import pymunk.pygame_util
+
+class K:
+    a=0
+    b=0
+    def __init__(self):
+        pass
+    def assignA(self, val):
+        self.a = val
+    def assignB(self, val):
+        self.b = val
 
 class World:
     ground = []
@@ -31,6 +41,7 @@ class Simulator(object):
     robots = []
     numRobots = 1
     collHand = []#collision handler
+    actionNetwork = ActionsNetwork()
 
     def __init__(self):
         self.screenWidth = 800; self.screenHeight = 640
@@ -82,6 +93,9 @@ class Simulator(object):
 #             p = tuple(map(int, c.point_a))
 #             pygame.draw.circle(data["surface"], THECOLORS["red"], p, r, 0)        
     
+
+        
+    
     def main(self):
         pygame.init()
         pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
@@ -89,21 +103,21 @@ class Simulator(object):
         width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
         self.draw_options.constraint_color = 200,200,200
-
+ 
         clock = pygame.time.Clock()
         running = True
         font = pygame.font.Font(None, 16)
-        
+         
 #         #---collission handler
 #         self.collHand = self.space.add_collision_handler(0, 0)
 #         self.collHand.data["surface"] = self.screen
 #         self.collHand.post_solve = self.__drawCollision__
-
+ 
         #---Create the spider robots
         self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
         for i in range(0,self.numRobots,1):
-            self.robots.append(RobotBody(self.space, self.focusRobotXY))
-
+            self.robots.append(RobotBody(self.space, self.focusRobotXY, self.actionNetwork))
+ 
         while running:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
@@ -127,7 +141,7 @@ class Simulator(object):
 #                 elif event.type == KEYUP:
 #                     motor_ba1Left.rate = 0
 #                     motor_ac1Left.rate = 0
-
+ 
             #---Update physics
             dt = 1.0/float(self.fps)/float(self.iterations)
             for x in range(self.iterations): #iterations to get a more stable simulation
@@ -143,7 +157,7 @@ class Simulator(object):
                 r.getCollission()
             #---draw all objects
             self.draw()
-            
+             
             self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
             clock.tick(self.fps)
 
