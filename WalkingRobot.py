@@ -3,6 +3,7 @@ from pymunk import Vec2d, shapes
 import random
 from collections import defaultdict
 import hashlib
+import math
 #from threading import Thread, Lock
 
 #from abc import ABCMeta, abstractmethod
@@ -28,16 +29,21 @@ class ActionsNetwork:#For now, a single instance of this is created which all wa
     def __init__(self):
         pass
     def addAction(self, actionList):#expects a list of numbers of strings or a combination of both
-        actionStr = ''.join(str(x) for x in actionList)
-        hashedStr = hashlib.md5(actionStr.encode()) #hash_object = hashlib.sha1(b'Hello World')
+        actionStr = ''.join(str(x)+',' for x in actionList)
+        #hashedStr = hashlib.md5(actionStr.encode()) #hash_object = hashlib.sha1(b'Hello World')        
+        if actionStr in self.hashID:
+            print('---------skipped')
+            return
+        else:
+            print(actionStr)
 #         self.mutex.acquire()
 #         try:
 #             self.actionID += 1
 #         finally:
 #             self.mutex.release()        
         self.actionID += 1 #should be protected by mutex if using threads
-        self.hashID[hashedStr] = self.actionID
-        self.IdHash[self.actionID] = hashedStr
+        self.hashID[actionStr] = self.actionID
+        self.IdHash[self.actionID] = actionStr
 
 class TactileCortex:
     body = None
@@ -59,6 +65,8 @@ class ActionsCortex:
     body = None    
     actionsNetworkPresent = False
     randomRates = []
+    angleAccuracy = 10 #degrees 
+    
     def __init__(self, bodyRef):
         self.body = bodyRef
         for leg in self.body.legs:
@@ -69,7 +77,7 @@ class ActionsCortex:
         if len(self.randomRates) == 0:
             if len(self.body.legs) > 0:
                 self.randomRates = random.sample(self.body.legs[0].motor.legRateRange, len(self.body.legs)) #sample(range,numNumbers) = sampling without replacement. Generates unique random samples within range
-                print(self.randomRates)
+                #print(self.randomRates)
                 
         if stopActionSequence:
             self.randomRates = []
@@ -78,6 +86,8 @@ class ActionsCortex:
         else: 
             for i in range(0, len(self.body.legs), 1):
                 self.body.legs[i].motor.rate = self.randomRates[i]
+                ang = round((math.degrees(self.body.legs[i].leg_body.angle)%360)/self.angleAccuracy)
+                self.body.actionNetwork.addAction([ang, self.body.legs[i].motor.rate])
         
     def stopRandomActionNetworkCreation(self):
         self.body.chassis_body.body_type = pymunk.Body.DYNAMIC

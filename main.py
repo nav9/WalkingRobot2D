@@ -160,7 +160,7 @@ class Simulator(object):
 #             if time.time() - prevTime > 0:
 #                 for r in self.robots:
 #                     #r.legs[0].leg_body.angle = 0
-#                     print('Angle'+str(math.degrees(r.legs[0].leg_body.angle)%365))
+#                     print('Angle'+str(math.degrees(r.legs[0].leg_body.angle)%360))
 #                     #r.brainActivity()
 #                     #r.stopBabyTrainingStage()
             #---draw all objects
