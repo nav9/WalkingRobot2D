@@ -117,7 +117,7 @@ class Simulator(object):
         self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
         for i in range(0, self.numRobots, 1):
             self.robots.append(RobotBody(self.space, self.focusRobotXY, self.actionNetwork))
- 
+        
         while running:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
@@ -153,8 +153,8 @@ class Simulator(object):
                     obj.updatePosition(updateBy)
                 self.world.updatePosition(updateBy)
             #---iterate robots
-            for r in self.robots:
-                r.brainActivity()
+#             for r in self.robots:
+#                 r.brainActivity()
             #---draw all objects
             self.draw()
              
