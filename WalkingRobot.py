@@ -44,7 +44,7 @@ class TactileCortex:
     def __init__(self, bodyRef):
         self.body = bodyRef
     def getTactileInputs(self):
-        self.body.chassis_body.each_arbiter(self.contactInfo)
+        return self.body.chassis_body.each_arbiter(self.contactInfo)
     def contactInfo(self, arbiter):    
 #         print(arbiter.shapes)#gives the type of objects that are colliding [chassis,line seg]
 #         print(arbiter.contact_point_set.normal)#direction of contact
@@ -52,28 +52,58 @@ class TactileCortex:
 #         print(arbiter.total_impulse)#Returns the impulse that was applied this step to resolve the collision Vec2d(xImpulse, yImpulse)
 #         print(arbiter.contact_point_set.points[0].point_a)#point_a and point_b are the contact position on the surface of each shape.
 #         print(arbiter.contact_point_set.points[0].point_b)
-        pass
+        return arbiter.contact_point_set
 
 class ActionsCortex:
     actionSeq = defaultdict(list)
     body = None    
+    actionsNetworkPresent = False
+    randomRates = []
     def __init__(self, bodyRef):
         self.body = bodyRef
         for leg in self.body.legs:
-            leg.motor.rate = 0
-
+            leg.motor.rate = 0#keep motor still when initialized
+        #TODO: load actions network
+    
+    def generateNewActions(self, stopActionSequence):
+        if len(self.randomRates) == 0:
+            if len(self.body.legs) > 0:
+                self.randomRates = random.sample(self.body.legs[0].motor.legRateRange, len(self.body.legs)) #sample(range,numNumbers) = sampling without replacement. Generates unique random samples within range
+                print(self.randomRates)
+                
+        if stopActionSequence:
+            self.randomRates = []
+            for leg in self.body.legs:
+                leg.motor.rate = 0
+        else: 
+            for i in range(0, len(self.body.legs), 1):
+                self.body.legs[i].motor.rate = self.randomRates[i]
+        
+    def stopRandomActionNetworkCreation(self):
+        self.body.chassis_body.body_type = pymunk.Body.DYNAMIC
+        self.body.chassis_body.mass = self.body.chassisMass
+        self.body.chassis_body.moment = pymunk.moment_for_box(self.body.chassisMass, (self.body.prevBodyWd, self.body.chassisHt))
+        
 class Brain:
     motorCortex = None
     tactileCortex = None
+    experience = 20#number of action iterations it can handle
+    trainingExperienceCounter = 0
+        
     def __init__(self, bodyRef):
         self.motorCortex = ActionsCortex(bodyRef)
         self.tactileCortex = TactileCortex(bodyRef)        
-    def getSensoryInputs(self):
-        self.tactileCortex.getTactileInputs()
-        #TODO: add visual input
-    def decideWhatToDo(self):
-        pass
-    
+    def getSensoryInputsAndDecideWhatToDo(self):#TODO: add visual sensory input
+        if self.motorCortex.actionsNetworkPresent:
+            senses = self.tactileCortex.getTactileInputs()
+        else:
+            if self.trainingExperienceCounter == 0:
+                self.motorCortex.generateNewActions(self.trainingExperienceCounter==0)
+                self.trainingExperienceCounter = self.experience
+            else:
+                self.motorCortex.generateNewActions(self.trainingExperienceCounter==0)
+                self.trainingExperienceCounter -= 1  
+
 class Directions:
     UP = 1
     DOWN = 2
@@ -86,7 +116,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
     ori = Directions()
     legLeftOrRight = ori.LEFT  # default. Will be overridden in ctor. Whether the leg is at the right of the chassis or the left
     prevBodyXY = 0
-    chassisWd = 0  # chassis width
+    prevBodyWd = 0  # chassis width
     legWd = 20 #leg thickness (width)
     legHt = 2 #leg height
     legMass = 0.5
@@ -100,7 +130,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.space = pymunkSpace
         self.shapeFilter = ownBodyShapeFilter
         self.prevBodyXY = prevBody.position
-        self.chassisWd = prevBodyWidth
+        self.prevBodyWd = prevBodyWidth
         self.legLeftOrRight = leftOrRight
         self.__createLegPart__()
         self.__linkLegPartWithPrevBodyPart__(prevBody)
@@ -108,9 +138,9 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
     def __createLegPart__(self):
         self.leg_body = pymunk.Body(self.legMass, pymunk.moment_for_box(self.legMass, (self.legWd, self.legHt)))
         if self.legLeftOrRight == self.ori.LEFT:
-            self.leg_body.position = self.prevBodyXY - ((self.chassisWd / 2) + (self.legWd / 2), 0)
+            self.leg_body.position = self.prevBodyXY - ((self.prevBodyWd / 2) + (self.legWd / 2), 0)
         if self.legLeftOrRight == self.ori.RIGHT:
-            self.leg_body.position = self.prevBodyXY + ((self.chassisWd / 2) + (self.legWd / 2), 0)
+            self.leg_body.position = self.prevBodyXY + ((self.prevBodyWd / 2) + (self.legWd / 2), 0)
         self.leg_body.startPosition = Vec2d(self.leg_body.position)
         self.leg_body.startAngle = self.leg_body.angle
         self.leg_shape = pymunk.Poly.create_box(self.leg_body, (self.legWd, self.legHt))        
@@ -121,36 +151,27 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
         maxMotorRate = 5
-        motorRateRangeStep = 2
+        motorRateRangeStep = 3
         #---link left leg A with Chassis
         if self.legLeftOrRight == self.ori.LEFT:
-            self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (self.legWd / 2, 0), (-self.chassisWd / 2, 0))
+            self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (self.legWd / 2, 0), (-self.prevBodyWd / 2, 0))
         if self.legLeftOrRight == self.ori.RIGHT:
-            self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (-self.legWd / 2, 0), (self.chassisWd / 2, 0))            
+            self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (-self.legWd / 2, 0), (self.prevBodyWd / 2, 0))            
         self.motor = pymunk.SimpleMotor(self.leg_body, prevBody, self.relativeAnguVel) 
         self.space.add(self.pinJoint, self.motor)
-        self.motor.rate = 5
+        #self.motor.rate = 0.1
         self.motor.max_force = 10000000
         self.motor.legRateRange = range(-maxMotorRate, maxMotorRate, motorRateRangeStep)#range(start,stop,step)         
         
     def updatePosition(self, offsetXY):
         self.leg_body.position = self.leg_body.position + offsetXY 
 
-#     def getLegStatesAndMotorRates(self):
-#         bodyStates = []; motorRates = []
-#         bodyStates.append(self.legA_body.angle)
-#         #bodyStates.append(self.legA_body.position)
-#         bodyStates.append(self.legB_body.angle)
-#         #bodyStates.append(self.legB_body.position)
-#         motorRates.append(self.LegAChassis_motor.rate)
-#         motorRates.append(self.LegBLegA_motor.rate)
-#         return (bodyStates, motorRates)
     
 class RobotBody:
     space = None
     ownBodyShapeFilter = pymunk.ShapeFilter(group=1)#to prevent collisions between robot body parts
     ori = Directions()  #leg at left or right of chassis
-    chassisWd = 30 #chassis width 
+    prevBodyWd = 30 #chassis width 
     chassisHt = 20 #chassis height
     chassisMass = 10
     chassis_body = None  #chassis body
@@ -159,59 +180,39 @@ class RobotBody:
     numLegsOnEachSide = 1
     actionNetwork = None
     brain = None
-    trainingSupport = []
     
     def __init__(self, pymunkSpace, chassisCenterPoint, globalActionNetwork):
         self.space = pymunkSpace
         self.__createBody__(chassisCenterPoint)
         self.actionNetwork = globalActionNetwork
-        self.createTrainingHolder()
-        #self.__activateBrain__()
+        self.__activateBrain__()
         
     def __createBody__(self, chassisXY):
-        self.chassis_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.chassisWd, self.chassisHt)))
+        self.chassis_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.prevBodyWd, self.chassisHt)))
+        self.chassis_body.body_type = pymunk.Body.KINEMATIC
         self.chassis_body.position = chassisXY
         self.chassis_body.startPosition = Vec2d(self.chassis_body.position)#you can assign your own properties to body
         self.chassis_body.startAngle = self.chassis_body.angle        
-        self.chassis_shape = pymunk.Poly.create_box(self.chassis_body, (self.chassisWd, self.chassisHt))
+        self.chassis_shape = pymunk.Poly.create_box(self.chassis_body, (self.prevBodyWd, self.chassisHt))
         self.chassis_shape.filter = self.ownBodyShapeFilter
-        self.chassis_shape.color = 200, 200, 200
+        self.chassis_shape.color = 170, 170, 170
         self.chassis_shape.friction = 10.0
         self.space.add(self.chassis_body, self.chassis_shape)  
         for i in range(0, self.numLegsOnEachSide, 1):
-            leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori.LEFT)
+            leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT)
             leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT)
             self.legs.append(leftLegA)
             self.legs.append(leftLegB)
-            rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori.RIGHT)
+            rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT)
             rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT)
             self.legs.append(rightLegA)
-            self.legs.append(rightLegB)   
-            
-    def createTrainingHolder(self):#holds the robot body in space so it can learn some moves
-        supportX1 = self.chassis_body.position[0]-self.chassisWd/2; supportWd = self.chassisWd
-        supportY1 = self.chassis_body.position[1]-(self.chassisHt/2)-1#increasing this value makes it support1_shape get positioned higher
-        support1_shape = pymunk.Segment(pymunk.Body(body_type=pymunk.Body.STATIC), (supportX1, supportY1), (supportX1+supportWd, supportY1), 1.0)
-        support1_shape.friction = 1.0        
-        self.space.add(support1_shape)        
-        self.trainingSupport.append(support1_shape) 
-        supportX2 = self.chassis_body.position[0]-self.chassisWd/2; supportWd = self.chassisWd
-        supportY2 = self.chassis_body.position[1]+(self.chassisHt/2)+1#increasing this value makes it support1_shape get positioned higher
-        support2_shape = pymunk.Segment(pymunk.Body(body_type=pymunk.Body.STATIC), (supportX2, supportY2), (supportX2+supportWd, supportY2), 1.0)
-        support2_shape.friction = 1.0        
-        self.space.add(support2_shape)        
-        self.trainingSupport.append(support2_shape)         
-    
-    def removeTrainingHolder(self):
-        for holder in self.trainingSupport:
-            self.space.remove(holder)
+            self.legs.append(rightLegB)  
         
     def __activateBrain__(self):
         self.brain = Brain(self)
         
     def brainActivity(self):
-        self.brain.getSensoryInputs()
-        self.brain.decideWhatToDo()
+        self.brain.getSensoryInputsAndDecideWhatToDo()
         
     def updatePosition(self, offsetXY):
         self.chassis_body.position = self.chassis_body.position + offsetXY 

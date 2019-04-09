@@ -1,5 +1,6 @@
 import sys
-
+import time
+import math
 from WalkingRobot import RobotBody, ActionsNetwork
 import pygame
 from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_s, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
@@ -118,6 +119,7 @@ class Simulator(object):
         for i in range(0, self.numRobots, 1):
             self.robots.append(RobotBody(self.space, self.focusRobotXY, self.actionNetwork))
         
+        prevTime = time.time();
         while running:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
@@ -153,8 +155,14 @@ class Simulator(object):
                     obj.updatePosition(updateBy)
                 self.world.updatePosition(updateBy)
             #---iterate robots
-#             for r in self.robots:
-#                 r.brainActivity()
+            for r in self.robots:
+                r.brainActivity()
+#             if time.time() - prevTime > 0:
+#                 for r in self.robots:
+#                     #r.legs[0].leg_body.angle = 0
+#                     print('Angle'+str(math.degrees(r.legs[0].leg_body.angle)%365))
+#                     #r.brainActivity()
+#                     #r.stopBabyTrainingStage()
             #---draw all objects
             self.draw()
              
