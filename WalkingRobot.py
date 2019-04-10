@@ -24,26 +24,23 @@ import math
 class ActionsNetwork:#For now, a single instance of this is created which all walking robots can contribute to and access
     #mutex = Lock()
     hashID = {}
-    IdHash = {}
-    actionID = 0
+    #IdHash = {}
+    #actionID = 0
     def __init__(self):
         pass
     def addAction(self, actionList):#expects a list of numbers of strings or a combination of both
         actionStr = ''.join(str(x)+',' for x in actionList)
         #hashedStr = hashlib.md5(actionStr.encode()) #hash_object = hashlib.sha1(b'Hello World')        
         if actionStr in self.hashID:
-            print('---------skipped')
             return
-        else:
-            print(actionStr)
 #         self.mutex.acquire()
 #         try:
 #             self.actionID += 1
 #         finally:
 #             self.mutex.release()        
-        self.actionID += 1 #should be protected by mutex if using threads
-        self.hashID[actionStr] = self.actionID
-        self.IdHash[self.actionID] = actionStr
+        #self.actionID += 1 #should be protected by mutex if using threads
+        self.hashID[actionStr] = []#self.actionID
+        #self.IdHash[self.actionID] = actionStr
 
 class TactileCortex:
     body = None
@@ -66,6 +63,7 @@ class ActionsCortex:
     actionsNetworkPresent = False
     randomRates = []
     angleAccuracy = 10 #degrees 
+    distanceAccuracy = 10 #pixels
     
     def __init__(self, bodyRef):
         self.body = bodyRef
@@ -83,11 +81,15 @@ class ActionsCortex:
             self.randomRates = []
             for leg in self.body.legs:
                 leg.motor.rate = 0
-        else: 
+        else:             
             for i in range(0, len(self.body.legs), 1):
                 self.body.legs[i].motor.rate = self.randomRates[i]
-                ang = round((math.degrees(self.body.legs[i].leg_body.angle)%360)/self.angleAccuracy)
-                self.body.actionNetwork.addAction([ang, self.body.legs[i].motor.rate])
+                #---find which angle quadrant and distance radius the leg tip falls wrt the rotated body position
+                bodyAng = round(math.degrees(self.body.chassis_body.angle)%360)
+                legTip = self.body.legs[i].getTip();  chCen = self.body.chassis_body.position
+                dist = abs(math.sqrt((legTip[0]-chCen[0])**2 + (legTip[1]-chCen[1])**2)) / self.distanceAccuracy
+                ang = round((math.degrees(math.atan2((legTip[1]-chCen[1]), (legTip[0]-chCen[0])))-bodyAng)/self.angleAccuracy)
+                self.body.actionNetwork.addAction([i, dist, ang, self.body.legs[i].motor.rate]) #HASH: [legID, distance, angle, motorRate]
         
     def stopRandomActionNetworkCreation(self):
         self.body.chassis_body.body_type = pymunk.Body.DYNAMIC
@@ -97,7 +99,7 @@ class ActionsCortex:
 class Brain:
     motorCortex = None
     tactileCortex = None
-    experience = 20#number of action iterations it can handle
+    experience = 20 #number of action iterations it can handle
     trainingExperienceCounter = 0
         
     def __init__(self, bodyRef):
@@ -148,16 +150,24 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
     def __createLegPart__(self):
         self.leg_body = pymunk.Body(self.legMass, pymunk.moment_for_box(self.legMass, (self.legWd, self.legHt)))
         if self.legLeftOrRight == self.ori.LEFT:
-            self.leg_body.position = self.prevBodyXY - ((self.prevBodyWd / 2) + (self.legWd / 2), 0)
+            self.leg_body.position = self.prevBodyXY - ((self.prevBodyWd / 2) + (self.legWd / 2), 0)            
         if self.legLeftOrRight == self.ori.RIGHT:
             self.leg_body.position = self.prevBodyXY + ((self.prevBodyWd / 2) + (self.legWd / 2), 0)
         self.leg_body.startPosition = Vec2d(self.leg_body.position)
         self.leg_body.startAngle = self.leg_body.angle
-        self.leg_shape = pymunk.Poly.create_box(self.leg_body, (self.legWd, self.legHt))        
+        self.leg_shape = pymunk.Poly.create_box(self.leg_body, (self.legWd, self.legHt))            
         self.leg_shape.filter = self.shapeFilter
         self.leg_shape.color = 200, 200, 200  
         self.leg_shape.friction = 10.0 
-        self.space.add(self.leg_body, self.leg_shape)   
+        self.space.add(self.leg_body, self.leg_shape) 
+    
+    def getTip(self):  
+        v = self.leg_shape.get_vertices()    
+        if self.legLeftOrRight == self.ori.LEFT:            
+            v = v[2].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future
+        if self.legLeftOrRight == self.ori.RIGHT:
+            v = v[1].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future        
+        return Vec2d(v)
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
         maxMotorRate = 5
