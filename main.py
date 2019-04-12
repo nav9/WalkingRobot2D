@@ -1,3 +1,6 @@
+# Author: Navin Ipe
+# Created: April 2019
+# License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 import sys
 import time
 import math
@@ -7,40 +10,11 @@ import pymunk.pygame_util
 from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_s, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
 from pygame.color import THECOLORS
 from WalkingRobot import RobotBody, ActionsNetwork
-from environments import *
-
-#import pymunk
-
-# class K:
-#     a=0
-#     b=0
-#     def __init__(self):
-#         pass
-#     def assignA(self, val):
-#         self.a = val
-#     def assignB(self, val):
-#         self.b = val
-
-class World:
-    worlds = []
-    boundaryObjects = []
-    testWorld = []
-    space = None
-    envWidth = None
-    envHeight = None
-    ordinal = 0
-    
-    def __init__(self, space, width, height):
-        self.envWidth = width; self.envHeight = height; self.space = space
-        self.worlds.append(TrainingWorld1())#registration of a world
-    def nextWorld(self):
-        if self.ordinal < len(self.worlds):
-            self.worlds[self.ordinal].initializeTrainingBoundary(self.space, 0, self.envHeight, self.envWidth, self.envHeight)
-            self.worlds[self.ordinal].initializeTrainingObjects()
-        self.ordinal += 1
-        return self.ordinal <= len(self.worlds)
+from Environments import *
 
 class Simulator(object):
+    worlds = []
+    worldOrdinal = -1
     focusRobotXY = Vec2d(0, 0)#will be overridden below
     robots = []
     numRobots = 1
@@ -52,12 +26,10 @@ class Simulator(object):
 
     def __init__(self):
         #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
-        self.screenWidth = 800; self.screenHeight = 640
+        self.screenWidth = 800; self.screenHeight = 400
         self.display_flags = 0
-        self.minViewX = 100
-        self.maxViewX = self.screenWidth - self.minViewX
-        self.minViewY = 100
-        self.maxViewY = self.screenHeight - self.minViewY
+        self.minViewX = 100; self.maxViewX = self.screenWidth - self.minViewX
+        self.minViewY = 100; self.maxViewY = self.screenHeight - self.minViewY
 
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
@@ -65,19 +37,16 @@ class Simulator(object):
         self.iterations = 10        
         #self.space.damping = 0.999 
         
-        self.world = World(self.space, self.screenWidth, self.screenHeight)
+        self.worlds.append(TrainingWorld1())#registration of a world
         self.focusRobotID = 0 #the first robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
 
-#     def reset_bodies(self):
-#         for body in self.space.bodies:
-#             if not hasattr(body, 'startPosition'):
-#                 continue
-#             body.position = Vec2d(body.startPosition)
-#             body.force = 0, 0
-#             body.torque = 0
-#             body.velocity = 0, 0
-#             body.angular_velocity = 0
-#             body.angle = body.startAngle
+    def nextWorld(self):
+        self.worldOrdinal += 1
+        if self.worldOrdinal < len(self.worlds):
+            w = self.worlds[self.worldOrdinal]
+            w.initializeTrainingBoundary(self.space)
+            w.initializeTrainingObjects()        
+        return self.worldOrdinal < len(self.worlds)#any more worlds to process?
 
     def draw(self):        
         self.screen.fill(THECOLORS["black"])# Clear screen
@@ -93,13 +62,6 @@ class Simulator(object):
         if currentXY[1] < self.minViewY or currentXY[1] > self.maxViewY:
             updateBy = -1 * Vec2d(0, currentXY[1] - self.focusRobotXY[1])
         return updateBy
-    
-#     def __drawCollision__(self, arbiter, space, data):        
-#         for c in arbiter.contact_point_set.points:
-#             r = max( 3, abs(c.distance*5) )
-#             r = int(r)
-#             p = tuple(map(int, c.point_a))
-#             pygame.draw.circle(data["surface"], THECOLORS["red"], p, r, 0)        
 
     
     def main(self):
@@ -108,10 +70,9 @@ class Simulator(object):
         self.screen = pygame.display.set_mode((self.screenWidth, self.screenHeight), self.display_flags)
         #width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
-        self.draw_options.constraint_color = 200, 200, 200
-        a = self.world.nextWorld()
-        print(a)
-        while a:
+        self.draw_options.constraint_color = 200,200,200
+        
+        while self.nextWorld():
             clock = pygame.time.Clock()
             simulating = True
 
@@ -120,7 +81,7 @@ class Simulator(object):
             for i in range(0, self.numRobots, 1):
                 self.robots.append(RobotBody(self.space, self.focusRobotXY, self.actionNetwork))
         
-                #prevTime = time.time();
+            #prevTime = time.time();
             while simulating:
                 for event in pygame.event.get():
                     if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
@@ -180,4 +141,21 @@ if __name__ == '__main__':
     sim = Simulator()
     sim.main()
     
+#     def reset_bodies(self):
+#         for body in self.space.bodies:
+#             if not hasattr(body, 'startPosition'):
+#                 continue
+#             body.position = Vec2d(body.startPosition)
+#             body.force = 0, 0
+#             body.torque = 0
+#             body.velocity = 0, 0
+#             body.angular_velocity = 0
+#             body.angle = body.startAngle    
+    
+#     def __drawCollision__(self, arbiter, space, data):        
+#         for c in arbiter.contact_point_set.points:
+#             r = max( 3, abs(c.distance*5) )
+#             r = int(r)
+#             p = tuple(map(int, c.point_a))
+#             pygame.draw.circle(data["surface"], THECOLORS["red"], p, r, 0)        
     

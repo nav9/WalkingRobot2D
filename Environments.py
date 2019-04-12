@@ -1,20 +1,29 @@
+# Author: Navin Ipe
+# Created: April 2019
+# License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 import pymunk
 from pymunk import Vec2d
 
 class TrainingEnvironments:
     boundaryObjects = []
     space = None  
-    envX = None
-    envY = None  
-    envWidth = None
-    envHeight = None
+    envX = 0
+    envY = 0  
+    envWidth = 1000
+    envHeight = 300
     wallThickness = 5
+    boundaryColor = 170,170,170
 
-    def initializeTrainingBoundary(self, space, x, y, width, height):
-        self.envX = x; self.envY = y; self.envWidth = width; self.envHeight = height; self.space = space
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX, self.envY)    
-        shape = pymunk.Poly.create_box(body, (self.envWidth, self.wallThickness)); shape.color = 170, 170, 170; shape.friction = 0.0
-        self.space.add(shape); self.boundaryObjects.append(shape);                 
+    def initializeTrainingBoundary(self, space):
+        self.space = space
+        #---top boundary        
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX, self.envY+self.envHeight)    
+        shape = pymunk.Poly.create_box(body, (self.envWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 0.0
+        self.space.add(shape); self.boundaryObjects.append(shape);
+        #---bottom boundary
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX, self.envY+self.wallThickness)    
+        shape = pymunk.Poly.create_box(body, (self.envWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 0.0
+        self.space.add(shape); self.boundaryObjects.append(shape);
     def deleteTrainingBoundary(self):
         for ob in self.boundaryObjects:
             self.space.remove(ob)
