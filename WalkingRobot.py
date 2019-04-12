@@ -243,6 +243,9 @@ class RobotBody:
     def brainActivity(self):
         self.brain.getSensoryInputsAndDecideWhatToDo()
         
+    def getPosition(self):
+        return self.chassis_body.position
+        
     def updatePosition(self, offsetXY):
         self.chassis_body.position = self.chassis_body.position + offsetXY 
         for leg in self.legs:
