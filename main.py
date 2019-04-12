@@ -1,50 +1,57 @@
 import sys
 import time
 import math
-from WalkingRobot import RobotBody, ActionsNetwork
 import pygame
-from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_s, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
-from pygame.color import THECOLORS
-
-#import pymunk
 from pymunk import Vec2d
 import pymunk.pygame_util
+from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_s, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
+from pygame.color import THECOLORS
+from WalkingRobot import RobotBody, ActionsNetwork
+from environments import *
 
-class K:
-    a=0
-    b=0
-    def __init__(self):
-        pass
-    def assignA(self, val):
-        self.a = val
-    def assignB(self, val):
-        self.b = val
+#import pymunk
+
+# class K:
+#     a=0
+#     b=0
+#     def __init__(self):
+#         pass
+#     def assignA(self, val):
+#         self.a = val
+#     def assignB(self, val):
+#         self.b = val
 
 class World:
-    ground = []
+    worlds = []
+    boundaryObjects = []
+    testWorld = []
+    space = None
+    envWidth = None
+    envHeight = None
+    ordinal = 0
     
-    def __init__(self, space):
-        # Pymunk physics coordinates start from the lower right-hand corner of the screen.
-        groundX = 10; groundLen = 600
-        groundY = 200#increasing this value makes it ground_shape get positioned higher
-        ground_shape = pymunk.Segment(pymunk.Body(body_type=pymunk.Body.KINEMATIC), (groundX, groundY), (groundX+groundLen, groundY), 1.0)
-        ground_shape.friction = 1.0        
-        space.add(ground_shape)
-        self.ground.append(ground_shape)      
-        
-    def updatePosition(self, cameraXY):
-        print(cameraXY)
-        for gr in self.ground:
-            gr.body.position += cameraXY
+    def __init__(self, space, width, height):
+        self.envWidth = width; self.envHeight = height; self.space = space
+        self.worlds.append(TrainingWorld1())#registration of a world
+    def nextWorld(self):
+        if self.ordinal < len(self.worlds):
+            self.worlds[self.ordinal].initializeTrainingBoundary(self.space, 0, self.envHeight, self.envWidth, self.envHeight)
+            self.worlds[self.ordinal].initializeTrainingObjects()
+        self.ordinal += 1
+        return self.ordinal <= len(self.worlds)
 
 class Simulator(object):
-    focusRobotXY = Vec2d(0,0)#will be overridden below
+    focusRobotXY = Vec2d(0, 0)#will be overridden below
     robots = []
     numRobots = 1
     collHand = []#collision handler
     actionNetwork = ActionsNetwork()
+    world = None
+    screen = None
+    draw_options = None    
 
     def __init__(self):
+        #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
         self.screenWidth = 800; self.screenHeight = 640
         self.display_flags = 0
         self.minViewX = 100
@@ -57,11 +64,9 @@ class Simulator(object):
         self.fps = 50
         self.iterations = 10        
         #self.space.damping = 0.999 
-
-        self.world = World(self.space)
-        self.screen = None
-        self.draw_options = None
-        self.focusRobotID = 0#the first robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
+        
+        self.world = World(self.space, self.screenWidth, self.screenHeight)
+        self.focusRobotID = 0 #the first robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
 
 #     def reset_bodies(self):
 #         for body in self.space.bodies:
@@ -75,7 +80,9 @@ class Simulator(object):
 #             body.angle = body.startAngle
 
     def draw(self):        
-        self.screen.fill(THECOLORS["white"])# Clear screen        
+        self.screen.fill(THECOLORS["black"])# Clear screen
+        self.screen.fill((30, 30, 30))# Clear screen  
+        #self.screen.fill((255, 243, 202))# Clear screen        
         self.space.debug_draw(self.draw_options)# Draw space        
         pygame.display.flip()#flip the display buffer
 
@@ -93,82 +100,82 @@ class Simulator(object):
 #             r = int(r)
 #             p = tuple(map(int, c.point_a))
 #             pygame.draw.circle(data["surface"], THECOLORS["red"], p, r, 0)        
-    
 
-        
     
     def main(self):
         pygame.init()
         pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
         self.screen = pygame.display.set_mode((self.screenWidth, self.screenHeight), self.display_flags)
-        width, height = self.screen.get_size()
+        #width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
-        self.draw_options.constraint_color = 200,200,200
- 
-        clock = pygame.time.Clock()
-        running = True
-        font = pygame.font.Font(None, 16)
-         
-#         #---collission handler
-#         self.collHand = self.space.add_collision_handler(0, 0)
-#         self.collHand.data["surface"] = self.screen
-#         self.collHand.post_solve = self.__drawCollision__
- 
-        #---Create the spider robots
-        self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
-        for i in range(0, self.numRobots, 1):
-            self.robots.append(RobotBody(self.space, self.focusRobotXY, self.actionNetwork))
-        
-        prevTime = time.time();
-        while running:
-            for event in pygame.event.get():
-                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
-                    #running = False
-                    sys.exit(0)
-#                 elif event.type == KEYDOWN and event.key == K_s:
-#                     # Start/stop simulation.
-#                     simulate = not simulate
-#                 elif event.type == KEYDOWN and event.key == K_r:
-#                     # Reset.
-#                     # simulate = False
-#                     self.reset_bodies()
-#                 elif event.type == KEYDOWN and event.key == K_UP:
-#                     motor_ba1Left.rate = rotationRate
-#                 elif event.type == KEYDOWN and event.key == K_DOWN:
-#                     motor_ba1Left.rate = -rotationRate
-#                 elif event.type == KEYDOWN and event.key == K_LEFT:
-#                     motor_ac1Left.rate = rotationRate
-#                 elif event.type == KEYDOWN and event.key == K_RIGHT:
-#                     motor_ac1Left.rate = -rotationRate                    
-#                 elif event.type == KEYUP:
-#                     motor_ba1Left.rate = 0
-#                     motor_ac1Left.rate = 0
- 
-            #---Update physics
-            dt = 1.0/float(self.fps)/float(self.iterations)
-            for x in range(self.iterations): #iterations to get a more stable simulation
-                self.space.step(dt)
-            #---Update world based on player focus
-            updateBy = self.getUpdateBy(self.robots[self.focusRobotID].chassis_body.position)
-            if updateBy != (0, 0):
-                for obj in self.robots:#update all robot positions
-                    obj.updatePosition(updateBy)
-                self.world.updatePosition(updateBy)
-            #---iterate robots
-            for r in self.robots:
-                r.brainActivity()
-#             if time.time() - prevTime > 0:
-#                 for r in self.robots:
-#                     #r.legs[0].leg_body.angle = 0
-#                     print('Angle'+str(math.degrees(r.legs[0].leg_body.angle)%360))
-#                     #r.brainActivity()
-#                     #r.stopBabyTrainingStage()
-            #---draw all objects
-            self.draw()
-             
-            self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
-            clock.tick(self.fps)
+        self.draw_options.constraint_color = 200, 200, 200
+        a = self.world.nextWorld()
+        print(a)
+        while a:
+            clock = pygame.time.Clock()
+            simulating = True
 
+            #---Create the spider robots
+            self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
+            for i in range(0, self.numRobots, 1):
+                self.robots.append(RobotBody(self.space, self.focusRobotXY, self.actionNetwork))
+        
+                #prevTime = time.time();
+            while simulating:
+                for event in pygame.event.get():
+                    if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
+                        #simulating = False
+                        sys.exit(0)
+#                     elif event.type == KEYDOWN and event.key == K_s:
+#                         # Start/stop simulation.
+#                         simulate = not simulate
+#                     elif event.type == KEYDOWN and event.key == K_r:
+#                         # Reset.
+#                         # simulate = False
+#                         self.reset_bodies()
+#                     elif event.type == KEYDOWN and event.key == K_UP:
+#                         motor_ba1Left.rate = rotationRate
+#                     elif event.type == KEYDOWN and event.key == K_DOWN:
+#                         motor_ba1Left.rate = -rotationRate
+#                     elif event.type == KEYDOWN and event.key == K_LEFT:
+#                         motor_ac1Left.rate = rotationRate
+#                     elif event.type == KEYDOWN and event.key == K_RIGHT:
+#                         motor_ac1Left.rate = -rotationRate                    
+#                     elif event.type == KEYUP:
+#                         motor_ba1Left.rate = 0
+#                         motor_ac1Left.rate = 0
+ 
+                #---Update physics
+                dt = 1.0/float(self.fps)/float(self.iterations)
+                for x in range(self.iterations): #iterations to get a more stable simulation
+                    self.space.step(dt)
+                #---Update world based on player focus
+                updateBy = self.getUpdateBy(self.robots[self.focusRobotID].chassis_body.position)
+                if updateBy != (0, 0):
+                    for obj in self.robots:#update all robot positions
+                        obj.updatePosition(updateBy)
+                    self.world.updatePosition(updateBy)
+                #---iterate robots
+                for r in self.robots:
+                    r.brainActivity()
+    #             if time.time() - prevTime > 0:
+    #                 for r in self.robots:
+    #                     #r.legs[0].leg_body.angle = 0
+    #                     print('Angle'+str(math.degrees(r.legs[0].leg_body.angle)%360))
+    #                     #r.brainActivity()
+    #                     #r.stopBabyTrainingStage()
+                #---draw all objects
+                self.draw()
+                 
+                self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
+                clock.tick(self.fps)
+
+
+#-----------------------------------------------
+#-----------------------------------------------
+#             PROGRAM STARTS HERE
+#-----------------------------------------------
+#-----------------------------------------------
 if __name__ == '__main__':
     sim = Simulator()
     sim.main()

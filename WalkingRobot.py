@@ -228,6 +228,11 @@ class RobotBody:
             self.legs.append(rightLegA)
             self.legs.append(rightLegB)  
         
+    def deleteRobot(self):
+        self.space.remove(self.chassis_body); self.space.remove(self.chassis_shape)
+        for legPart in self.legs:
+            self.space.remove(legPart)
+        
     def __activateBrain__(self):
         self.brain = Brain(self)
         
