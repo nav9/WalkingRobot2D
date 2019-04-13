@@ -95,10 +95,7 @@ class ActionsCortex:
                 ang = round((math.degrees(math.atan2((legTip[1]-chCen[1]), (legTip[0]-chCen[0])))-bodyAng)/self.angleAccuracy)
                 self.body.actionNetwork.addAction([i, dist, ang, self.body.legs[i].motor.rate]) #HASH: [legID, distance, angle, motorRate]
         
-    def stopRandomActionNetworkCreation(self):
-        self.body.chassis_body.body_type = pymunk.Body.DYNAMIC
-        self.body.chassis_body.mass = self.body.chassisMass
-        self.body.chassis_body.moment = pymunk.moment_for_box(self.body.chassisMass, (self.body.prevBodyWd, self.body.chassisHt))
+
         
 class Brain:
     motorCortex = None
@@ -109,6 +106,7 @@ class Brain:
     def __init__(self, bodyRef):
         self.motorCortex = ActionsCortex(bodyRef)
         self.tactileCortex = TactileCortex(bodyRef)        
+        
     def getSensoryInputsAndDecideWhatToDo(self):#TODO: add visual sensory input
         if self.motorCortex.actionsNetworkPresent:
             senses = self.tactileCortex.getTactileInputs()
@@ -231,6 +229,12 @@ class RobotBody:
             rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT)
             self.legs.append(rightLegA)
             self.legs.append(rightLegB)  
+        self.makeRobotDynamic()
+            
+    def makeRobotDynamic(self):
+        self.chassis_body.body_type = pymunk.Body.DYNAMIC
+        self.chassis_body.mass = self.chassisMass
+        self.chassis_body.moment = pymunk.moment_for_box(self.chassisMass, (self.prevBodyWd, self.chassisHt))            
         
     def deleteRobot(self):
         self.space.remove(self.chassis_body); self.space.remove(self.chassis_shape)

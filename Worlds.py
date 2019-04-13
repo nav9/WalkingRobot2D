@@ -13,7 +13,7 @@ from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_s, K_r, K_q, K_ESCA
 from pygame.color import THECOLORS
 from WalkingRobot import RobotBody, ActionsNetwork
 
-class TrainingEnvironments:
+class Worlds:
     focusRobotXY = Vec2d(0, 0)#will be overridden below
     focusRobotID = 0
     screen = None
@@ -23,7 +23,7 @@ class TrainingEnvironments:
     space = None  
     envX = 0
     envY = 0  
-    envWidth = 1000
+    envWidth = 500
     envHeight = 300
     wallThickness = 5
     boundaryColor = 170,170,170
@@ -33,7 +33,7 @@ class TrainingEnvironments:
 
     def __init__(self):
         #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
-        self.screenWidth = 800; self.screenHeight = 400
+        self.screenWidth = 500; self.screenHeight = 300
         self.display_flags = 0
         self.minViewX = 100; self.maxViewX = self.screenWidth - self.minViewX
         self.minViewY = 100; self.maxViewY = self.screenHeight - self.minViewY
@@ -44,19 +44,27 @@ class TrainingEnvironments:
         self.iterations = 10        
         #self.space.damping = 0.999 
         
-        #self.worlds.append(TrainingWorld1())#registration of a world
+        #self.worlds.append(FlatGroundTraining())#registration of a world
         self.focusRobotID = 0 #the first robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
 
-    def initializeTrainingBoundary(self):
+    def initializeTrainingBoundary(self):#NOTE: The x,y position of a body is it's body center. Not the top left coordinate
         #---top boundary        
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX, self.envY+self.envHeight)    
-        shape = pymunk.Poly.create_box(body, (self.envWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 0.0
-        self.space.add(shape); self.boundaryObjects.append(shape);
-        #---bottom boundary
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX, self.envY+self.wallThickness)    
-        shape = pymunk.Poly.create_box(body, (self.envWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 0.0
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX+self.envWidth/2, self.envY+self.envHeight-self.wallThickness/2)
+        shape = pymunk.Poly.create_box(body, (self.envWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
         self.space.add(shape); self.boundaryObjects.append(shape)
-        
+        #---bottom boundary
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX+self.envWidth/2, self.envY+self.wallThickness/2) 
+        shape = pymunk.Poly.create_box(body, (self.envWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
+        self.space.add(shape); self.boundaryObjects.append(shape)
+        #---left boundary
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX+self.wallThickness/2, self.envY+self.envHeight/2)
+        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.envHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
+        self.space.add(shape); self.boundaryObjects.append(shape)
+        #---right boundary
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX+self.envWidth-self.wallThickness/2, self.envY+self.envHeight/2)
+        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.envHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
+        self.space.add(shape); self.boundaryObjects.append(shape)
+    
     def deleteTrainingBoundary(self):
         for ob in self.boundaryObjects:
             self.space.remove(ob)
@@ -73,15 +81,11 @@ class TrainingEnvironments:
         for r in self.robots:
             r.brainActivity()        
     
-    def updatePosition(self):
+    def updatePosition(self):#gets overridden in derived class
         updateBy = self.calcUpdateBy(self.robots[self.focusRobotID].getPosition())
         if updateBy != (0, 0):
             for obj in self.robots:#update all robot positions
                 obj.updatePosition(updateBy)        
-#            self.worlds[self.worldOrdinal].updatePosition(updateBy)#update all environment object positions
-#     def updatePosition(self, cameraXY):
-#         for ob in self.boundaryObjects:
-#             ob.body.position += cameraXY 
 
     def calcUpdateBy(self, focusRobotsXY):
         updateBy = Vec2d(0,0)
@@ -118,7 +122,7 @@ class TrainingEnvironments:
         while simulating:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
-                    #simulating = False
+                    simulating = False
                     sys.exit(0)
 #                     elif event.type == KEYDOWN and event.key == K_s:
 #                         # Start/stop simulation.
@@ -165,17 +169,18 @@ class TrainingEnvironments:
              
             self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
             clock.tick(self.fps)       
-        
-class TrainingWorld1(TrainingEnvironments):#inherits
+
+class FlatGroundTraining(Worlds):#inherits
     groundObjects = []
-    elevFromBottomWall = 50
+    elevFromBottomWall = 10
 
     def initializeTrainingObjects(self):        
-        groundX = self.envX+self.wallThickness; groundLen = self.envWidth-2*self.wallThickness; groundY = self.elevFromBottomWall
+        groundX = self.envX+self.wallThickness/2; groundLen = self.envWidth-2*self.wallThickness; groundY = self.elevFromBottomWall
         ground_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); groundStart = Vec2d(groundX, groundY); groundPosition = Vec2d(groundX+groundLen, groundY)
+        ground_body.position = groundStart
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, 1.0); ground_shape.friction = 1.0        
         self.space.add(ground_shape); self.groundObjects.append(ground_shape)         
-               
+    
     def deleteTrainingObjects(self):
         for ob in self.groundObjects:
             self.space.remove(ob)

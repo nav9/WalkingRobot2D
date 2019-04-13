@@ -2,14 +2,15 @@
 # Created: April 2019
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
-from Environments import *
+from Worlds import *
 
 class Simulator(object):
     worlds = []
     worldOrdinal = -1
 
     def __init__(self):
-        self.worlds.append(TrainingWorld1())#registration of a world
+        #---registration of the worlds to run
+        self.worlds.append(FlatGroundTraining())
 
     def nextWorld(self):
         self.worldOrdinal += 1
