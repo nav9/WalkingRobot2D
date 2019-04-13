@@ -23,9 +23,9 @@ class Worlds:
     space = None  
     envX = 0
     envY = 0  
-    envWidth = 500
+    envWidth = 1000
     envHeight = 300
-    wallThickness = 5
+    wallThickness = 15
     boundaryColor = 170,170,170
     robots = []
     numRobots = 1  
@@ -33,7 +33,8 @@ class Worlds:
 
     def __init__(self):
         #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
-        self.screenWidth = 500; self.screenHeight = 300
+        self.screenWidth = 300; 
+        self.screenHeight = 300
         self.display_flags = 0
         self.minViewX = 100; self.maxViewX = self.screenWidth - self.minViewX
         self.minViewY = 100; self.maxViewY = self.screenHeight - self.minViewY
@@ -41,7 +42,7 @@ class Worlds:
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
         self.fps = 50
-        self.iterations = 10        
+        self.iterations = 20        
         #self.space.damping = 0.999 
         
         #self.worlds.append(FlatGroundTraining())#registration of a world
@@ -101,7 +102,7 @@ class Worlds:
         for i in range(0, self.numRobots, 1):
             self.robots.append(RobotBody(self.space, robotXY, self.actionNetwork))             
        
-    def run(self):
+    def runWorld(self):
         pygame.init()
         pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
         self.screen = pygame.display.set_mode((self.screenWidth, self.screenHeight), self.display_flags)
@@ -112,7 +113,6 @@ class Worlds:
         clock = pygame.time.Clock()
         simulating = True
         self.initializeRobots()
-        
 #             #---Create the spider robots
 #             self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
 #             for i in range(0, self.numRobots, 1):
@@ -166,19 +166,21 @@ class Worlds:
 #                     #r.stopBabyTrainingStage()
             #---draw all objects
             self.draw()
-             
+            
             self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
             clock.tick(self.fps)       
 
 class FlatGroundTraining(Worlds):#inherits
     groundObjects = []
-    elevFromBottomWall = 10
+    elevFromBottomWall = 20
+    groundThickness = 10
 
-    def initializeTrainingObjects(self):        
+    def initializeObjects(self):     
+        self.initializeTrainingBoundary()
         groundX = self.envX+self.wallThickness/2; groundLen = self.envWidth-2*self.wallThickness; groundY = self.elevFromBottomWall
         ground_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); groundStart = Vec2d(groundX, groundY); groundPosition = Vec2d(groundX+groundLen, groundY)
         ground_body.position = groundStart
-        ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, 1.0); ground_shape.friction = 1.0        
+        ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
         self.space.add(ground_shape); self.groundObjects.append(ground_shape)         
     
     def deleteTrainingObjects(self):
