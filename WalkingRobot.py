@@ -26,12 +26,11 @@ import math
 
 
 class ActionsNetwork:#For now, a single instance of this is created which all walking robots can contribute to and access
-    #mutex = Lock()
-    hashID = {}
-    #IdHash = {}
-    #actionID = 0
     def __init__(self):
-        pass
+        #mutex = Lock()
+        self.hashID = {}
+        #IdHash = {}
+        #actionID = 0        
     def addAction(self, actionList):#expects a list of numbers of strings or a combination of both
         actionStr = ''.join(str(x)+',' for x in actionList)
         #hashedStr = hashlib.md5(actionStr.encode()) #hash_object = hashlib.sha1(b'Hello World')        
@@ -47,7 +46,6 @@ class ActionsNetwork:#For now, a single instance of this is created which all wa
         #self.IdHash[self.actionID] = actionStr
 
 class TactileCortex:
-    body = None
     def __init__(self, bodyRef):
         self.body = bodyRef
     def getTactileInputs(self):
@@ -61,18 +59,16 @@ class TactileCortex:
 #         print(arbiter.contact_point_set.points[0].point_b)
         return arbiter.contact_point_set
 
-class ActionsCortex:
-    actionSeq = defaultdict(list)
-    body = None    
-    actionsNetworkPresent = False
-    randomRates = []
-    angleAccuracy = 10 #degrees 
-    distanceAccuracy = 10 #pixels
-    
+class ActionsCortex:    
     def __init__(self, bodyRef):
+        self.actionSeq = defaultdict(list)  
+        self.actionsNetworkPresent = False
+        self.randomRates = []
+        self.angleAccuracy = 10 #degrees 
+        self.distanceAccuracy = 10 #pixels        
         self.body = bodyRef
         for leg in self.body.legs:
-            leg.motor.rate = 0#keep motor still when initialized
+            leg.motor.rate = 0 #keep motor still when initialized
         #TODO: load actions network
     
     def generateNewActions(self, stopActionSequence):
@@ -95,15 +91,10 @@ class ActionsCortex:
                 ang = round((math.degrees(math.atan2((legTip[1]-chCen[1]), (legTip[0]-chCen[0])))-bodyAng)/self.angleAccuracy)
                 self.body.actionNetwork.addAction([i, dist, ang, self.body.legs[i].motor.rate]) #HASH: [legID, distance, angle, motorRate]
         
-
-        
-class Brain:
-    motorCortex = None
-    tactileCortex = None
-    experience = 20 #number of action iterations it can handle
-    trainingExperienceCounter = 0
-        
+class Brain:        
     def __init__(self, bodyRef):
+        self.experience = 20 #number of action iterations it can handle
+        self.trainingExperienceCounter = 0        
         self.motorCortex = ActionsCortex(bodyRef)
         self.tactileCortex = TactileCortex(bodyRef)        
         
@@ -125,22 +116,20 @@ class Directions:
     RIGHT = 4
 
 class LegPart:#This is one leg part. Could be part A that's connected to the chassis or part B that's connected to part A
-    space = pymunk.Space()
-    shapeFilter = None
-    ori = Directions()
-    legLeftOrRight = ori.LEFT  # default. Will be overridden in ctor. Whether the leg is at the right of the chassis or the left
-    prevBodyXY = 0
-    prevBodyWd = 0  # chassis width
-    legWd = 20 #leg thickness (width)
-    legHt = 2 #leg height
-    legMass = 0.5
-    relativeAnguVel = 0
-    leg_body = None
-    leg_shape = None
-    pinJoint = None
-    motor = None
-    
     def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight):
+        self.space = pymunk.Space()
+        self.ori = Directions()
+        self.legLeftOrRight = self.ori.LEFT  # default. Will be overridden in ctor. Whether the leg is at the right of the chassis or the left
+        self.prevBodyXY = 0
+        self.prevBodyWd = 0  # chassis width
+        self.legWd = 20 #leg thickness (width)
+        self.legHt = 2 #leg height
+        self.legMass = 0.5
+        self.relativeAnguVel = 0
+        self.leg_body = None
+        self.leg_shape = None
+        self.pinJoint = None
+        self.motor = None        
         self.space = pymunkSpace
         self.shapeFilter = ownBodyShapeFilter
         self.prevBodyXY = prevBody.position
@@ -193,9 +182,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
 
     
 class RobotBody:
-    
     def __init__(self, pymunkSpace, chassisCenterPoint, globalActionNetwork):
-        self.space = None
         self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1)#to prevent collisions between robot body parts
         self.ori = Directions()  #leg at left or right of chassis
         self.prevBodyWd = 30 #chassis width 
@@ -205,7 +192,6 @@ class RobotBody:
         self.chassis_shape = None  #chassis shape    
         self.legs = []
         self.numLegsOnEachSide = 1
-        self.actionNetwork = None
         self.brain = None        
         self.space = pymunkSpace
         self.__createBody__(chassisCenterPoint)
@@ -233,7 +219,7 @@ class RobotBody:
             self.legs.append(rightLegA)
             self.legs.append(rightLegB)  
         self.makeRobotDynamic()
-        print(len(self.legs))
+        
     
     def makeRobotDynamic(self):
         self.chassis_body.body_type = pymunk.Body.DYNAMIC

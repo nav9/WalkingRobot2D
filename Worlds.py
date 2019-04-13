@@ -13,25 +13,23 @@ from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_s, K_r, K_q, K_ESCA
 from pygame.color import THECOLORS
 from WalkingRobot import RobotBody, ActionsNetwork
 
-class Worlds:
-    focusRobotXY = Vec2d(0, 0)#will be overridden below
-    focusRobotID = 0
-    screen = None
-    draw_options = None       
-    
-    boundaryObjects = []
-    space = None  
-    envX = 0
-    envY = 0  
-    envWidth = 1000
-    envHeight = 300
-    wallThickness = 15
-    boundaryColor = 170,170,170
-    robots = []
-    numRobots = 3
-    actionNetwork = ActionsNetwork()
-
+class Worlds(object):
     def __init__(self):
+        self.focusRobotXY = Vec2d(0, 0)#will be overridden below
+        self.focusRobotID = 0
+        self.screen = None
+        self.draw_options = None       
+        
+        self.boundaryObjects = []
+        self.envX = 0
+        self.envY = 0  
+        self.envWidth = 1000
+        self.envHeight = 300
+        self.wallThickness = 15
+        self.boundaryColor = 170,170,170
+        self.robots = []
+        self.numRobots = 3
+        self.actionNetwork = ActionsNetwork()        
         #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
         self.screenWidth = 300; 
         self.screenHeight = 300
@@ -47,8 +45,6 @@ class Worlds:
         
         #self.worlds.append(FlatGroundTraining())#registration of a world
         self.focusRobotID = 0 #the first robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
-
-    def initializeTrainingBoundary(self):#NOTE: The x,y position of a body is it's body center. Not the top left coordinate
         #---top boundary        
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX+self.envWidth/2, self.envY+self.envHeight-self.wallThickness/2)
         shape = pymunk.Poly.create_box(body, (self.envWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
@@ -171,17 +167,16 @@ class Worlds:
             clock.tick(self.fps)       
 
 class FlatGroundTraining(Worlds):#inherits
-    groundObjects = []
-    elevFromBottomWall = 20
-    groundThickness = 10
-
-    def initializeObjects(self):     
-        self.initializeTrainingBoundary()
+    def __init__(self):
+        super(FlatGroundTraining, self).__init__()
+        self.groundObjects = []
+        self.elevFromBottomWall = 20
+        self.groundThickness = 10
         groundX = self.envX+self.wallThickness/2; groundLen = self.envWidth-2*self.wallThickness; groundY = self.elevFromBottomWall
         ground_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); groundStart = Vec2d(groundX, groundY); groundPosition = Vec2d(groundX+groundLen, groundY)
         ground_body.position = groundStart
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
-        self.space.add(ground_shape); self.groundObjects.append(ground_shape)         
+        self.space.add(ground_shape); self.groundObjects.append(ground_shape)  
     
     def deleteTrainingObjects(self):
         for ob in self.groundObjects:

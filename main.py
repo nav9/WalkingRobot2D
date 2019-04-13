@@ -5,10 +5,9 @@
 from Worlds import *
 
 class Simulator(object):
-    worlds = []
-    worldOrdinal = -1
-
     def __init__(self):
+        self.worlds = []
+        self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
         self.worlds.append(FlatGroundTraining())
 
@@ -16,8 +15,6 @@ class Simulator(object):
         self.worldOrdinal += 1
         if self.worldOrdinal < len(self.worlds):
             w = self.worlds[self.worldOrdinal]
-
-            w.initializeObjects()
             w.runWorld()       
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
 
