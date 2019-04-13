@@ -28,7 +28,7 @@ class Worlds:
     wallThickness = 15
     boundaryColor = 170,170,170
     robots = []
-    numRobots = 1  
+    numRobots = 3
     actionNetwork = ActionsNetwork()
 
     def __init__(self):
@@ -119,7 +119,7 @@ class Worlds:
 #                 self.robots.append(RobotBody(self.space, self.focusRobotXY, self.actionNetwork))
     
         #prevTime = time.time();
-        while simulating:
+        while simulating and len(self.robots) > 0:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
                     simulating = False

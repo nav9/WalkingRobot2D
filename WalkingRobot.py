@@ -193,20 +193,20 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
 
     
 class RobotBody:
-    space = None
-    ownBodyShapeFilter = pymunk.ShapeFilter(group=1)#to prevent collisions between robot body parts
-    ori = Directions()  #leg at left or right of chassis
-    prevBodyWd = 30 #chassis width 
-    chassisHt = 20 #chassis height
-    chassisMass = 10
-    chassis_body = None  #chassis body
-    chassis_shape = None  #chassis shape    
-    legs = []
-    numLegsOnEachSide = 1
-    actionNetwork = None
-    brain = None
     
     def __init__(self, pymunkSpace, chassisCenterPoint, globalActionNetwork):
+        self.space = None
+        self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1)#to prevent collisions between robot body parts
+        self.ori = Directions()  #leg at left or right of chassis
+        self.prevBodyWd = 30 #chassis width 
+        self.chassisHt = 20 #chassis height
+        self.chassisMass = 10
+        self.chassis_body = None  #chassis body
+        self.chassis_shape = None  #chassis shape    
+        self.legs = []
+        self.numLegsOnEachSide = 1
+        self.actionNetwork = None
+        self.brain = None        
         self.space = pymunkSpace
         self.__createBody__(chassisCenterPoint)
         self.actionNetwork = globalActionNetwork
@@ -233,6 +233,7 @@ class RobotBody:
             self.legs.append(rightLegA)
             self.legs.append(rightLegB)  
         self.makeRobotDynamic()
+        print(len(self.legs))
     
     def makeRobotDynamic(self):
         self.chassis_body.body_type = pymunk.Body.DYNAMIC
@@ -243,6 +244,7 @@ class RobotBody:
         self.space.remove(self.chassis_shape); self.space.remove(self.chassis_body)
         for legPart in self.legs:
             legPart.delete()
+        self.legs[:] = []#clear the list
         
     def __activateBrain__(self):
         self.brain = Brain(self)
@@ -257,8 +259,7 @@ class RobotBody:
         self.chassis_body.position = self.chassis_body.position + offsetXY 
         for leg in self.legs:
             leg.updatePosition(offsetXY)
-        self.legs[:] = []#clear the list
-        
+    
     def getFullBodyStatesAndMotorRates(self):
         bodyStates = []; motorRates = []
         bodyStates.append(self.chassis_body.angle)
