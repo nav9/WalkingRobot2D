@@ -44,7 +44,7 @@ class Worlds(object):
         #self.space.damping = 0.999 
         
         #self.worlds.append(FlatGroundTraining())#registration of a world
-        self.focusRobotID = 0 #the first robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
+        self.focusRobotID = self.numRobots-1 #the last robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
         #---top boundary        
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX+self.envWidth/2, self.envY+self.envHeight-self.wallThickness/2)
         shape = pymunk.Poly.create_box(body, (self.envWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
@@ -79,9 +79,12 @@ class Worlds(object):
             r.brainActivity()        
     
     def updatePosition(self):#gets overridden in derived class
+        self.robots[self.focusRobotID].setFocusRobotColor()
         updateBy = self.calcUpdateBy(self.robots[self.focusRobotID].getPosition())
         if updateBy != (0, 0):
             for obj in self.robots:#update all robot positions
+                if obj == self.robots[self.focusRobotID]: obj.setFocusRobotColor() 
+                else: obj.setNormalRobotColor()                
                 obj.updatePosition(updateBy)        
 
     def calcUpdateBy(self, focusRobotsXY):
@@ -183,7 +186,7 @@ class FlatGroundTraining(Worlds):#inherits
             self.space.remove(ob)
         self.groundObjects[:] = []  
           
-    def updatePosition(self):
+    def updatePosition(self):        
         updateBy = self.calcUpdateBy(self.robots[self.focusRobotID].getPosition())
         if updateBy != (0, 0):
             for ob in self.boundaryObjects:
@@ -191,6 +194,8 @@ class FlatGroundTraining(Worlds):#inherits
             for ob in self.groundObjects:
                 ob.body.position += updateBy    
             for obj in self.robots:#update all robot positions
+                if obj == self.robots[self.focusRobotID]: obj.setFocusRobotColor() 
+                else: obj.setNormalRobotColor()
                 obj.updatePosition(updateBy) 
                             
                     

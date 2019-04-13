@@ -189,7 +189,7 @@ class RobotBody:
         self.chassisHt = 20 #chassis height
         self.chassisMass = 10
         self.chassis_body = None  #chassis body
-        self.chassis_shape = None  #chassis shape    
+        self.chassis_shape = None  #chassis shape 
         self.legs = []
         self.numLegsOnEachSide = 1
         self.brain = None        
@@ -206,7 +206,7 @@ class RobotBody:
         self.chassis_body.startAngle = self.chassis_body.angle        
         self.chassis_shape = pymunk.Poly.create_box(self.chassis_body, (self.prevBodyWd, self.chassisHt))
         self.chassis_shape.filter = self.ownBodyShapeFilter
-        self.chassis_shape.color = 170, 170, 170
+        self.setNormalRobotColor() 
         self.chassis_shape.friction = 10.0
         self.space.add(self.chassis_shape, self.chassis_body)  
         for i in range(0, self.numLegsOnEachSide, 1):
@@ -220,7 +220,12 @@ class RobotBody:
             self.legs.append(rightLegB)  
         self.makeRobotDynamic()
         
-    
+    def setFocusRobotColor(self):
+        self.chassis_shape.color = 190, 0, 0
+        
+    def setNormalRobotColor(self):
+        self.chassis_shape.color = 170, 170, 170
+        
     def makeRobotDynamic(self):
         self.chassis_body.body_type = pymunk.Body.DYNAMIC
         self.chassis_body.mass = self.chassisMass
