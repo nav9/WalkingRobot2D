@@ -180,7 +180,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
     def updatePosition(self, offsetXY):
         self.leg_body.position = self.leg_body.position + offsetXY 
 
-    
+
 class RobotBody:
     def __init__(self, pymunkSpace, chassisCenterPoint, globalActionNetwork):
         self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1)#to prevent collisions between robot body parts

@@ -9,7 +9,7 @@ import pygame
 from pymunk import Vec2d
 import pymunk.pygame_util
 import pymunk
-from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_s, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
+from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_LEFTBRACKET, K_RIGHTBRACKET, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
 from pygame.color import THECOLORS
 from WalkingRobot import RobotBody, ActionsNetwork
 
@@ -121,15 +121,15 @@ class Worlds(object):
         while simulating and len(self.robots) > 0:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
-                    simulating = False
                     sys.exit(0)
-#                     elif event.type == KEYDOWN and event.key == K_s:
-#                         # Start/stop simulation.
-#                         simulate = not simulate
-#                     elif event.type == KEYDOWN and event.key == K_r:
-#                         # Reset.
-#                         # simulate = False
-#                         self.reset_bodies()
+                if event.type == KEYDOWN:
+                    if event.key == K_RIGHTBRACKET:
+                        self.focusRobotID += 1
+                        if self.focusRobotID == self.numRobots: self.focusRobotID = 0
+                    if event.key == K_LEFTBRACKET:
+                        self.focusRobotID -= 1
+                        if self.focusRobotID < 0: self.focusRobotID = self.numRobots - 1
+                        
 #                     elif event.type == KEYDOWN and event.key == K_UP:
 #                         motor_ba1Left.rate = rotationRate
 #                     elif event.type == KEYDOWN and event.key == K_DOWN:
