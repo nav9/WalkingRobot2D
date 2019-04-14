@@ -21,9 +21,10 @@ class Worlds(object):
         self.draw_options = None       
          
         #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
-        self.screenWidth = 300; 
-        self.screenHeight = 350 #keep at at least 350
+        self.screenWidth = 1000; 
+        self.screenHeight = 500 #keep at at least 350
         self.boundaryObjects = []
+        self.worldObjects = []
         self.worldX = 0
         self.worldY = 0 
         self.worldWidth = 1000
@@ -61,10 +62,13 @@ class Worlds(object):
         shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
         self.space.add(shape); self.boundaryObjects.append(shape)
     
-    def deleteTrainingBoundary(self):
+    def delete(self):
         for ob in self.boundaryObjects:
             self.space.remove(ob)
         self.boundaryObjects[:] = []#clear the list
+        for ob in self.robots:
+            self.space.remove(ob)
+        self.robots[:] = []
 
     def draw(self):        
         self.screen.fill(THECOLORS["black"])# Clear screen
@@ -76,12 +80,16 @@ class Worlds(object):
     def processRobot(self):
         for r in self.robots:
             r.brainActivity()        
-    
-    def updatePosition(self):#gets overridden in derived class
+
+    def updatePosition(self):   
+        self.robots[self.focusRobotID].setFocusRobotColor()            
         updateBy = self.calcUpdateBy(self.robots[self.focusRobotID].getPosition())
         if updateBy != (0, 0):
-            for obj in self.robots:#update all robot positions                
-                obj.updatePosition(updateBy)        
+            for ob in self.boundaryObjects:
+                ob.body.position += updateBy  
+            for obj in self.robots:#update all robot positions
+                obj.updatePosition(updateBy)
+        return updateBy           
     
     def updateColor(self):
         self.robots[self.focusRobotID].setFocusRobotColor()
@@ -124,7 +132,6 @@ class Worlds(object):
         #prevTime = time.time();
         while simulating:
             for event in pygame.event.get():
-                if event.type==KEYDOWN: print(str(event.key)+' '+str(K_RIGHTBRACKET))
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
                     sys.exit(0)
                 if event.type == KEYDOWN:
@@ -170,30 +177,25 @@ class Worlds(object):
 class FlatGroundTraining(Worlds):#inherits
     def __init__(self):
         super(FlatGroundTraining, self).__init__()
-        self.numRobots = 5
-        self.groundObjects = []
+        self.numRobots = 5        
         self.elevFromBottomWall = 20
         self.groundThickness = 10
         groundX = self.worldX+self.wallThickness/2; groundLen = self.worldWidth-2*self.wallThickness; groundY = self.elevFromBottomWall
         ground_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); groundStart = Vec2d(groundX, groundY); groundPosition = Vec2d(groundX+groundLen, groundY)
         ground_body.position = groundStart
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
-        self.space.add(ground_shape); self.groundObjects.append(ground_shape)  
+        self.space.add(ground_shape); self.worldObjects.append(ground_shape)  
     
-    def deleteTrainingObjects(self):
-        for ob in self.groundObjects:
+    def delete(self):
+        super(FlatGroundTraining, self).delete()   
+        for ob in self.worldObjects:
             self.space.remove(ob)
-        self.groundObjects[:] = []  
+        self.worldObjects[:] = []  
     
-    def updatePosition(self):    
-        self.robots[self.focusRobotID].setFocusRobotColor()            
-        updateBy = self.calcUpdateBy(self.robots[self.focusRobotID].getPosition())
+    def updatePosition(self):  
+        updateBy = super(FlatGroundTraining, self).updatePosition()     
         if updateBy != (0, 0):
-            for ob in self.boundaryObjects:
-                ob.body.position += updateBy
-            for ob in self.groundObjects:
-                ob.body.position += updateBy    
-            for obj in self.robots:#update all robot positions
-                obj.updatePosition(updateBy) 
+            for ob in self.worldObjects:
+                ob.body.position += updateBy     
                             
                     
