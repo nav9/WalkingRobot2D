@@ -19,20 +19,20 @@ class Worlds(object):
         self.focusRobotID = 0
         self.screen = None
         self.draw_options = None       
-        
+         
+        #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
+        self.screenWidth = 300; 
+        self.screenHeight = 350 #keep at at least 350
         self.boundaryObjects = []
-        self.envX = 0
-        self.envY = 0  
-        self.envWidth = 1000
-        self.envHeight = 300
+        self.worldX = 0
+        self.worldY = 0 
+        self.worldWidth = 1000
+        self.worldHeight = 500
         self.wallThickness = 15
         self.boundaryColor = 170,170,170
         self.robots = []
-        self.numRobots = 3
+        self.numRobots = 3#can be overridden in child class
         self.actionNetwork = ActionsNetwork()        
-        #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
-        self.screenWidth = 300; 
-        self.screenHeight = 300
         self.display_flags = 0
         self.minViewX = 100; self.maxViewX = self.screenWidth - self.minViewX
         self.minViewY = 100; self.maxViewY = self.screenHeight - self.minViewY
@@ -42,24 +42,23 @@ class Worlds(object):
         self.fps = 50
         self.iterations = 20        
         #self.space.damping = 0.999 
-        
-        #self.worlds.append(FlatGroundTraining())#registration of a world
+        self.focusRobotChanged = False
         self.focusRobotID = self.numRobots-1 #the last robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
         #---top boundary        
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX+self.envWidth/2, self.envY+self.envHeight-self.wallThickness/2)
-        shape = pymunk.Poly.create_box(body, (self.envWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth/2, self.worldY+self.worldHeight-self.wallThickness/2)
+        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
         self.space.add(shape); self.boundaryObjects.append(shape)
         #---bottom boundary
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX+self.envWidth/2, self.envY+self.wallThickness/2) 
-        shape = pymunk.Poly.create_box(body, (self.envWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth/2, self.worldY+self.wallThickness/2) 
+        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
         self.space.add(shape); self.boundaryObjects.append(shape)
         #---left boundary
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX+self.wallThickness/2, self.envY+self.envHeight/2)
-        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.envHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.wallThickness/2, self.worldY+self.worldHeight/2)
+        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
         self.space.add(shape); self.boundaryObjects.append(shape)
         #---right boundary
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.envX+self.envWidth-self.wallThickness/2, self.envY+self.envHeight/2)
-        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.envHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth-self.wallThickness/2, self.worldY+self.worldHeight/2)
+        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
         self.space.add(shape); self.boundaryObjects.append(shape)
     
     def deleteTrainingBoundary(self):
@@ -79,14 +78,18 @@ class Worlds(object):
             r.brainActivity()        
     
     def updatePosition(self):#gets overridden in derived class
-        self.robots[self.focusRobotID].setFocusRobotColor()
         updateBy = self.calcUpdateBy(self.robots[self.focusRobotID].getPosition())
         if updateBy != (0, 0):
-            for obj in self.robots:#update all robot positions
-                if obj == self.robots[self.focusRobotID]: obj.setFocusRobotColor() 
-                else: obj.setNormalRobotColor()                
+            for obj in self.robots:#update all robot positions                
                 obj.updatePosition(updateBy)        
-
+    
+    def updateColor(self):
+        self.robots[self.focusRobotID].setFocusRobotColor()
+        self.focusRobotChanged = False
+        for obj in self.robots:#update all robot positions
+            if obj == self.robots[self.focusRobotID]: obj.setFocusRobotColor() 
+            else: obj.setNormalRobotColor()
+                  
     def calcUpdateBy(self, focusRobotsXY):
         updateBy = Vec2d(0,0)
         if focusRobotsXY[0] < self.minViewX or focusRobotsXY[0] > self.maxViewX:
@@ -97,7 +100,7 @@ class Worlds(object):
     
     def initializeRobots(self):
         distFromWall = 100
-        robotXY = Vec2d(self.envX+distFromWall, self.envY+self.envHeight/2)
+        robotXY = Vec2d(self.worldX+distFromWall, self.worldY+self.worldHeight/2)
         for i in range(0, self.numRobots, 1):
             self.robots.append(RobotBody(self.space, robotXY, self.actionNetwork))             
        
@@ -112,42 +115,37 @@ class Worlds(object):
         clock = pygame.time.Clock()
         simulating = True
         self.initializeRobots()
+        if len(self.robots) <= 0: print('Create at least one robot');return
 #             #---Create the spider robots
 #             self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
 #             for i in range(0, self.numRobots, 1):
 #                 self.robots.append(RobotBody(self.space, self.focusRobotXY, self.actionNetwork))
-    
+
         #prevTime = time.time();
-        while simulating and len(self.robots) > 0:
+        while simulating:
             for event in pygame.event.get():
+                if event.type==KEYDOWN: print(str(event.key)+' '+str(K_RIGHTBRACKET))
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
                     sys.exit(0)
                 if event.type == KEYDOWN:
                     if event.key == K_RIGHTBRACKET:
-                        self.focusRobotID += 1
+                        self.focusRobotID += 1; self.focusRobotChanged = True
                         if self.focusRobotID == self.numRobots: self.focusRobotID = 0
                     if event.key == K_LEFTBRACKET:
-                        self.focusRobotID -= 1
+                        self.focusRobotID -= 1; self.focusRobotChanged = True
                         if self.focusRobotID < 0: self.focusRobotID = self.numRobots - 1
-                        
-#                     elif event.type == KEYDOWN and event.key == K_UP:
-#                         motor_ba1Left.rate = rotationRate
-#                     elif event.type == KEYDOWN and event.key == K_DOWN:
-#                         motor_ba1Left.rate = -rotationRate
-#                     elif event.type == KEYDOWN and event.key == K_LEFT:
-#                         motor_ac1Left.rate = rotationRate
-#                     elif event.type == KEYDOWN and event.key == K_RIGHT:
-#                         motor_ac1Left.rate = -rotationRate                    
-#                     elif event.type == KEYUP:
-#                         motor_ba1Left.rate = 0
-#                         motor_ac1Left.rate = 0
+#                     if event.key == K_UP:
+#                     if event.key == K_DOWN:
+#                     if event.key == K_LEFT:
+#                     if event.key == K_RIGHT:
 
             #---Update physics
-            dt = 1.0/float(self.fps)/float(self.iterations)
+            dt = 1.0 / float(self.fps) / float(self.iterations)
             for x in range(self.iterations): #iterations to get a more stable simulation
                 self.space.step(dt)
             #---Update world based on player focus
             self.updatePosition()
+            if self.focusRobotChanged: self.updateColor()
             self.processRobot()
 #                 updateBy = self.calcUpdateBy(self.robots[self.focusRobotID].chassis_body.position)
 #                 if updateBy != (0, 0):
@@ -172,10 +170,11 @@ class Worlds(object):
 class FlatGroundTraining(Worlds):#inherits
     def __init__(self):
         super(FlatGroundTraining, self).__init__()
+        self.numRobots = 5
         self.groundObjects = []
         self.elevFromBottomWall = 20
         self.groundThickness = 10
-        groundX = self.envX+self.wallThickness/2; groundLen = self.envWidth-2*self.wallThickness; groundY = self.elevFromBottomWall
+        groundX = self.worldX+self.wallThickness/2; groundLen = self.worldWidth-2*self.wallThickness; groundY = self.elevFromBottomWall
         ground_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); groundStart = Vec2d(groundX, groundY); groundPosition = Vec2d(groundX+groundLen, groundY)
         ground_body.position = groundStart
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
@@ -185,8 +184,9 @@ class FlatGroundTraining(Worlds):#inherits
         for ob in self.groundObjects:
             self.space.remove(ob)
         self.groundObjects[:] = []  
-          
-    def updatePosition(self):        
+    
+    def updatePosition(self):    
+        self.robots[self.focusRobotID].setFocusRobotColor()            
         updateBy = self.calcUpdateBy(self.robots[self.focusRobotID].getPosition())
         if updateBy != (0, 0):
             for ob in self.boundaryObjects:
@@ -194,8 +194,6 @@ class FlatGroundTraining(Worlds):#inherits
             for ob in self.groundObjects:
                 ob.body.position += updateBy    
             for obj in self.robots:#update all robot positions
-                if obj == self.robots[self.focusRobotID]: obj.setFocusRobotColor() 
-                else: obj.setNormalRobotColor()
                 obj.updatePosition(updateBy) 
                             
                     

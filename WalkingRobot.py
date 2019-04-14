@@ -183,13 +183,13 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
 
 class RobotBody:
     def __init__(self, pymunkSpace, chassisCenterPoint, globalActionNetwork):
-        self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1)#to prevent collisions between robot body parts
+        self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1) #to prevent collisions between robot body parts
         self.ori = Directions()  #leg at left or right of chassis
         self.prevBodyWd = 30 #chassis width 
         self.chassisHt = 20 #chassis height
         self.chassisMass = 10
-        self.chassis_body = None  #chassis body
-        self.chassis_shape = None  #chassis shape 
+        self.chassis_body = None #chassis body
+        self.chassis_shape = None #chassis shape 
         self.legs = []
         self.numLegsOnEachSide = 1
         self.brain = None        
@@ -212,12 +212,10 @@ class RobotBody:
         for i in range(0, self.numLegsOnEachSide, 1):
             leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT)
             leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT)
-            self.legs.append(leftLegA)
-            self.legs.append(leftLegB)
+            self.legs.append(leftLegA); self.legs.append(leftLegB)
             rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT)
             rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT)
-            self.legs.append(rightLegA)
-            self.legs.append(rightLegB)  
+            self.legs.append(rightLegA); self.legs.append(rightLegB)  
         self.makeRobotDynamic()
         
     def setFocusRobotColor(self):
