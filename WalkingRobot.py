@@ -10,21 +10,6 @@ import hashlib
 import math
 #from threading import Thread, Lock
 
-#from abc import ABCMeta, abstractmethod
-# class AbstractActionsNetwork:
-#     __metaclass__ = ABCMeta
-#     hashID = {}
-#     IdHash = {}
-#         
-#     @abstractmethod
-#     def setValues(self):#The force applied by the action
-#         pass    
-# class LegActions(AbstractActions):    
-#     legRate = 0
-#     max_force = 10000000
-#     legRateRange = []
-
-
 class ActionsNetwork:#For now, a single instance of this is created which all walking robots can contribute to and access
     def __init__(self):
         #mutex = Lock()
@@ -75,7 +60,6 @@ class ActionsCortex:
         if len(self.randomRates) == 0:
             if len(self.body.legs) > 0:
                 self.randomRates = random.sample(self.body.legs[0].motor.legRateRange, len(self.body.legs)) #sample(range,numNumbers) = sampling without replacement. Generates unique random samples within range
-                #print(self.randomRates)
                 
         if stopActionSequence:
             self.randomRates = []
@@ -179,7 +163,6 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         
     def updatePosition(self, offsetXY):
         self.leg_body.position = self.leg_body.position + offsetXY 
-
 
 class RobotBody:
     def __init__(self, pymunkSpace, chassisCenterPoint, globalActionNetwork):

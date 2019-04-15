@@ -12,6 +12,7 @@ import pymunk
 from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_LEFTBRACKET, K_RIGHTBRACKET, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
 from pygame.color import THECOLORS
 from WalkingRobot import RobotBody, ActionsNetwork
+from Behaviours import DifferentialEvolution
 
 class Worlds(object):
     def __init__(self):
@@ -32,6 +33,7 @@ class Worlds(object):
         self.wallThickness = 15
         self.boundaryColor = 170,170,170
         self.robots = []
+        self.behaviour = None
         self.numRobots = 3#can be overridden in child class
         self.actionNetwork = ActionsNetwork()        
         self.display_flags = 0
@@ -45,6 +47,7 @@ class Worlds(object):
         #self.space.damping = 0.999 
         self.focusRobotChanged = False
         self.focusRobotID = self.numRobots-1 #the last robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
+        
         #---top boundary        
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth/2, self.worldY+self.worldHeight-self.wallThickness/2)
         shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
@@ -62,6 +65,8 @@ class Worlds(object):
         shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
         self.space.add(shape); self.boundaryObjects.append(shape)
     
+        self.initializeRobots()
+        
     def delete(self):
         for ob in self.boundaryObjects:
             self.space.remove(ob)
@@ -122,7 +127,7 @@ class Worlds(object):
         
         clock = pygame.time.Clock()
         simulating = True
-        self.initializeRobots()
+        
         if len(self.robots) <= 0: print('Create at least one robot');return
 #             #---Create the spider robots
 #             self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
@@ -185,7 +190,11 @@ class FlatGroundTraining(Worlds):#inherits
         ground_body.position = groundStart
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
         self.space.add(ground_shape); self.worldObjects.append(ground_shape)  
+        self.behaviour = DifferentialEvolution(self.robots)
     
+    def processRobot(self):
+        self.behaviour.run()
+        
     def delete(self):
         super(FlatGroundTraining, self).delete()   
         for ob in self.worldObjects:
