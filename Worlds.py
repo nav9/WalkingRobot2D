@@ -9,6 +9,8 @@ import pygame
 from pymunk import Vec2d
 import pymunk.pygame_util
 import pymunk
+from pygame.locals import *
+from pygame.color import *
 from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_LEFTBRACKET, K_RIGHTBRACKET, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
 from pygame.color import THECOLORS
 from WalkingRobot import RobotBody, ActionsNetwork
@@ -23,7 +25,7 @@ class Worlds(object):
          
         #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
         self.screenWidth = 1000; 
-        self.screenHeight = 500 #keep at at least 350
+        self.screenHeight = 700 #keep at at least 350
         self.boundaryObjects = []
         self.worldObjects = []
         self.worldX = 0
@@ -38,7 +40,8 @@ class Worlds(object):
         self.actionNetwork = ActionsNetwork()        
         self.display_flags = 0
         self.minViewX = 100; self.maxViewX = self.screenWidth - self.minViewX
-        self.minViewY = 100; self.maxViewY = self.screenHeight - self.minViewY
+        self.minViewY = 100; self.maxViewY = self.screenHeight - self.minViewY  
+        self.statsPos = Vec2d(0, 0)      
 
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
@@ -76,10 +79,11 @@ class Worlds(object):
         self.robots[:] = []
 
     def draw(self):        
-        self.screen.fill(THECOLORS["black"])# Clear screen
+        #self.screen.fill(THECOLORS["black"])# Clear screen
         self.screen.fill((30, 30, 30))# Clear screen  
         #self.screen.fill((255, 243, 202))# Clear screen        
-        self.space.debug_draw(self.draw_options)# Draw space        
+        self.space.debug_draw(self.draw_options)# Draw space
+        self.displayStats(self.behaviour.infoString);        
         pygame.display.flip()#flip the display buffer
         
     def processRobot(self):
@@ -94,6 +98,7 @@ class Worlds(object):
                 ob.body.position += updateBy  
             for obj in self.robots:#update all robot positions
                 obj.updatePosition(updateBy)
+            self.statsPos += updateBy
         return updateBy           
     
     def updateColor(self):
@@ -116,11 +121,15 @@ class Worlds(object):
         robotXY = Vec2d(self.worldX+distFromWall, self.worldY+self.worldHeight/2)
         for i in range(0, self.numRobots, 1):
             self.robots.append(RobotBody(self.space, robotXY, self.actionNetwork))             
-       
+    
+    def displayStats(self, displayStr):
+        self.screen.blit(self.font.render(displayStr, 1, THECOLORS["green"]), self.statsPos)
+                        
     def runWorld(self):
         pygame.init()
         pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
         self.screen = pygame.display.set_mode((self.screenWidth, self.screenHeight), self.display_flags)
+        self.font = pygame.font.SysFont("Arial", 14)
         #width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
         self.draw_options.constraint_color = 200,200,200
@@ -173,7 +182,7 @@ class Worlds(object):
 #                     print('Angle'+str(math.degrees(r.legs[0].leg_body.angle)%360))
 #                     #r.brainActivity()
 #                     #r.stopBabyTrainingStage()
-            #---draw all objects
+            #---draw all objects            
             self.draw()
             
             self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
@@ -193,7 +202,7 @@ class FlatGroundTraining(Worlds):#inherits
         self.behaviour = DifferentialEvolution(self.robots)
     
     def processRobot(self):
-        self.behaviour.run()
+        self.behaviour.run()        
         
     def delete(self):
         super(FlatGroundTraining, self).delete()   
