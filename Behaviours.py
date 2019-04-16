@@ -5,7 +5,7 @@ class RunCode:
     STOP = 0
     CONTINUE = 1
     RESET = 2
-    NEXTEPOCH = 3
+    NEXTGEN = 3
 
 class DifferentialEvolution:#(AbstractRobotBehaviour):    
     def __init__(self, robo): 
@@ -38,7 +38,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
             self.repeatSeq += 1
         if self.maxSeqRepetitions == self.repeatSeq:
             self.repeatSeq = 0
-            runState = RunCode.NEXTEPOCH
+            runState = RunCode.NEXTGEN
         
         return runState    
     

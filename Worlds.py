@@ -39,10 +39,11 @@ class Worlds(object):
         self.behaviour = None
         self.numRobots = 3#can be overridden in child class
         self.actionNetwork = ActionsNetwork()        
-        self.display_flags = 0
+        self.display_flags = 0        
         self.minViewX = 100; self.maxViewX = self.screenWidth - self.minViewX
         self.minViewY = 100; self.maxViewY = self.screenHeight - self.minViewY  
-        self.statsPos = Vec2d(0, 0) 
+        self.statsPos = Vec2d(0, 0)
+        self.robotInitPos = Vec2d(self.screenWidth/2, self.screenHeight/2) 
         self.prevCameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
         self.cameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2) 
         self.cameraMoveSpeed = Vec2d(100, 50)
@@ -104,6 +105,7 @@ class Worlds(object):
                 ob.body.position += updateBy  
             for obj in self.robots:#update all robot positions
                 obj.updatePosition(updateBy)
+            self.robotInitPos += updateBy
             #self.statsPos += updateBy
         return updateBy           
     
@@ -127,11 +129,9 @@ class Worlds(object):
             r.delete()
         self.robots[:] = []
         
-    def initializeRobots(self):
-        distFromWall = 500
-        robotXY = Vec2d(self.worldX+distFromWall, self.worldY+200)
+    def initializeRobots(self):      
         for i in range(0, self.numRobots, 1):
-            self.robots.append(RobotBody(self.space, robotXY, self.actionNetwork))             
+            self.robots.append(RobotBody(self.space, self.robotInitPos, self.actionNetwork))             
     
     def displayStats(self, displayStr):
         self.screen.blit(self.font.render(displayStr, 1, THECOLORS["green"]), self.statsPos)
@@ -211,23 +211,23 @@ class FlatGroundTraining(Worlds):#inherits
         self.behaviour = DifferentialEvolution(self.robots)
         self.sequenceLength = 1
         self.maxSequenceLength = 5 #The number of dT times a leg is moved
-        self.epoch = 0 
-        self.maxEpochs = 5
+        self.gen = 0 
+        self.maxGens = 3
         
     def processRobot(self):
         if self.sequenceLength == self.maxSequenceLength:
             return RunCode.STOP
         
         runCode = self.behaviour.run(self.sequenceLength)
-        if self.epoch == self.maxEpochs:
+        if self.gen == self.maxGens:
             self.sequenceLength += 1 
-            self.epoch = 0   
+            self.gen = 0   
             self.deleteRobots(); self.initializeRobots()            
             self.behaviour.generatingSeq = True              
         else:
-            if runCode == RunCode.NEXTEPOCH:
-                self.epoch += 1
-        self.infoString = "SeqLen: "+str(self.sequenceLength)+"  Epoch: "+str(self.epoch)+"  SeqRep: "+str(self.behaviour.repeatSeq)+"  Seq: "+str(self.behaviour.seqNum)
+            if runCode == RunCode.NEXTGEN:
+                self.gen += 1
+        self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)+"  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)+"  Seq: "+str(self.behaviour.seqNum)+"/"+str(self.sequenceLength)
         
     def initializeRobots(self):
         super(FlatGroundTraining, self).initializeRobots()
