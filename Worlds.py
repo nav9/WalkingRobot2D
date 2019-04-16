@@ -214,16 +214,15 @@ class FlatGroundTraining(Worlds):#inherits
             return RunCode.STOP
         
         runCode = self.behaviour.run(self.sequenceLength)
-        if runCode == RunCode.RESET:     
-            self.deleteRobots(); self.initializeRobots()
-            self.epoch += 1
-            self.behaviour.generatingSeq = True  
-        
         if self.epoch == self.maxEpochs:
             self.sequenceLength += 1 
             self.epoch = 0   
-            
-        self.infoString = "SeqLev: "+str(self.sequenceLength)+"  Epoch: "+str(self.epoch)+"  Seq: "+str(self.behaviour.seqNum)+"  Fittest: "
+            self.deleteRobots(); self.initializeRobots()            
+            self.behaviour.generatingSeq = True              
+        else:
+            if runCode == RunCode.NEXTEPOCH:
+                self.epoch += 1
+        self.infoString = "SeqLen: "+str(self.sequenceLength)+"  Epoch: "+str(self.epoch)+"  SeqRep: "+str(self.behaviour.repeatSeq)+"  Seq: "+str(self.behaviour.seqNum)
         
     def initializeRobots(self):
         super(FlatGroundTraining, self).initializeRobots()
