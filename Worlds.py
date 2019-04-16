@@ -43,7 +43,8 @@ class Worlds(object):
         self.minViewX = 100; self.maxViewX = self.screenWidth - self.minViewX
         self.minViewY = 100; self.maxViewY = self.screenHeight - self.minViewY  
         self.statsPos = Vec2d(0, 0)      
-
+        
+    def initialize(self):
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
         self.fps = 50
@@ -53,8 +54,7 @@ class Worlds(object):
         #self.space.damping = 0.999 
         self.focusRobotChanged = False
         self.focusRobotID = self.numRobots-1 #the last robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
-        self.infoString = ""
-        
+        self.infoString = ""        
         #---top boundary        
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth/2, self.worldY+self.worldHeight-self.wallThickness/2)
         shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
@@ -71,9 +71,7 @@ class Worlds(object):
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth-self.wallThickness/2, self.worldY+self.worldHeight/2)
         shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
         self.space.add(shape); self.boundaryObjects.append(shape)
-    
-        
-        
+            
     def delete(self):
         for ob in self.boundaryObjects:
             self.space.remove(ob)
@@ -198,17 +196,18 @@ class FlatGroundTraining(Worlds):#inherits
         self.numRobots = 5        
         self.elevFromBottomWall = 20
         self.groundThickness = 10
+  
+    def initialize(self):
+        super(FlatGroundTraining, self).initialize()
         groundX = self.worldX+self.wallThickness/2; groundLen = self.worldWidth-2*self.wallThickness; groundY = self.elevFromBottomWall
         ground_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); groundStart = Vec2d(groundX, groundY); groundPosition = Vec2d(groundX+groundLen, groundY)
         ground_body.position = groundStart
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
         self.space.add(ground_shape); self.worldObjects.append(ground_shape)  
         self.behaviour = DifferentialEvolution(self.robots)
-        #---DE
-        
         self.sequenceLength = 1; self.maxSequenceLength = 20 #The number of dT times a leg is moved
-        self.epoch = 0; self.maxEpochs = 5         
-    
+        self.epoch = 0; self.maxEpochs = 5
+            
     def processRobot(self):
         if self.sequenceLength == self.maxSequenceLength:
             return RunCode.STOP

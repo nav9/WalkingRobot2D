@@ -29,7 +29,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         else:#sequence generated. Now just execute as-is for entire epoch
             for r in self.robots:
                 for leg in r.legs:                                    
-                    leg.motor.rate = r.experience[self.seqNum]   
+                    leg.motor.rate = r.experience[self.seqNum]
         self.seqNum += 1      
         if self.seqNum == seqLen:
             self.seqNum = 0
