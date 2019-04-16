@@ -137,7 +137,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.space.add(self.leg_shape, self.leg_body) 
         
     def delete(self):
-        self.space.remove(self.leg_shape); self.space.remove(self.leg_body)
+        self.space.remove(self.leg_shape, self.leg_body, self.pinJoint, self.motor)
     
     def getTip(self):  
         v = self.leg_shape.get_vertices()    
