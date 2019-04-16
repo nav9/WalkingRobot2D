@@ -23,7 +23,7 @@ class Worlds(object):
         self.focusRobotID = 0
         self.screen = None
         self.draw_options = None       
-         
+        
         #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
         self.screenWidth = 1000; 
         self.screenHeight = 700 #keep at at least 350
@@ -47,11 +47,13 @@ class Worlds(object):
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
         self.fps = 50
+        self.maxMovtTime = self.fps
+        self.movtTime = self.maxMovtTime
         self.iterations = 20        
         #self.space.damping = 0.999 
         self.focusRobotChanged = False
         self.focusRobotID = self.numRobots-1 #the last robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
-        
+        self.infoString = ""
         
         #---top boundary        
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth/2, self.worldY+self.worldHeight-self.wallThickness/2)
@@ -140,13 +142,11 @@ class Worlds(object):
         #width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
         self.draw_options.constraint_color = 200,200,200
-        
+        runState = RunCode.CONTINUE
         clock = pygame.time.Clock()
         simulating = True
         self.initializeRobots()
-        if len(self.robots) <= 0: 
-            print('Create at least one robot'); 
-            return
+        if len(self.robots) <= 0: print('Create at least one robot'); return
         
 #             #---Create the spider robots
 #             self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
@@ -177,8 +177,12 @@ class Worlds(object):
             #---Update world based on player focus
             self.updatePosition()
             if self.focusRobotChanged: self.updateColor()
-            runState = self.processRobot()
-
+            if self.movtTime == 0:
+                runState = self.processRobot()
+                self.movtTime = self.maxMovtTime
+            else:
+                self.movtTime -= 1
+            
             #---draw all objects            
             self.draw()
             
