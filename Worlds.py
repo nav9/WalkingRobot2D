@@ -14,7 +14,8 @@ from pygame.color import *
 from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_LEFTBRACKET, K_RIGHTBRACKET, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
 from pygame.color import THECOLORS
 from WalkingRobot import RobotBody, ActionsNetwork
-from Behaviours import DifferentialEvolution
+from Behaviours import DifferentialEvolution, RunCode
+from statsmodels.sandbox.stats.runs import Runs
 
 class Worlds(object):
     def __init__(self):
@@ -51,6 +52,7 @@ class Worlds(object):
         self.focusRobotChanged = False
         self.focusRobotID = self.numRobots-1 #the last robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
         
+        
         #---top boundary        
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth/2, self.worldY+self.worldHeight-self.wallThickness/2)
         shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
@@ -68,7 +70,7 @@ class Worlds(object):
         shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
         self.space.add(shape); self.boundaryObjects.append(shape)
     
-        self.initializeRobots()
+        
         
     def delete(self):
         for ob in self.boundaryObjects:
@@ -83,7 +85,7 @@ class Worlds(object):
         self.screen.fill((30, 30, 30))# Clear screen  
         #self.screen.fill((255, 243, 202))# Clear screen        
         self.space.debug_draw(self.draw_options)# Draw space
-        self.displayStats(self.behaviour.infoString);        
+        self.displayStats(self.infoString);        
         pygame.display.flip()#flip the display buffer
         
     def processRobot(self):
@@ -116,9 +118,14 @@ class Worlds(object):
             updateBy = -1 * Vec2d(0, focusRobotsXY[1] - self.focusRobotXY[1])
         return updateBy   
     
+    def deleteRobots(self):
+        for r in self.robots:
+            r.delete()
+        self.robots[:] = []
+        
     def initializeRobots(self):
-        distFromWall = 100
-        robotXY = Vec2d(self.worldX+distFromWall, self.worldY+self.worldHeight/2)
+        distFromWall = 500
+        robotXY = Vec2d(self.worldX+distFromWall, self.worldY+200)
         for i in range(0, self.numRobots, 1):
             self.robots.append(RobotBody(self.space, robotXY, self.actionNetwork))             
     
@@ -136,8 +143,11 @@ class Worlds(object):
         
         clock = pygame.time.Clock()
         simulating = True
+        self.initializeRobots()
+        if len(self.robots) <= 0: 
+            print('Create at least one robot'); 
+            return
         
-        if len(self.robots) <= 0: print('Create at least one robot');return
 #             #---Create the spider robots
 #             self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
 #             for i in range(0, self.numRobots, 1):
@@ -167,30 +177,20 @@ class Worlds(object):
             #---Update world based on player focus
             self.updatePosition()
             if self.focusRobotChanged: self.updateColor()
-            self.processRobot()
-#                 updateBy = self.calcUpdateBy(self.robots[self.focusRobotID].chassis_body.position)
-#                 if updateBy != (0, 0):
-#                     for obj in self.robots:#update all robot positions
-#                         obj.updatePosition(updateBy)
-                #self.updatePosition(updateBy)
-#                 #---iterate robots
-#                 for r in self.robots:
-#                     r.brainActivity()
-#             if time.time() - prevTime > 0:
-#                 for r in self.robots:
-#                     #r.legs[0].leg_body.angle = 0
-#                     print('Angle'+str(math.degrees(r.legs[0].leg_body.angle)%360))
-#                     #r.brainActivity()
-#                     #r.stopBabyTrainingStage()
+            runState = self.processRobot()
+
             #---draw all objects            
             self.draw()
             
             self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
-            clock.tick(self.fps)       
+            clock.tick(self.fps)
+            if runState == RunCode.STOP:
+                break                   
 
 class FlatGroundTraining(Worlds):#inherits
     def __init__(self):
         super(FlatGroundTraining, self).__init__()
+        self.worldWidth = 2000 #overriding
         self.numRobots = 5        
         self.elevFromBottomWall = 20
         self.groundThickness = 10
@@ -200,9 +200,31 @@ class FlatGroundTraining(Worlds):#inherits
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
         self.space.add(ground_shape); self.worldObjects.append(ground_shape)  
         self.behaviour = DifferentialEvolution(self.robots)
+        #---DE
+        
+        self.sequenceLength = 1; self.maxSequenceLength = 20 #The number of dT times a leg is moved
+        self.epoch = 0; self.maxEpochs = 5         
     
     def processRobot(self):
-        self.behaviour.run()        
+        if self.sequenceLength == self.maxSequenceLength:
+            return RunCode.STOP
+        
+        runCode = self.behaviour.run(self.sequenceLength)
+        if runCode == RunCode.RESET:     
+            self.deleteRobots(); self.initializeRobots()
+            self.epoch += 1
+            self.behaviour.generatingSeq = True  
+        
+        if self.epoch == self.maxEpochs:
+            self.sequenceLength += 1 
+            self.epoch = 0   
+            
+        self.infoString = "SeqLev: "+str(self.sequenceLength)+"  Epoch: "+str(self.epoch)+"  Seq: "+str(self.behaviour.seqNum)+"  Fittest: "
+        
+    def initializeRobots(self):
+        super(FlatGroundTraining, self).initializeRobots()
+        for r in self.robots:
+            r.experience = []        
         
     def delete(self):
         super(FlatGroundTraining, self).delete()   

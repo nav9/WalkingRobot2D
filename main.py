@@ -3,6 +3,7 @@
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
 from Worlds import *
+#from Behaviours import RunCode
 
 class Simulator(object):
     def __init__(self):
