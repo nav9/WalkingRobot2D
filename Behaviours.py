@@ -15,7 +15,8 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
 #         self.experienceLevel = 1; self.maxExperienceLevel = 20 #The number of seqNum times a leg is moved
 #         self.epoch = 0; self.maxEpochs = 5         
         #self.firstRunForAnExperienceLevel = True    
-        self.repeatSeq = 0; self.maxSeqRepetitions = 10 #how many times to repeat the sequence of seqNum's  
+        self.repeatSeq = 0; 
+        self.maxSeqRepetitions = 2 #how many times to repeat the sequence of seqNum's  
         self.seqNum = 0 #ordinal of the sequence of movements of an experience 
         
     def run(self, seqLen):#will return false when it's time to stop        

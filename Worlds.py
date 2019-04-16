@@ -26,7 +26,7 @@ class Worlds(object):
         
         #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
         self.screenWidth = 1000; 
-        self.screenHeight = 700 #keep at at least 350
+        self.screenHeight = 550 #keep at at least 350
         self.boundaryObjects = []
         self.worldObjects = []
         self.worldX = 0
@@ -104,7 +104,7 @@ class Worlds(object):
                 ob.body.position += updateBy  
             for obj in self.robots:#update all robot positions
                 obj.updatePosition(updateBy)
-            self.statsPos += updateBy
+            #self.statsPos += updateBy
         return updateBy           
     
     def updateColor(self):
@@ -209,9 +209,11 @@ class FlatGroundTraining(Worlds):#inherits
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
         self.space.add(ground_shape); self.worldObjects.append(ground_shape)  
         self.behaviour = DifferentialEvolution(self.robots)
-        self.sequenceLength = 1; self.maxSequenceLength = 20 #The number of dT times a leg is moved
-        self.epoch = 0; self.maxEpochs = 5
-            
+        self.sequenceLength = 1
+        self.maxSequenceLength = 5 #The number of dT times a leg is moved
+        self.epoch = 0 
+        self.maxEpochs = 5
+        
     def processRobot(self):
         if self.sequenceLength == self.maxSequenceLength:
             return RunCode.STOP
