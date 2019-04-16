@@ -42,7 +42,10 @@ class Worlds(object):
         self.display_flags = 0
         self.minViewX = 100; self.maxViewX = self.screenWidth - self.minViewX
         self.minViewY = 100; self.maxViewY = self.screenHeight - self.minViewY  
-        self.statsPos = Vec2d(0, 0)      
+        self.statsPos = Vec2d(0, 0) 
+        self.prevCameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
+        self.cameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2) 
+        self.cameraMoveSpeed = Vec2d(100, 50)
         
     def initialize(self):
         self.space = pymunk.Space()
@@ -94,7 +97,8 @@ class Worlds(object):
 
     def updatePosition(self):   
         self.robots[self.focusRobotID].setFocusRobotColor()            
-        updateBy = self.calcUpdateBy(self.robots[self.focusRobotID].getPosition())
+        updateBy = self.cameraXY - self.prevCameraXY #self.calcUpdateBy(self.robots[self.focusRobotID].chassis_body.position)
+        self.cameraXY = Vec2d(self.prevCameraXY[0], self.prevCameraXY[1])
         if updateBy != (0, 0):
             for ob in self.boundaryObjects:
                 ob.body.position += updateBy  
@@ -110,13 +114,13 @@ class Worlds(object):
             if obj == self.robots[self.focusRobotID]: obj.setFocusRobotColor() 
             else: obj.setNormalRobotColor()
                   
-    def calcUpdateBy(self, focusRobotsXY):
-        updateBy = Vec2d(0,0)
-        if focusRobotsXY[0] < self.minViewX or focusRobotsXY[0] > self.maxViewX:
-            updateBy = -1 * Vec2d(focusRobotsXY[0] - self.focusRobotXY[0], 0) 
-        if focusRobotsXY[1] < self.minViewY or focusRobotsXY[1] > self.maxViewY:
-            updateBy = -1 * Vec2d(0, focusRobotsXY[1] - self.focusRobotXY[1])
-        return updateBy   
+#     def calcUpdateBy(self, focusPointXY):
+#         updateBy = Vec2d(0,0)
+#         if focusPointXY[0] < self.minViewX or focusPointXY[0] > self.maxViewX:
+#             updateBy = -1 * Vec2d(focusPointXY[0] - self.focusRobotXY[0], 0) 
+#         if focusPointXY[1] < self.minViewY or focusPointXY[1] > self.maxViewY:
+#             updateBy = -1 * Vec2d(0, focusPointXY[1] - self.focusRobotXY[1])
+#         return updateBy   
     
     def deleteRobots(self):
         for r in self.robots:
@@ -131,7 +135,7 @@ class Worlds(object):
     
     def displayStats(self, displayStr):
         self.screen.blit(self.font.render(displayStr, 1, THECOLORS["green"]), self.statsPos)
-                        
+
     def runWorld(self):
         pygame.init()
         pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
@@ -163,10 +167,10 @@ class Worlds(object):
                     if event.key == K_LEFTBRACKET:
                         self.focusRobotID -= 1; self.focusRobotChanged = True
                         if self.focusRobotID < 0: self.focusRobotID = self.numRobots - 1
-#                     if event.key == K_UP:
-#                     if event.key == K_DOWN:
-#                     if event.key == K_LEFT:
-#                     if event.key == K_RIGHT:
+                    if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveSpeed[1])
+                    if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveSpeed[1])
+                    if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveSpeed[0], 0)
+                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveSpeed[0], 0)
 
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
