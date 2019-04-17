@@ -10,88 +10,88 @@ import hashlib
 import math
 #from threading import Thread, Lock
 
-class ActionsNetwork:#For now, a single instance of this is created which all walking robots can contribute to and access
-    def __init__(self):
-        #mutex = Lock()
-        self.hashID = {}
-        #IdHash = {}
-        #actionID = 0        
-    def addAction(self, actionList):#expects a list of numbers of strings or a combination of both
-        actionStr = ''.join(str(x)+',' for x in actionList)
-        #hashedStr = hashlib.md5(actionStr.encode()) #hash_object = hashlib.sha1(b'Hello World')        
-        if actionStr in self.hashID:
-            return
-#         self.mutex.acquire()
-#         try:
-#             self.actionID += 1
-#         finally:
-#             self.mutex.release()        
-        #self.actionID += 1 #should be protected by mutex if using threads
-        self.hashID[actionStr] = []#self.actionID
-        #self.IdHash[self.actionID] = actionStr
-
-class TactileCortex:
-    def __init__(self, bodyRef):
-        self.body = bodyRef
-    def getTactileInputs(self):
-        return self.body.chassis_body.each_arbiter(self.contactInfo)
-    def contactInfo(self, arbiter):    
-#         print(arbiter.shapes)#gives the type of objects that are colliding [chassis,line seg]
-#         print(arbiter.contact_point_set.normal)#direction of contact
-#         print(arbiter.contact_point_set.points[0].distance)#distance is the penetration distance of the two shapes. Overlapping means it will be negative. This value is calculated as dot(point2 - point1), normal) and is ignored when you set the Arbiter.contact_point_set.
-#         print(arbiter.total_impulse)#Returns the impulse that was applied this step to resolve the collision Vec2d(xImpulse, yImpulse)
-#         print(arbiter.contact_point_set.points[0].point_a)#point_a and point_b are the contact position on the surface of each shape.
-#         print(arbiter.contact_point_set.points[0].point_b)
-        return arbiter.contact_point_set
-
-class ActionsCortex:    
-    def __init__(self, bodyRef):
-        self.actionSeq = defaultdict(list)  
-        self.actionsNetworkPresent = False
-        self.randomRates = []
-        self.angleAccuracy = 10 #degrees 
-        self.distanceAccuracy = 10 #pixels        
-        self.body = bodyRef
-        for leg in self.body.legs:
-            leg.motor.rate = 0 #keep motor still when initialized
-        #TODO: load actions network
-    
-    def generateNewActions(self, stopActionSequence):
-        if len(self.randomRates) == 0:
-            if len(self.body.legs) > 0:
-                self.randomRates = random.sample(self.body.legs[0].motor.legRateRange, len(self.body.legs)) #sample(range,numNumbers) = sampling without replacement. Generates unique random samples within range
-                
-        if stopActionSequence:
-            self.randomRates = []
-            for leg in self.body.legs:
-                leg.motor.rate = 0
-        else:             
-            for i in range(0, len(self.body.legs), 1):
-                self.body.legs[i].motor.rate = self.randomRates[i]
-                #---find which angle quadrant and distance radius the leg tip falls wrt the rotated body position
-                bodyAng = round(math.degrees(self.body.chassis_body.angle)%360)
-                legTip = self.body.legs[i].getTip();  chCen = self.body.chassis_body.position
-                dist = abs(math.sqrt((legTip[0]-chCen[0])**2 + (legTip[1]-chCen[1])**2)) / self.distanceAccuracy
-                ang = round((math.degrees(math.atan2((legTip[1]-chCen[1]), (legTip[0]-chCen[0])))-bodyAng)/self.angleAccuracy)
-                self.body.actionNetwork.addAction([i, dist, ang, self.body.legs[i].motor.rate]) #HASH: [legID, distance, angle, motorRate]
-        
-class Brain:        
-    def __init__(self, bodyRef):
-        self.experience = 20 #number of action iterations it can handle
-        self.trainingExperienceCounter = 0        
-        self.motorCortex = ActionsCortex(bodyRef)
-        self.tactileCortex = TactileCortex(bodyRef)        
-        
-    def getSensoryInputsAndDecideWhatToDo(self):#TODO: add visual sensory input
-        if self.motorCortex.actionsNetworkPresent:
-            senses = self.tactileCortex.getTactileInputs()
-        else:
-            if self.trainingExperienceCounter == 0:
-                self.motorCortex.generateNewActions(self.trainingExperienceCounter==0)
-                self.trainingExperienceCounter = self.experience
-            else:
-                self.motorCortex.generateNewActions(self.trainingExperienceCounter==0)
-                self.trainingExperienceCounter -= 1  
+# class ActionsNetwork:#For now, a single instance of this is created which all walking robots can contribute to and access
+#     def __init__(self):
+#         #mutex = Lock()
+#         self.hashID = {}
+#         #IdHash = {}
+#         #actionID = 0        
+#     def addAction(self, actionList):#expects a list of numbers of strings or a combination of both
+#         actionStr = ''.join(str(x)+',' for x in actionList)
+#         #hashedStr = hashlib.md5(actionStr.encode()) #hash_object = hashlib.sha1(b'Hello World')        
+#         if actionStr in self.hashID:
+#             return
+# #         self.mutex.acquire()
+# #         try:
+# #             self.actionID += 1
+# #         finally:
+# #             self.mutex.release()        
+#         #self.actionID += 1 #should be protected by mutex if using threads
+#         self.hashID[actionStr] = []#self.actionID
+#         #self.IdHash[self.actionID] = actionStr
+# 
+# class TactileCortex:
+#     def __init__(self, bodyRef):
+#         self.body = bodyRef
+#     def getTactileInputs(self):
+#         return self.body.chassis_body.each_arbiter(self.contactInfo)
+#     def contactInfo(self, arbiter):    
+# #         print(arbiter.shapes)#gives the type of objects that are colliding [chassis,line seg]
+# #         print(arbiter.contact_point_set.normal)#direction of contact
+# #         print(arbiter.contact_point_set.points[0].distance)#distance is the penetration distance of the two shapes. Overlapping means it will be negative. This value is calculated as dot(point2 - point1), normal) and is ignored when you set the Arbiter.contact_point_set.
+# #         print(arbiter.total_impulse)#Returns the impulse that was applied this step to resolve the collision Vec2d(xImpulse, yImpulse)
+# #         print(arbiter.contact_point_set.points[0].point_a)#point_a and point_b are the contact position on the surface of each shape.
+# #         print(arbiter.contact_point_set.points[0].point_b)
+#         return arbiter.contact_point_set
+# 
+# class ActionsCortex:    
+#     def __init__(self, bodyRef):
+#         self.actionSeq = defaultdict(list)  
+#         self.actionsNetworkPresent = False
+#         self.randomRates = []
+#         self.angleAccuracy = 10 #degrees 
+#         self.distanceAccuracy = 10 #pixels        
+#         self.body = bodyRef
+#         for leg in self.body.legs:
+#             leg.motor.rate = 0 #keep motor still when initialized
+#         #TODO: load actions network
+#     
+#     def generateNewActions(self, stopActionSequence):
+#         if len(self.randomRates) == 0:
+#             if len(self.body.legs) > 0:
+#                 self.randomRates = random.sample(self.body.legs[0].motor.legRateRange, len(self.body.legs)) #sample(range,numNumbers) = sampling without replacement. Generates unique random samples within range
+#                 
+#         if stopActionSequence:
+#             self.randomRates = []
+#             for leg in self.body.legs:
+#                 leg.motor.rate = 0
+#         else:             
+#             for i in range(0, len(self.body.legs), 1):
+#                 self.body.legs[i].motor.rate = self.randomRates[i]
+#                 #---find which angle quadrant and distance radius the leg tip falls wrt the rotated body position
+#                 bodyAng = round(math.degrees(self.body.chassis_body.angle)%360)
+#                 legTip = self.body.legs[i].getTip();  chCen = self.body.chassis_body.position
+#                 dist = abs(math.sqrt((legTip[0]-chCen[0])**2 + (legTip[1]-chCen[1])**2)) / self.distanceAccuracy
+#                 ang = round((math.degrees(math.atan2((legTip[1]-chCen[1]), (legTip[0]-chCen[0])))-bodyAng)/self.angleAccuracy)
+#                 self.body.actionNetwork.addAction([i, dist, ang, self.body.legs[i].motor.rate]) #HASH: [legID, distance, angle, motorRate]
+#         
+# class Brain:        
+#     def __init__(self, bodyRef):
+#         self.experience = 20 #number of action iterations it can handle
+#         self.trainingExperienceCounter = 0        
+#         self.motorCortex = ActionsCortex(bodyRef)
+#         self.tactileCortex = TactileCortex(bodyRef)        
+#         
+#     def getSensoryInputsAndDecideWhatToDo(self):#TODO: add visual sensory input
+#         if self.motorCortex.actionsNetworkPresent:
+#             senses = self.tactileCortex.getTactileInputs()
+#         else:
+#             if self.trainingExperienceCounter == 0:
+#                 self.motorCortex.generateNewActions(self.trainingExperienceCounter==0)
+#                 self.trainingExperienceCounter = self.experience
+#             else:
+#                 self.motorCortex.generateNewActions(self.trainingExperienceCounter==0)
+#                 self.trainingExperienceCounter -= 1  
 
 class Directions:
     UP = 1
@@ -121,6 +121,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.legLeftOrRight = leftOrRight
         self.__createLegPart__()
         self.__linkLegPartWithPrevBodyPart__(prevBody)
+        self.experience = []
     
     def __createLegPart__(self):
         self.leg_body = pymunk.Body(self.legMass, pymunk.moment_for_box(self.legMass, (self.legWd, self.legHt)))
@@ -165,7 +166,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.leg_body.position = self.leg_body.position + offsetXY 
 
 class RobotBody:
-    def __init__(self, pymunkSpace, chassisCenterPoint, globalActionNetwork):
+    def __init__(self, pymunkSpace, chassisCenterPoint):
         self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1) #to prevent collisions between robot body parts
         self.ori = Directions()  #leg at left or right of chassis
         self.prevBodyWd = 30 #chassis width 
@@ -178,14 +179,14 @@ class RobotBody:
         self.brain = None        
         self.space = pymunkSpace
         self.__createBody__(chassisCenterPoint)
-        self.actionNetwork = globalActionNetwork
-        self.__activateBrain__()
+        #self.actionNetwork = globalActionNetwork
+        #self.__activateBrain__()
         
     def __createBody__(self, chassisXY):
         self.chassis_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.prevBodyWd, self.chassisHt)))
         self.chassis_body.body_type = pymunk.Body.KINEMATIC
         self.chassis_body.position = chassisXY
-#         self.chassis_body.startPosition = Vec2d(self.chassis_body.position)#you can assign your own properties to body
+         self.chassis_body.startPosition = Vec2d(self.chassis_body.position)#you can assign your own properties to body
 #         self.chassis_body.startAngle = self.chassis_body.angle        
         self.chassis_shape = pymunk.Poly.create_box(self.chassis_body, (self.prevBodyWd, self.chassisHt))
         self.chassis_shape.filter = self.ownBodyShapeFilter
@@ -200,7 +201,30 @@ class RobotBody:
             rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT)
             self.legs.append(rightLegA); self.legs.append(rightLegB)  
         self.makeRobotDynamic()
-        
+    
+    def reinitializeWithRandomValues(self, seqLen):        
+        for leg in self.legs:
+            leg.experience[:] = []
+            for i in range(0, seqLen, 1):
+                thisRate = random.choice(leg.motor.legRateRange)
+                leg.experience.append(thisRate)                                    
+    
+    def getValues(self):
+        ex = []
+        for leg in self.legs:
+            ex.extend(leg.experience)
+        return ex
+    
+    def setValues(self, ex):
+        i = 0
+        for leg in self.legs:
+            leg.experience.append(ex[i])
+            i += 1
+    
+    def setMotorRateForSequence(self, seqId):
+        for leg in self.legs:
+            leg.motor.rate = leg.experience[seqId]
+            
     def setFocusRobotColor(self):
         self.chassis_shape.color = 190, 0, 0
         
@@ -218,8 +242,8 @@ class RobotBody:
             legPart.delete()
         self.legs[:] = []#clear the list
         
-    def __activateBrain__(self):
-        self.brain = Brain(self)
+#     def __activateBrain__(self):
+#         self.brain = Brain(self)
         
     def brainActivity(self):
         self.brain.getSensoryInputsAndDecideWhatToDo()

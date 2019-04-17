@@ -13,7 +13,7 @@ from pygame.locals import *
 from pygame.color import *
 from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_LEFTBRACKET, K_RIGHTBRACKET, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
 from pygame.color import THECOLORS
-from WalkingRobot import RobotBody, ActionsNetwork
+from WalkingRobot import RobotBody
 from Behaviours import DifferentialEvolution, RunCode
 from statsmodels.sandbox.stats.runs import Runs
 
@@ -38,7 +38,7 @@ class Worlds(object):
         self.robots = []
         self.behaviour = None
         self.numRobots = 3#can be overridden in child class
-        self.actionNetwork = ActionsNetwork()        
+        #self.actionNetwork = ActionsNetwork()        
         self.display_flags = 0        
         self.minViewX = 100; self.maxViewX = self.screenWidth - self.minViewX
         self.minViewY = 100; self.maxViewY = self.screenHeight - self.minViewY  
@@ -131,7 +131,7 @@ class Worlds(object):
         
     def initializeRobots(self):      
         for i in range(0, self.numRobots, 1):
-            self.robots.append(RobotBody(self.space, self.robotInitPos, self.actionNetwork))             
+            self.robots.append(RobotBody(self.space, self.robotInitPos))             
     
     def displayStats(self, displayStr):
         self.screen.blit(self.font.render(displayStr, 1, THECOLORS["green"]), self.statsPos)
@@ -197,7 +197,7 @@ class FlatGroundTraining(Worlds):#inherits
     def __init__(self):
         super(FlatGroundTraining, self).__init__()
         self.worldWidth = 2000 #overriding
-        self.numRobots = 5        
+        self.numRobots = 3
         self.elevFromBottomWall = 20
         self.groundThickness = 10
   
@@ -229,10 +229,10 @@ class FlatGroundTraining(Worlds):#inherits
                 self.gen += 1
         self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)+"  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)+"  Seq: "+str(self.behaviour.seqNum)+"/"+str(self.sequenceLength)
         
-    def initializeRobots(self):
-        super(FlatGroundTraining, self).initializeRobots()
-        for r in self.robots:
-            r.experience = []        
+#     def initializeRobots(self):
+#         super(FlatGroundTraining, self).initializeRobots()
+#         for r in self.robots:
+#             r.experience = []        
         
     def delete(self):
         super(FlatGroundTraining, self).delete()   

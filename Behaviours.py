@@ -1,6 +1,6 @@
 import random
 from random import uniform
-from WalkingRobot import RobotBody, ActionsNetwork
+from WalkingRobot import RobotBody
 
 class RunCode:
     STOP = 0
@@ -11,7 +11,7 @@ class RunCode:
 class DifferentialEvolution:#(AbstractRobotBehaviour):    
     def __init__(self, robo): 
         self.infoString = ""  
-        self.robots = robo         
+        self.robots = robo    
         self.generatingSeq = True
 #         self.experienceLevel = 1; self.maxExperienceLevel = 20 #The number of seqNum times a leg is moved
 #         self.epoch = 0; self.maxEpochs = 5         
@@ -23,10 +23,10 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
     def getFitness(self):
         fit = []
         for r in self.robots:
-            fit.append(r.chassis_body.position[0])
+            fit.append(r.chassis_body.position[0] - self.startPos)
         return fit
         
-    def differentialEvolution(self):
+    def differentialEvolution(self, seqLen):
         fit = self.getFitness(); oldSel = []; sel = []; i = 0
         for i in range(len(self.robots)):
             sel.append(i); oldSel.append(i)
@@ -47,48 +47,35 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
             x2 = random.choice(sel); sel.remove(x2)
             x3 = random.choice(sel); sel.remove(x3)
             mutant = []
-            x1 = self.robots[x1].experience
-            x2 = self.robots[x2].experience
-            x3 = self.robots[x3].experience
-            prev = self.robots[i].experience               
+            x1 = self.robots[x1].getValues()
+            x2 = self.robots[x2].getValues()
+            x3 = self.robots[x3].getValues()
+            prev = self.robots[i].getValues()               
             for i in range(len(x1)):
                 mutant.append(x1[i] + round(self.vBeta * (x2[i] - x3[i])))
             if mutant == prev:
-                self.robots[i].reinitializeWithRandomValues()
+                self.robots[i].reinitializeWithRandomValues(seqLen)
             else:
                 #---crossover
                 for i in range(len(prev)):
                     if uniform(0,1) <= self.crProba:
                         mutant[i] = prev[i]
                 self.robots[i].setValues(mutant) 
-            self.robots[leastFitCar].reinitializeWithRandomValues()
+            self.robots[leastFitCar].reinitializeWithRandomValues(seqLen)
         
         #---beta is reduced to encourage exploitation and reduce exploration
         if self.vBeta > 1/40: 
             self.vBeta = self.vBeta - 1/40        
-        
-    def reinitializeWithRandomValues(self):
-        for r in self.robots:
-            for leg in r.legs:
-                thisRate = random.choice(leg.motor.legRateRange)
-                r.experience.append(thisRate)                                    
-                leg.motor.rate = thisRate
-                            
-    def generateSequence(self, seqLen):
-        for i in range(0, seqLen, 1):
-            for r in self.robots:
-                for leg in r.legs:
-                    thisRate = random.choice(leg.motor.legRateRange)
-                    r.experience.append(thisRate)            
+          
 
     def run(self, seqLen):#will return false when it's time to stop        
         runState = RunCode.CONTINUE
         if self.generatingSeq:#sequence is being generated
-            self.generateSequence(seqLen)
+            for r in self.robots:
+                r.reinitializeWithRandomValues(seqLen)
         #sequence generated. Now just execute as-is for entire epoch
         for r in self.robots:
-            for leg in r.legs:                                    
-                leg.motor.rate = r.experience[self.seqNum]
+            r.setMotorRateForSequence(self.seqNum)                                   
         self.seqNum += 1      
         if self.seqNum == seqLen:
             self.seqNum = 0
