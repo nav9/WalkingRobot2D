@@ -197,13 +197,13 @@ class FlatGroundTraining(Worlds):#inherits
     def __init__(self):
         super(FlatGroundTraining, self).__init__()
         self.worldWidth = 2000 #overriding
-        self.numRobots = 3
+        self.numRobots = 4
         self.elevFromBottomWall = 20
         self.groundThickness = 10
   
     def initialize(self):
         super(FlatGroundTraining, self).initialize()
-        groundX = self.worldX+self.wallThickness/2; groundLen = self.worldWidth-2*self.wallThickness; groundY = self.elevFromBottomWall
+        groundX = self.worldX+self.wallThickness/2; groundLen = self.worldWidth-2 * self.wallThickness; groundY = self.elevFromBottomWall
         ground_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); groundStart = Vec2d(groundX, groundY); groundPosition = Vec2d(groundX+groundLen, groundY)
         ground_body.position = groundStart
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
@@ -215,18 +215,19 @@ class FlatGroundTraining(Worlds):#inherits
         self.maxGens = 3
         
     def processRobot(self):
-        if self.sequenceLength == self.maxSequenceLength:
+        if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
             return RunCode.STOP
         
         runCode = self.behaviour.run(self.sequenceLength)
-        if self.gen == self.maxGens:
+        if self.gen == self.maxGens:#completion of one epoch
             self.sequenceLength += 1 
-            self.gen = 0   
-            self.deleteRobots(); self.initializeRobots()            
-            self.behaviour.generatingSeq = True              
+            self.gen = 0          
+            self.behaviour.startNewGen()   
         else:
-            if runCode == RunCode.NEXTGEN:
+            if runCode == RunCode.NEXTGEN:#reset for next generation
                 self.gen += 1
+                self.deleteRobots(); self.initializeRobots()            
+                self.behaviour.startNewGen()                                   
         self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)+"  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)+"  Seq: "+str(self.behaviour.seqNum)+"/"+str(self.sequenceLength)
         
 #     def initializeRobots(self):

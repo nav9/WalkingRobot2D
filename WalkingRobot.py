@@ -186,7 +186,7 @@ class RobotBody:
         self.chassis_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.prevBodyWd, self.chassisHt)))
         self.chassis_body.body_type = pymunk.Body.KINEMATIC
         self.chassis_body.position = chassisXY
-         self.chassis_body.startPosition = Vec2d(self.chassis_body.position)#you can assign your own properties to body
+        self.chassis_body.startPosition = Vec2d(self.chassis_body.position[0], self.chassis_body.position[1])
 #         self.chassis_body.startAngle = self.chassis_body.angle        
         self.chassis_shape = pymunk.Poly.create_box(self.chassis_body, (self.prevBodyWd, self.chassisHt))
         self.chassis_shape.filter = self.ownBodyShapeFilter
@@ -215,11 +215,13 @@ class RobotBody:
             ex.extend(leg.experience)
         return ex
     
-    def setValues(self, ex):
-        i = 0
+    def setValues(self, ex, seqLen):
+        j = 0
         for leg in self.legs:
-            leg.experience.append(ex[i])
-            i += 1
+            leg.experience[:] = []
+            for i in range(0, seqLen, 1): 
+                leg.experience.append(ex[j])
+                j += 1
     
     def setMotorRateForSequence(self, seqId):
         for leg in self.legs:
@@ -245,8 +247,8 @@ class RobotBody:
 #     def __activateBrain__(self):
 #         self.brain = Brain(self)
         
-    def brainActivity(self):
-        self.brain.getSensoryInputsAndDecideWhatToDo()
+#     def brainActivity(self):
+#         self.brain.getSensoryInputsAndDecideWhatToDo()
         
     def getPosition(self):
         return self.chassis_body.position
