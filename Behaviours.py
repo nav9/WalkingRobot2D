@@ -40,6 +40,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
 #     def updateChassisBodyPositionForFitness(self, x):
 #         self.cameraXOffset += x
 #     
+    
     def getFitness(self):
         fit = []
         for r in self.robots:

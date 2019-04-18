@@ -19,8 +19,7 @@ from statsmodels.sandbox.stats.runs import Runs
 
 class Worlds(object):
     def __init__(self):
-        self.focusRobotXY = Vec2d(0, 0)#will be overridden below
-        self.focusRobotID = 0
+        #self.focusRobotXY = Vec2d(0, 0)#will be overridden below        
         self.screen = None
         self.draw_options = None       
         
@@ -43,7 +42,7 @@ class Worlds(object):
         self.minViewX = 100; self.maxViewX = self.screenWidth - self.minViewX
         self.minViewY = 100; self.maxViewY = self.screenHeight - self.minViewY  
         self.statsPos = Vec2d(0, 0)
-        self.robotInitPos = Vec2d(self.screenWidth/2, self.screenHeight/2) 
+        self.robotInitPos = Vec2d(self.screenWidth/2, self.screenHeight/2) #could be overridden in base class
         self.prevCameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
         self.cameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2) 
         self.cameraMoveSpeed = Vec2d(100, 50)
@@ -52,12 +51,13 @@ class Worlds(object):
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
         self.fps = 50
-        self.maxMovtTime = self.fps
-        self.movtTime = self.maxMovtTime
+        self.maxMovtTime = 10 #how often in time the sequences of the robot get executed
+        self.movtTime = self.fps #start value of movt time. Can be anything from 0 to maxMovtTime
         self.iterations = 20        
         #self.space.damping = 0.999 
-        self.focusRobotChanged = False
-        self.focusRobotID = self.numRobots-1 #the last robot created will be the focus robot. ie: The screen moves with this robot. Focus robot id can be changed dynamically
+        #self.focusRobotChanged = False
+        self.prevFocusRobotID = -1 #At first none of the robots will be in focus since fitness hasn't been determined
+        self.focusRobotID = -1 #At first none of the robots will be in focus since fitness hasn't been determined
         self.infoString = ""        
         #---top boundary        
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth/2, self.worldY+self.worldHeight-self.wallThickness/2)
@@ -97,7 +97,7 @@ class Worlds(object):
             r.brainActivity()        
 
     def updatePosition(self):   
-        self.robots[self.focusRobotID].setFocusRobotColor()            
+        #self.robots[self.focusRobotID].setFocusRobotColor()            
         updateBy = self.cameraXY - self.prevCameraXY #self.calcUpdateBy(self.robots[self.focusRobotID].chassis_body.position)
         self.cameraXY = Vec2d(self.prevCameraXY[0], self.prevCameraXY[1])
         if updateBy != (0, 0):
@@ -110,10 +110,12 @@ class Worlds(object):
         return updateBy           
     
     def updateColor(self):
-        self.robots[self.focusRobotID].setFocusRobotColor()
-        self.focusRobotChanged = False
+        #self.robots[self.focusRobotID].setFocusRobotColor()
+        #self.focusRobotChanged = False
         for obj in self.robots:#update all robot positions
-            if obj == self.robots[self.focusRobotID]: obj.setFocusRobotColor() 
+            if self.focusRobotID >= 0:
+                if obj == self.robots[self.focusRobotID]: obj.setFocusRobotColor() 
+                else: obj.setNormalRobotColor()
             else: obj.setNormalRobotColor()
                   
 #     def calcUpdateBy(self, focusPointXY):
@@ -149,11 +151,6 @@ class Worlds(object):
         simulating = True
         self.initializeRobots()
         if len(self.robots) <= 0: print('Create at least one robot'); return
-        
-#             #---Create the spider robots
-#             self.focusRobotXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
-#             for i in range(0, self.numRobots, 1):
-#                 self.robots.append(RobotBody(self.space, self.focusRobotXY, self.actionNetwork))
 
         #prevTime = time.time();
         while simulating:
@@ -161,16 +158,16 @@ class Worlds(object):
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
                     sys.exit(0)
                 if event.type == KEYDOWN:
-                    if event.key == K_RIGHTBRACKET:
-                        self.focusRobotID += 1; self.focusRobotChanged = True
-                        if self.focusRobotID == self.numRobots: self.focusRobotID = 0
-                    if event.key == K_LEFTBRACKET:
-                        self.focusRobotID -= 1; self.focusRobotChanged = True
-                        if self.focusRobotID < 0: self.focusRobotID = self.numRobots - 1
                     if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveSpeed[1])
                     if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveSpeed[1])
                     if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveSpeed[0], 0)
-                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveSpeed[0], 0)
+                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveSpeed[0], 0)                    
+#                     if event.key == K_RIGHTBRACKET:
+#                         self.focusRobotID += 1; self.focusRobotChanged = True
+#                         if self.focusRobotID == self.numRobots: self.focusRobotID = 0
+#                     if event.key == K_LEFTBRACKET:
+#                         self.focusRobotID -= 1; self.focusRobotChanged = True
+#                         if self.focusRobotID < 0: self.focusRobotID = self.numRobots - 1
 
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
@@ -178,7 +175,9 @@ class Worlds(object):
                 self.space.step(dt)
             #---Update world based on player focus
             self.updatePosition()
-            if self.focusRobotChanged: self.updateColor()
+            if self.prevFocusRobotID != self.focusRobotID: 
+                self.updateColor()
+                self.prevFocusRobotID = self.focusRobotID
             if self.movtTime == 0:
                 runState = self.processRobot()
                 self.movtTime = self.maxMovtTime
@@ -188,7 +187,7 @@ class Worlds(object):
             #---draw all objects            
             self.draw()
             
-            self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
+            #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
             clock.tick(self.fps)
             if runState == RunCode.STOP:
                 break                   
@@ -200,6 +199,7 @@ class FlatGroundTraining(Worlds):#inherits
         self.numRobots = 4 #min 4 robots required for DE
         self.elevFromBottomWall = 20
         self.groundThickness = 10
+        self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
   
     def initialize(self):
         super(FlatGroundTraining, self).initialize()
@@ -233,7 +233,7 @@ class FlatGroundTraining(Worlds):#inherits
         if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)
         self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
         self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
-        self.infoString += "  Seq: "+str(self.behaviour.seqNum)+"/"+str(self.sequenceLength)
+        self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
         self.infoString += "  Fittest: "+str(genFittestRoboString)+" | "+str(currFittestRoboString)+"  Fit: "+str(self.behaviour.bestFitnessOfGen)+" | "+str(self.behaviour.currentBestFitness)
         
     def delete(self):
@@ -245,6 +245,8 @@ class FlatGroundTraining(Worlds):#inherits
     def updatePosition(self):  
         updateBy = super(FlatGroundTraining, self).updatePosition()    
 #         self.behaviour.updateChassisBodyPositionForFitness(updateBy[0]) 
+        if self.behaviour.currentFittestRobot != self.focusRobotID:
+            self.focusRobotID = self.behaviour.currentFittestRobot
         if updateBy != (0, 0):
             for ob in self.worldObjects:
                 ob.body.position += updateBy     
