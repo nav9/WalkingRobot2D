@@ -197,7 +197,7 @@ class FlatGroundTraining(Worlds):#inherits
     def __init__(self):
         super(FlatGroundTraining, self).__init__()
         self.worldWidth = 2000 #overriding
-        self.numRobots = 5
+        self.numRobots = 30
         self.elevFromBottomWall = 20
         self.groundThickness = 10
   
@@ -209,10 +209,10 @@ class FlatGroundTraining(Worlds):#inherits
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
         self.space.add(ground_shape); self.worldObjects.append(ground_shape)  
         self.behaviour = DifferentialEvolution(self.robots)
-        self.sequenceLength = 1
+        self.sequenceLength = 1 #start seq len. Should start with 1
         self.maxSequenceLength = 5 #The number of dT times a leg is moved
-        self.gen = 0 
-        self.maxGens = 3
+        self.gen = 0 #start gen
+        self.maxGens = 20 
         
     def processRobot(self):
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
@@ -220,24 +220,21 @@ class FlatGroundTraining(Worlds):#inherits
         
         runCode = self.behaviour.run(self.sequenceLength)
         if runCode == RunCode.NEXTGEN:#reset for next generation
-            print('resetting robots to ori pos for new gen')
             self.gen += 1
             self.deleteRobots(); self.initializeRobots()            
             self.behaviour.startNewGen()         
             if self.gen == self.maxGens:#completion of one epoch
-                print('EPOCH completed')
                 self.sequenceLength += 1 
-                print('increasing seq len to '+str(self.sequenceLength))
-                self.gen = 0          
-                #self.behaviour.startNewGen()   
+                self.gen = 0             
                 self.behaviour.startNewEpoch()
-            print('SeqLen: '+str(self.sequenceLength))
-        self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)+"  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)+"  Seq: "+str(self.behaviour.seqNum)+"/"+str(self.sequenceLength)
-        
-#     def initializeRobots(self):
-#         super(FlatGroundTraining, self).initializeRobots()
-#         for r in self.robots:
-#             r.experience = []        
+        #---info dashboard
+        genFittestRoboString = "None"; currFittestRoboString = "None"
+        if self.behaviour.fittestRobotInGen > 0: genFittestRoboString = str(self.behaviour.fittestRobotInGen)
+        if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)
+        self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
+        self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
+        self.infoString += "  Seq: "+str(self.behaviour.seqNum)+"/"+str(self.sequenceLength)
+        self.infoString += "  Fittest: "+str(genFittestRoboString)+" | "+str(currFittestRoboString)+"  Fit: "+str(self.behaviour.bestFitnessOfGen)+" | "+str(self.behaviour.currentBestFitness)
         
     def delete(self):
         super(FlatGroundTraining, self).delete()   
