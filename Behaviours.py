@@ -29,32 +29,27 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.vBeta = 0 #variable beta
         self.crProba = 0.3 #crossover probability range [0 -> 1]  
         self.vBeta = self.masterBeta    
+        self.fit = []
         
     def resetDE(self):
         self.fittestRobotInGen = -1
         self.bestFitnessOfGen = 0
         self.currentBestFitness = 0
         self.currentFittestRobot = -1
-#         self.cameraXOffset = 0
-        
-#     def updateChassisBodyPositionForFitness(self, x):
-#         self.cameraXOffset += x
-#     
-    
-    def getFitness(self):
-        fit = []
+
+    def calcFitness(self):     
+        self.fit[:] = []   
         for r in self.robots:
-            fit.append(round(r.chassis_body.position[0] - r.chassis_body.startPosition[0], self.decimalPrecision))
-        return fit
+            self.fit.append(round(r.chassis_body.position[0] - r.chassis_body.startPosition[0], self.decimalPrecision))
         
     def differentialEvolution(self, seqLen):
-        fit = self.getFitness(); oldSel = []; sel = []; i = 0; mutant = []
+        self.calcFitness(); oldSel = []; sel = []; i = 0; mutant = []
         for i in range(len(self.robots)):
             oldSel.append(i)
         
-        self.bestFitnessOfGen = max(fit)
-        self.fittestRobotInGen = fit.index(self.bestFitnessOfGen)
-        leastFitRobot = fit.index(min(fit)) 
+        self.bestFitnessOfGen = max(self.fit)
+        self.fittestRobotInGen = self.fit.index(self.bestFitnessOfGen)
+        leastFitRobot = self.fit.index(min(self.fit)) 
         for i in range(len(self.robots)):
             sel[:] = []
             for s in oldSel:
@@ -92,14 +87,11 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.temp[:] = []
         for i in range(len(self.robots)):
             self.temp.append(self.robots[i].getValues())#all legs values stored in one row
-            
+    
     def findCurrentBestFitness(self):
-        fit = self.getFitness()
-        self.currentBestFitness = max(fit)
-        try:
-            self.currentFittestRobot = fit.index(self.bestFitnessOfGen)
-        except ValueError:
-            self.currentFittestRobot = -1
+        self.calcFitness()
+        self.currentBestFitness = max(self.fit)
+        self.currentFittestRobot = self.fit.index(self.currentBestFitness)
     
     def run(self, seqLen):#will return false when it's time to stop   
         self.findCurrentBestFitness()     

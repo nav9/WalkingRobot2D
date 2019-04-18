@@ -209,10 +209,10 @@ class FlatGroundTraining(Worlds):#inherits
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
         self.space.add(ground_shape); self.worldObjects.append(ground_shape)  
         self.behaviour = DifferentialEvolution(self.robots)
-        self.sequenceLength = 1 #start seq len. Should start with 1
-        self.maxSequenceLength = 5 #The number of dT times a leg is moved
+        self.sequenceLength = 3 #start seq len. Should start with anything from 1 to maxSequenceLength
+        self.maxSequenceLength = 10 #The number of dT times a leg is moved
         self.gen = 0 #start gen
-        self.maxGens = 20 
+        self.maxGens = 5 
         
     def processRobot(self):
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
