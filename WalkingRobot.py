@@ -8,6 +8,7 @@ import random
 from collections import defaultdict
 import hashlib
 import math
+import numpy as np
 #from threading import Thread, Lock
 
 # class ActionsNetwork:#For now, a single instance of this is created which all walking robots can contribute to and access
@@ -148,7 +149,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
         maxMotorRate = 5
-        motorRateRangeStep = 3
+        motorRateRangePieces = (maxMotorRate * 2 + 1) * 10
         #---link left leg A with Chassis
         if self.legLeftOrRight == self.ori.LEFT:
             self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (self.legWd / 2, 0), (-self.prevBodyWd / 2, 0))
@@ -158,7 +159,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.space.add(self.pinJoint, self.motor)
         #self.motor.rate = 0.1
         self.motor.max_force = 10000000
-        self.motor.legRateRange = range(-maxMotorRate, maxMotorRate, motorRateRangeStep)#range(start,stop,step)         
+        self.motor.legRateRange = np.linspace(-maxMotorRate, maxMotorRate, motorRateRangePieces)         
         
     def updatePosition(self, offsetXY):
         self.leg_body.position = self.leg_body.position + offsetXY 
@@ -198,6 +199,21 @@ class RobotBody:
             rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT)
             rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT)
             self.legs.append(rightLegA); self.legs.append(rightLegB)  
+            
+            leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT)
+            leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT)
+            self.legs.append(leftLegA); self.legs.append(leftLegB)
+            rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT)
+            rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT)
+            self.legs.append(rightLegA); self.legs.append(rightLegB)  
+                        
+#             leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT)
+#             leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT)
+#             self.legs.append(leftLegA); self.legs.append(leftLegB)
+#             rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT)
+#             rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT)
+#             self.legs.append(rightLegA); self.legs.append(rightLegB) 
+                                    
         self.makeRobotDynamic()
     
     def reinitializeWithRandomValues(self, seqLen):        
@@ -272,8 +288,7 @@ class RobotBody:
             motorRates.append(val[1])
         return (bodyStates, motorRates)
     
-#     def setMotorRates(self, motorRates):
-#         for leg in self.legs:
-#             leg.setMotorRates(motorRates)
-            
-            
+    def getBodyAngle(self):
+        round(math.degrees(self.body.chassis_body.angle)%360)
+    
+    

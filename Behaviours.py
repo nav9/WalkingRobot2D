@@ -20,7 +20,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.robots = robo    
         self.generatingSeqForThisGen = True   
         self.repeatSeq = 0; 
-        self.maxSeqRepetitions = 30 #how many times to repeat the sequence of seqNum's  
+        self.maxSeqRepetitions = 40 #how many times to repeat the sequence of seqNum's  
         self.seqNum = 0 #ordinal of the sequence of movements of an experience
         self.temp = []
         self.resetDE()
@@ -94,15 +94,19 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.currentFittestRobot = self.fit.index(self.currentBestFitness)
     
     def run(self, seqLen):#will return false when it's time to stop   
-        self.findCurrentBestFitness()     
+        self.findCurrentBestFitness()  
+#         #---check for ulta robot
+#         for r in range(self.robots):
+#             ang = r.getBodyAngle()
+#             if ang > 90 and ang < 270:
+                
         runState = RunCode.CONTINUE
         if self.generatingSeqForThisGen:#sequence is being generated
             i = 0
             for r in self.robots:
                 if len(self.temp) == 0:
                     r.reinitializeWithRandomValues(seqLen)
-                else:                 
-                       
+                else:                                        
                     v = self.temp[i]; j = 0; 
                     for leg in r.legs:#assign DE values calculated from prev gen
                         leg.experience[:] = []

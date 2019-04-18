@@ -24,7 +24,7 @@ class Worlds(object):
         self.draw_options = None       
         
         #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
-        self.screenWidth = 1000; 
+        self.screenWidth = 1300; 
         self.screenHeight = 550 #keep at at least 350
         self.boundaryObjects = []
         self.worldObjects = []
@@ -196,7 +196,7 @@ class FlatGroundTraining(Worlds):#inherits
     def __init__(self):
         super(FlatGroundTraining, self).__init__()
         self.worldWidth = 2000 #overriding
-        self.numRobots = 4 #min 4 robots required for DE
+        self.numRobots = 30 #min 4 robots required for DE
         self.elevFromBottomWall = 20
         self.groundThickness = 10
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
@@ -209,10 +209,10 @@ class FlatGroundTraining(Worlds):#inherits
         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
         self.space.add(ground_shape); self.worldObjects.append(ground_shape)  
         self.behaviour = DifferentialEvolution(self.robots)
-        self.sequenceLength = 3 #start seq len. Should start with anything from 1 to maxSequenceLength
+        self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength
         self.maxSequenceLength = 10 #The number of dT times a leg is moved
         self.gen = 0 #start gen
-        self.maxGens = 5 
+        self.maxGens = 50 
         
     def processRobot(self):
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
