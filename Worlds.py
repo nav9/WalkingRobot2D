@@ -197,7 +197,7 @@ class FlatGroundTraining(Worlds):#inherits
     def __init__(self):
         super(FlatGroundTraining, self).__init__()
         self.worldWidth = 2000 #overriding
-        self.numRobots = 30
+        self.numRobots = 4 #min 4 robots required for DE
         self.elevFromBottomWall = 20
         self.groundThickness = 10
   
@@ -243,7 +243,8 @@ class FlatGroundTraining(Worlds):#inherits
         self.worldObjects[:] = []  
     
     def updatePosition(self):  
-        updateBy = super(FlatGroundTraining, self).updatePosition()     
+        updateBy = super(FlatGroundTraining, self).updatePosition()    
+#         self.behaviour.updateChassisBodyPositionForFitness(updateBy[0]) 
         if updateBy != (0, 0):
             for ob in self.worldObjects:
                 ob.body.position += updateBy     

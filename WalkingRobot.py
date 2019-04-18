@@ -129,8 +129,6 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
             self.leg_body.position = self.prevBodyXY - ((self.prevBodyWd / 2) + (self.legWd / 2), 0)            
         if self.legLeftOrRight == self.ori.RIGHT:
             self.leg_body.position = self.prevBodyXY + ((self.prevBodyWd / 2) + (self.legWd / 2), 0)
-#         self.leg_body.startPosition = Vec2d(self.leg_body.position)
-#         self.leg_body.startAngle = self.leg_body.angle
         self.leg_shape = pymunk.Poly.create_box(self.leg_body, (self.legWd, self.legHt))            
         self.leg_shape.filter = self.shapeFilter
         self.leg_shape.color = 200, 200, 200  
@@ -259,7 +257,8 @@ class RobotBody:
         return self.chassis_body.position
         
     def updatePosition(self, offsetXY):
-        self.chassis_body.position = self.chassis_body.position + offsetXY 
+        self.chassis_body.position += offsetXY 
+        self.chassis_body.startPosition += offsetXY
         for leg in self.legs:
             leg.updatePosition(offsetXY)
     

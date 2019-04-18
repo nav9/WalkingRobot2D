@@ -35,11 +35,14 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.bestFitnessOfGen = 0
         self.currentBestFitness = 0
         self.currentFittestRobot = -1
-    
+#         self.cameraXOffset = 0
+        
+#     def updateChassisBodyPositionForFitness(self, x):
+#         self.cameraXOffset += x
+#     
     def getFitness(self):
         fit = []
         for r in self.robots:
-            print('p'+str(r.chassis_body.position[0])+' sp:'+str(r.chassis_body.startPosition[0]))
             fit.append(round(r.chassis_body.position[0] - r.chassis_body.startPosition[0], self.decimalPrecision))
         return fit
         
