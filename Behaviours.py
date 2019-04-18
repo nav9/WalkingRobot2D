@@ -39,6 +39,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         return fit
         
     def differentialEvolution(self, seqLen):
+        print('seqLen in DE:'+str(seqLen))
         fit = self.getFitness(); oldSel = []; sel = []; i = 0; mutant = []
         for i in range(len(self.robots)):
             oldSel.append(i)
@@ -48,6 +49,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         leastFitCar = fit.index(min(fit)) 
         print('bestFit:'+str(bestFitnessThisGen)+" fitCar:"+str(fittestCar)+" leastFitCar:"+str(leastFitCar))
         for i in range(len(self.robots)):
+            print('======================= Robot number: '+str(i))
             sel[:] = []
             for s in oldSel:
                 sel.append(s)
@@ -64,20 +66,21 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
             x1 = self.robots[x1].getValues()
             x2 = self.robots[x2].getValues()
             x3 = self.robots[x3].getValues()
-            prev = self.robots[i].getValues()   
-            print('prev:'+str(prev))  
+            curr = self.robots[i].getValues()   
+            print('curr:'+str(curr))  
             print('x1:'+str(x1)); print('x2:'+str(x2)); print('x3:'+str(x3))
-            for i in range(len(x1)):
-                mutant.append(x1[i] + round(self.vBeta * (x2[i] - x3[i])))
+            for ii in range(len(x1)):
+                mutant.append(x1[ii] + round(self.vBeta * (x2[ii] - x3[ii])))
             print('mutant'+str(mutant))
-            if mutant == prev:
+            if mutant == curr:
                 self.robots[i].reinitializeWithRandomValues(seqLen)
                 print('reinitialized')
             else:
                 #---crossover
-                for i in range(len(prev)):
+                for ii in range(len(curr)):
                     if uniform(0,1) <= self.crProba:
-                        mutant[i] = prev[i]
+                        print('crossover: '+str(mutant[ii])+'<='+str(curr[ii]))
+                        mutant[ii] = curr[ii]                        
                 self.robots[i].setValues(mutant, seqLen) 
             self.robots[leastFitCar].reinitializeWithRandomValues(seqLen)
         
@@ -93,29 +96,38 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
 
     def run(self, seqLen):#will return false when it's time to stop        
         runState = RunCode.CONTINUE
+        print('+++++++++ getting from temp')
+        print('temp');print(self.temp)
         if self.generatingSeqForThisGen:#sequence is being generated
             i = 0
             for r in self.robots:
                 if len(self.temp) == 0:
                     r.reinitializeWithRandomValues(seqLen)
-                else:
-                    j = 0
+                else:                 
+                       
+                    v = self.temp[i]; j = 0; print('val from temp: '+str(v))
+                    print('numLegs: '+str(len(r.legs))+' seqLen: '+str(seqLen))
                     for leg in r.legs:#assign DE values calculated from prev gen
+                        leg.experience[:] = []
+                        print('leg exp before: '+str(leg.experience))
                         for k in range(0, seqLen, 1):
-                            leg.experience.append(self.temp[i][j])
+                            leg.experience.append(v[j])
                             j += 1
+                        print('leg exp after: '+str(leg.experience))
                 i += 1
         #sequence generated. Now just execute as-is for entire epoch
         for r in self.robots:
             r.setMotorRateForSequence(self.seqNum)                                   
         self.seqNum += 1      
         if self.seqNum == seqLen:#finished one sequence experience
+            print('max seq reached')
             self.seqNum = 0
             self.generatingSeqForThisGen = False
             self.repeatSeq += 1
         if self.maxSeqRepetitions == self.repeatSeq:#finished one generation
+            print('finished gen. Now doing DE')
             self.repeatSeq = 0
-            #self.differentialEvolution(seqLen)
+            self.differentialEvolution(seqLen)
             runState = RunCode.NEXTGEN            
         
         return runState    

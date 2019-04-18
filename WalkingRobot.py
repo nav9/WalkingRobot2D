@@ -208,11 +208,13 @@ class RobotBody:
             for i in range(0, seqLen, 1):
                 thisRate = random.choice(leg.motor.legRateRange)
                 leg.experience.append(thisRate)                                    
+        print('reinitializing with rand vals:'+str(leg.experience))
     
     def getValues(self):
-        ex = []
+        ex = [];print('=======')
         for leg in self.legs:
             ex.extend(leg.experience)
+        print('getting:'+str(ex))
         return ex
     
     def setValues(self, ex, seqLen):
@@ -222,6 +224,7 @@ class RobotBody:
             for i in range(0, seqLen, 1): 
                 leg.experience.append(ex[j])
                 j += 1
+            print('setting:'+str(leg.experience))
     
     def setMotorRateForSequence(self, seqId):
         for leg in self.legs:
