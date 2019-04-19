@@ -212,7 +212,7 @@ class FlatGroundTraining(Worlds):#inherits
         self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength
         self.maxSequenceLength = 10 #The number of dT times a leg is moved
         self.gen = 0 #start gen
-        self.maxGens = 50 
+        self.maxGens = 20 
         
     def processRobot(self):
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's

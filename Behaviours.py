@@ -19,7 +19,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.decimalPrecision = 2
         self.robots = robo     
         self.repeatSeq = 0; 
-        self.maxSeqRepetitions = 20 #how many times to repeat the sequence of seqNum's  
+        self.maxSeqRepetitions = 100 #how many times to repeat the sequence of seqNum's  
         self.seqNum = 0 #ordinal of the sequence of movements of an experience
         self.temp = []
         self.NOTFIT = 0
@@ -66,6 +66,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         if not False in self.unfitThisFullGen:
             for r in self.robots:
                 r.reinitializeWithRandomValues(seqLen)
+                self.temp[:] = []                   
             return
         #---proceed with DE 
         leastFitRobot = self.fit.index(min(self.fit)) 
@@ -133,12 +134,17 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         #sequence generated. Now just execute as-is for entire epoch
         for r in self.robots:
             r.setMotorRateForSequence(self.seqNum)                                   
-        self.seqNum += 1      
-        if self.seqNum == seqLen:#finished one sequence experience
+        self.seqNum += 1  
+        
+        if not False in self.unfitThisFullGen:
+            self.seqNum = seqLen
+            self.repeatSeq = self.maxSeqRepetitions#no point running this sequence any more. Proceed to next one
+                        
+        if self.seqNum >= seqLen:#finished one sequence experience
             self.seqNum = 0
             self.generatingSeqForThisGen = False
             self.repeatSeq += 1
-        if self.maxSeqRepetitions == self.repeatSeq:#finished one generation
+        if self.repeatSeq >= self.maxSeqRepetitions:#finished one generation
             self.repeatSeq = 0
             self.differentialEvolution(seqLen)
             runState = RunCode.NEXTGEN            
