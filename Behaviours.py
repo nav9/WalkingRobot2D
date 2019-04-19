@@ -34,8 +34,8 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.startNewGen()
         
     def resetDE(self):
-        self.fittestRobotInGen = self.UNDETERMINED
-        self.bestFitnessOfGen = 0
+        self.epochFittestRobot = self.UNDETERMINED
+        self.epochBestFitness = 0
         self.currentBestFitness = 0
         self.currentFittestRobot = self.UNDETERMINED
 
@@ -56,15 +56,25 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         for i in range(len(self.robots)):
             oldSel.append(i)
         
-        self.bestFitnessOfGen = max(self.fit)
-        self.fittestRobotInGen = self.fit.index(self.bestFitnessOfGen)
+        self.currentBestFitness = max(self.fit)
+        self.currentFittestRobot = self.fit.index(self.currentBestFitness)
+        if self.currentBestFitness > self.epochBestFitness:
+            self.epochBestFitness = self.currentBestFitness
+            self.epochFittestRobot = self.fit.index(self.epochBestFitness)
+            
+        #---if none are fit, re-initialize all randomly coz there's no point doing DE
+        if not False in self.unfitThisFullGen:
+            for r in self.robots:
+                r.reinitializeWithRandomValues(seqLen)
+            return
+        #---proceed with DE 
         leastFitRobot = self.fit.index(min(self.fit)) 
         for i in range(len(self.robots)):
             sel[:] = []
             for s in oldSel:
                 sel.append(s)
 
-            if i == self.fittestRobotInGen:#don't mess with the fittest
+            if i == self.currentFittestRobot:#don't mess with the fittest
                 continue
             del sel[i]#remove current car from list to be able to select another 3
             #---randomly choose three others for DE

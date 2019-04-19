@@ -46,6 +46,7 @@ class Worlds(object):
         self.prevCameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2)
         self.cameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2) 
         self.cameraMoveSpeed = Vec2d(100, 50)
+        self.UNDETERMINED = -1
         
     def initialize(self):
         self.space = pymunk.Space()
@@ -56,8 +57,8 @@ class Worlds(object):
         self.iterations = 20        
         #self.space.damping = 0.999 
         #self.focusRobotChanged = False
-        self.prevFocusRobotID = -1 #At first none of the robots will be in focus since fitness hasn't been determined
-        self.focusRobotID = -1 #At first none of the robots will be in focus since fitness hasn't been determined
+        self.prevFocusRobotID = self.UNDETERMINED #At first none of the robots will be in focus since fitness hasn't been determined
+        self.focusRobotID = self.UNDETERMINED #At first none of the robots will be in focus since fitness hasn't been determined
         self.infoString = ""        
         #---top boundary        
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth/2, self.worldY+self.worldHeight-self.wallThickness/2)
@@ -121,14 +122,12 @@ class Worlds(object):
         return updateBy           
     
     def updateColor(self):
-        #self.robots[self.focusRobotID].setFocusRobotColor()
-        #self.focusRobotChanged = False
         for obj in self.robots:#update all robot positions
             if self.focusRobotID >= 0:
                 if obj == self.robots[self.focusRobotID]: obj.setFocusRobotColor() 
                 else: obj.setNormalRobotColor()
             else: obj.setNormalRobotColor()
-                  
+    
 #     def calcUpdateBy(self, focusPointXY):
 #         updateBy = Vec2d(0,0)
 #         if focusPointXY[0] < self.minViewX or focusPointXY[0] > self.maxViewX:
@@ -229,13 +228,13 @@ class FlatGroundTraining(Worlds):#inherits
                 self.gen = 0
                 self.behaviour.startNewEpoch()
         #---info dashboard
-        genFittestRoboString = "None"; currFittestRoboString = "None"
-        if self.behaviour.fittestRobotInGen > 0: genFittestRoboString = str(self.behaviour.fittestRobotInGen)
+        genFittestRoboString = "-"; currFittestRoboString = "-"
+        if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
         if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)
         self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
         self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
         self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
-        self.infoString += "  Fittest: "+str(genFittestRoboString)+" | "+str(currFittestRoboString)+"  Fit: "+str(self.behaviour.bestFitnessOfGen)+" | "+str(self.behaviour.currentBestFitness)
+        self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
         
     def delete(self):
         super(FlatGroundTraining, self).delete()   
@@ -248,6 +247,8 @@ class FlatGroundTraining(Worlds):#inherits
 #         self.behaviour.updateChassisBodyPositionForFitness(updateBy[0]) 
         if self.behaviour.currentFittestRobot != self.focusRobotID:
             self.focusRobotID = self.behaviour.currentFittestRobot
+        if self.behaviour.unfitThisFullGen[self.focusRobotID]:
+            self.focusRobotID = self.UNDETERMINED
         if updateBy != (0, 0):
             for ob in self.worldObjects:
                 ob.body.position += updateBy     
