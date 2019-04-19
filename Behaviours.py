@@ -17,12 +17,13 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
     def __init__(self, robo): 
         self.infoString = ""  
         self.decimalPrecision = 2
-        self.robots = robo    
-        self.generatingSeqForThisGen = True   
+        self.robots = robo     
         self.repeatSeq = 0; 
-        self.maxSeqRepetitions = 40 #how many times to repeat the sequence of seqNum's  
+        self.maxSeqRepetitions = 20 #how many times to repeat the sequence of seqNum's  
         self.seqNum = 0 #ordinal of the sequence of movements of an experience
         self.temp = []
+        self.NOTFIT = 0
+        self.UNDETERMINED = -1
         self.resetDE()
         #---Differential Evolution parameters
         self.masterBeta = 2.0 #beta is real number belongs to [0 -> 2]
@@ -30,18 +31,26 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.crProba = 0.3 #crossover probability range [0 -> 1]  
         self.vBeta = self.masterBeta    
         self.fit = []
+        self.startNewGen()
         
     def resetDE(self):
-        self.fittestRobotInGen = -1
+        self.fittestRobotInGen = self.UNDETERMINED
         self.bestFitnessOfGen = 0
         self.currentBestFitness = 0
-        self.currentFittestRobot = -1
+        self.currentFittestRobot = self.UNDETERMINED
 
     def calcFitness(self):     
         self.fit[:] = []   
         for r in self.robots:
             self.fit.append(round(r.chassis_body.position[0] - r.chassis_body.startPosition[0], self.decimalPrecision))
-        
+        #---assign zero fitness to any robot that became ulta
+        for r in range(len(self.robots)):
+            ang = self.robots[r].getBodyAngle()            
+            if ang > 90 and ang < 270:
+                self.unfitThisFullGen[r] = True
+            if self.unfitThisFullGen[r]:
+                self.fit[r] = self.NOTFIT  
+    
     def differentialEvolution(self, seqLen):
         self.calcFitness(); oldSel = []; sel = []; i = 0; mutant = []
         for i in range(len(self.robots)):
@@ -79,6 +88,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
                 self.robots[i].setValuesWithClamping(mutant, seqLen) 
             self.robots[leastFitRobot].reinitializeWithRandomValues(seqLen)
         
+        
         #---beta is reduced to encourage exploitation and reduce exploration
         if self.vBeta > 1/40: 
             self.vBeta = self.vBeta - 1/40        
@@ -95,10 +105,6 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
     
     def run(self, seqLen):#will return false when it's time to stop   
         self.findCurrentBestFitness()  
-#         #---check for ulta robot
-#         for r in range(self.robots):
-#             ang = r.getBodyAngle()
-#             if ang > 90 and ang < 270:
                 
         runState = RunCode.CONTINUE
         if self.generatingSeqForThisGen:#sequence is being generated
@@ -129,10 +135,12 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         
         return runState    
     
-    def startNewGen(self):
-        self.generatingSeqForThisGen = True     
+    def startNewGen(self):#NOTE: gets called when starting new epoch too
+        self.generatingSeqForThisGen = True   
+        self.unfitThisFullGen = [False] * len(self.robots)
         
     def startNewEpoch(self):
+        self.startNewGen()
         self.temp[:] = []   
         self.resetDE()
         

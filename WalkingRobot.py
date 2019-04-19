@@ -200,12 +200,12 @@ class RobotBody:
             rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT)
             self.legs.append(rightLegA); self.legs.append(rightLegB)  
             
-            leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT)
-            leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT)
-            self.legs.append(leftLegA); self.legs.append(leftLegB)
-            rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT)
-            rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT)
-            self.legs.append(rightLegA); self.legs.append(rightLegB)  
+#             leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT)
+#             leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT)
+#             self.legs.append(leftLegA); self.legs.append(leftLegB)
+#             rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT)
+#             rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT)
+#             self.legs.append(rightLegA); self.legs.append(rightLegB)  
                         
 #             leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT)
 #             leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT)
@@ -222,13 +222,11 @@ class RobotBody:
             for i in range(0, seqLen, 1):
                 thisRate = random.choice(leg.motor.legRateRange)
                 leg.experience.append(thisRate)                                    
-        #print('reinitializing with rand vals:'+str(leg.experience))
     
     def getValues(self):
-        ex = [];#print('=======')
+        ex = [];
         for leg in self.legs:
             ex.extend(leg.experience)
-        #print('getting:'+str(ex))
         return ex
     
     def setValuesWithClamping(self, ex, seqLen):
@@ -289,6 +287,6 @@ class RobotBody:
         return (bodyStates, motorRates)
     
     def getBodyAngle(self):
-        round(math.degrees(self.body.chassis_body.angle)%360)
+        return round(math.degrees(self.chassis_body.angle)%360)
     
     

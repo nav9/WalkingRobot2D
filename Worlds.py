@@ -76,6 +76,17 @@ class Worlds(object):
         shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
         self.space.add(shape); self.boundaryObjects.append(shape)
             
+        pygame.init()
+        pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
+        self.screen = pygame.display.set_mode((self.screenWidth, self.screenHeight), self.display_flags)
+        self.font = pygame.font.SysFont("Arial", 14)
+        #width, height = self.screen.get_size()
+        self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
+        self.draw_options.constraint_color = 200,200,200
+
+        self.initializeRobots()
+        if len(self.robots) <= 0: print('Create at least one robot'); return
+                    
     def delete(self):
         for ob in self.boundaryObjects:
             self.space.remove(ob)
@@ -139,19 +150,9 @@ class Worlds(object):
         self.screen.blit(self.font.render(displayStr, 1, THECOLORS["green"]), self.statsPos)
 
     def runWorld(self):
-        pygame.init()
-        pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
-        self.screen = pygame.display.set_mode((self.screenWidth, self.screenHeight), self.display_flags)
-        self.font = pygame.font.SysFont("Arial", 14)
-        #width, height = self.screen.get_size()
-        self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
-        self.draw_options.constraint_color = 200,200,200
         runState = RunCode.CONTINUE
         clock = pygame.time.Clock()
-        simulating = True
-        self.initializeRobots()
-        if len(self.robots) <= 0: print('Create at least one robot'); return
-
+        simulating = True        
         #prevTime = time.time();
         while simulating:
             for event in pygame.event.get():
@@ -196,8 +197,8 @@ class FlatGroundTraining(Worlds):#inherits
     def __init__(self):
         super(FlatGroundTraining, self).__init__()
         self.worldWidth = 2000 #overriding
-        self.numRobots = 30 #min 4 robots required for DE
-        self.elevFromBottomWall = 20
+        self.numRobots = 4 #min 4 robots required for DE
+        self.elevFromBottomWall = 10
         self.groundThickness = 10
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
   
@@ -225,7 +226,7 @@ class FlatGroundTraining(Worlds):#inherits
             self.behaviour.startNewGen()         
             if self.gen == self.maxGens:#completion of one epoch
                 self.sequenceLength += 1 
-                self.gen = 0             
+                self.gen = 0
                 self.behaviour.startNewEpoch()
         #---info dashboard
         genFittestRoboString = "None"; currFittestRoboString = "None"
