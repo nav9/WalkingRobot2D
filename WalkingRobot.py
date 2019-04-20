@@ -194,9 +194,9 @@ class RobotBody:
         self.space.add(self.chassis_shape, self.chassis_body)  
         for i in range(0, self.numLegsOnEachSide, 1):
             leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT); self.legs.append(leftLegA)
-            #leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT); self.legs.append(leftLegB)             
+            leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT); self.legs.append(leftLegB)             
             rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT); self.legs.append(rightLegA) 
-            #rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT); self.legs.append(rightLegB)  
+            rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT); self.legs.append(rightLegB)  
                         
 #             leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT); self.legs.append(leftLegA)
 #             leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT); self.legs.append(leftLegB)            
