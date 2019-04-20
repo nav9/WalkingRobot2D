@@ -15,7 +15,6 @@ from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_LEFTBRACKET, K_RIGH
 from pygame.color import THECOLORS
 from WalkingRobot import RobotBody
 from Behaviours import DifferentialEvolution, RunCode
-from statsmodels.sandbox.stats.runs import Runs
 
 class Worlds(object):
     def __init__(self):
