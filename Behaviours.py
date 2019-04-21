@@ -255,8 +255,7 @@ class ImaginationDifferentialEvolution:#(AbstractRobotBehaviour):
                     if uniform(0,1) <= self.crProba:
                         mutant[ii] = curr[ii]                        
                 self.robots[i].setValuesWithClamping(mutant, seqLen) 
-            self.robots[leastFitRobot].reinitializeWithRandomValues(seqLen)
-        
+            self.robots[leastFitRobot].reinitializeWithRandomValues(seqLen)        
         
         #---beta is reduced to encourage exploitation and reduce exploration
         if self.vBeta > 1/40: 

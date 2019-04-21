@@ -3,7 +3,7 @@
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
 from Worlds import *
-import networkx as nx
+# import networkx as nx
 
 class Simulator(object):
     def __init__(self):
@@ -12,13 +12,7 @@ class Simulator(object):
         #---registration of the worlds to runWorld
         #self.worlds.append(FlatGroundTraining())
         self.worlds.append(ImaginationSupport())
-        G = nx.Graph()
-        G.add_edge('A', 'B', weight=4)
-        G.add_edge('B', 'D', weight=2)
-        G.add_edge('A', 'C', weight=3)
-        G.add_edge('C', 'D', weight=4)
-        s = nx.shortest_path(G, 'A', 'D', weight='weight')
-        print(s)        
+       
 
     def nextWorld(self):
         self.worldOrdinal += 1

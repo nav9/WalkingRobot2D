@@ -235,10 +235,13 @@ class RobotBody:
             leg.motor.rate = leg.experience[seqId]
             
     def setFocusRobotColor(self):
-        self.chassis_shape.color = 190, 0, 0
+        self.chassis_shape.color = (190, 0, 0)
         
     def setNormalRobotColor(self):
-        self.chassis_shape.color = 170, 170, 170
+        self.chassis_shape.color = (170, 170, 170)
+                
+    def setImaginaryRobotColor(self):
+        self.chassis_shape.color = (110, 110, 110)        
         
     def makeRobotDynamic(self):
         self.chassis_body.body_type = pymunk.Body.DYNAMIC

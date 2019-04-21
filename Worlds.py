@@ -24,18 +24,16 @@ class Worlds(object):
         
         #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
         self.screenWidth = 1300; #can get overridden in child class
-        self.screenHeight = 550 #keep at at least 350. Can get overridden in child class
+        self.screenHeight = 400 #keep at at least 350. Can get overridden in child class
         self.boundaryObjects = []
         self.worldObjects = []
-        self.worldX = 0
-        self.worldY = 0 
         self.worldWidth = 1000 #may get overridden in child class
         self.worldHeight = 500 #may get overridden in child class
         self.wallThickness = 15
         self.boundaryColor = 170,170,170
         self.robots = []
         self.behaviour = None
-        self.numRobots = 3#can be overridden in child class
+        self.numRobots = 3 #can be overridden in child class
         #self.actionNetwork = ActionsNetwork()        
         self.display_flags = 0        
         self.minViewX = 100; self.maxViewX = self.screenWidth - self.minViewX
@@ -46,6 +44,24 @@ class Worlds(object):
         self.cameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2) 
         self.cameraMoveSpeed = Vec2d(100, 50)
         self.UNDETERMINED = -1
+        
+    def createBoundary(self, worldX, worldY, bouColor):
+        #---top boundary        
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth/2, worldY+self.worldHeight-self.wallThickness/2)
+        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = bouColor; shape.friction = 1.0
+        self.space.add(shape); self.boundaryObjects.append(shape)
+        #---bottom boundary
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth/2, worldY+self.wallThickness/2) 
+        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = bouColor; shape.friction = 1.0
+        self.space.add(shape); self.boundaryObjects.append(shape)
+        #---left boundary
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.wallThickness/2, worldY+self.worldHeight/2)
+        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = bouColor; shape.friction = 1.0
+        self.space.add(shape); self.boundaryObjects.append(shape)
+        #---right boundary
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth-self.wallThickness/2, worldY+self.worldHeight/2)
+        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = bouColor; shape.friction = 1.0
+        self.space.add(shape); self.boundaryObjects.append(shape)          
         
     def initialize(self):
         self.space = pymunk.Space()
@@ -58,23 +74,9 @@ class Worlds(object):
         #self.focusRobotChanged = False
         self.prevFocusRobotID = self.UNDETERMINED #At first none of the robots will be in focus since fitness hasn't been determined
         self.focusRobotID = self.UNDETERMINED #At first none of the robots will be in focus since fitness hasn't been determined
-        self.infoString = ""        
-        #---top boundary        
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth/2, self.worldY+self.worldHeight-self.wallThickness/2)
-        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
-        self.space.add(shape); self.boundaryObjects.append(shape)
-        #---bottom boundary
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth/2, self.worldY+self.wallThickness/2) 
-        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = self.boundaryColor; shape.friction = 1.0
-        self.space.add(shape); self.boundaryObjects.append(shape)
-        #---left boundary
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.wallThickness/2, self.worldY+self.worldHeight/2)
-        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
-        self.space.add(shape); self.boundaryObjects.append(shape)
-        #---right boundary
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(self.worldX+self.worldWidth-self.wallThickness/2, self.worldY+self.worldHeight/2)
-        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = self.boundaryColor; shape.friction = 1.0
-        self.space.add(shape); self.boundaryObjects.append(shape)
+        self.infoString = ""   
+        
+        self.createBoundary(0, 0, self.boundaryColor)
             
         pygame.init()
         pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
@@ -86,7 +88,8 @@ class Worlds(object):
 
         self.initializeRobots()
         if len(self.robots) <= 0: print('Create at least one robot'); return
-                    
+
+
     def delete(self):
         for ob in self.boundaryObjects:
             self.space.remove(ob)
@@ -147,7 +150,7 @@ class Worlds(object):
     def displayStats(self, displayStr):
         self.screen.blit(self.font.render(displayStr, 1, THECOLORS["green"]), self.statsPos)
 
-    def runWorld(self):
+    def runWorld(self): #may get overridden in child class
         runState = RunCode.CONTINUE
         clock = pygame.time.Clock()
         simulating = True        
@@ -264,26 +267,48 @@ class FlatGroundTraining(Worlds):#inherits
 class ImaginationSupport(Worlds):#inherits
     def __init__(self):
         super(ImaginationSupport, self).__init__()
-        self.screenHeight = 700 #keep at at least 350        
+        self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 2000 #overriding
-        self.worldHeight = 250
-        self.numRobots = 4 #min 4 robots required for DE
-        self.elevFromBottomWall = 10
+        self.worldHeight = 300
+        self.imaginaryWorldYOffset = self.worldHeight 
+        self.numRobots = 1
+        self.numImaginaryRobots = 4 #min 4 robots required for DE
+        self.imaginaryRobots = []
+        self.elevFromBottomWall = 0
         self.groundThickness = 10
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
-  
+        self.imaginationColor = 100,100,100
+        self.imaginationGroundColor = 100,150,100
+        self.groundColor = 0,170,0
+        
+    def createGround(self, groundX, groundY, grColor):
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2)
+        shape = pymunk.Poly.create_box(body, (self.worldWidth-2*self.wallThickness, self.wallThickness)); shape.color = grColor; shape.friction = 1.0
+        self.space.add(shape); self.worldObjects.append(shape)        
+        
+#         groundX = worldX+self.wallThickness/2; groundLen = self.worldWidth - (2*self.wallThickness); 
+#         ground_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); 
+#         segStPt = Vec2d(groundX + self.wallThickness/2, groundY); segEnPt = Vec2d(groundX+groundLen, groundY)
+#         ground_shape = pymunk.Segment(ground_body, segStPt, segEnPt, self.groundThickness); ground_shape.friction = 1.0        
+#         self.space.add(ground_shape); self.worldObjects.append(ground_shape) 
+        
+    def initializeImaginaryRobots(self):      
+        for i in range(0, self.numImaginaryRobots, 1):
+            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos+Vec2d(0, self.imaginaryWorldYOffset)))
+                
     def initialize(self):
+        #---actual world
         super(ImaginationSupport, self).initialize()
-        groundX = self.worldX+self.wallThickness/2; groundLen = self.worldWidth-2 * self.wallThickness; groundY = self.elevFromBottomWall
-        ground_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); groundStart = Vec2d(groundX, groundY); groundPosition = Vec2d(groundX+groundLen, groundY)
-        ground_body.position = groundStart
-        ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
-        self.space.add(ground_shape); self.worldObjects.append(ground_shape)  
-        self.behaviour = ImaginationDifferentialEvolution(self.robots)
+        self.createGround(0, self.elevFromBottomWall, self.groundColor)
+        #---imaginary world
+        self.createBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
+        self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)
+        self.initializeImaginaryRobots()
+        self.behaviour = ImaginationDifferentialEvolution(self.imaginaryRobots)
         self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength
         self.maxSequenceLength = 1 #The number of dT times a leg is moved
         self.gen = 0 #start gen
-        self.maxGens = 20 
+        self.maxGens = 20             
         
     def processRobot(self):
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
@@ -322,6 +347,58 @@ class ImaginationSupport(Worlds):#inherits
             self.focusRobotID = self.UNDETERMINED
         if updateBy != (0, 0):
             for ob in self.worldObjects:
-                ob.body.position += updateBy    
+                ob.body.position += updateBy   
                 
- 
+    def updateColor(self):
+        for obj in self.robots:
+            obj.setNormalRobotColor()        
+        for obj in self.imaginaryRobots:
+            if self.focusRobotID >= 0:
+                if obj == self.imaginaryRobots[self.focusRobotID]: obj.setFocusRobotColor() 
+                else: obj.setImaginaryRobotColor()
+            else: obj.setImaginaryRobotColor()                 
+    
+    def runWorld(self):
+        runState = RunCode.CONTINUE
+        clock = pygame.time.Clock()
+        simulating = True        
+        #prevTime = time.time();
+        while simulating:
+            for event in pygame.event.get():
+                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
+                    sys.exit(0)
+                if event.type == KEYDOWN:
+                    if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveSpeed[1])
+                    if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveSpeed[1])
+                    if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveSpeed[0], 0)
+                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveSpeed[0], 0)                    
+#                     if event.key == K_RIGHTBRACKET:
+#                         self.focusRobotID += 1; self.focusRobotChanged = True
+#                         if self.focusRobotID == self.numRobots: self.focusRobotID = 0
+#                     if event.key == K_LEFTBRACKET:
+#                         self.focusRobotID -= 1; self.focusRobotChanged = True
+#                         if self.focusRobotID < 0: self.focusRobotID = self.numRobots - 1
+
+            #---Update physics
+            dt = 1.0 / float(self.fps) / float(self.iterations)
+            for x in range(self.iterations): #iterations to get a more stable simulation
+                self.space.step(dt)
+            #---Update world based on player focus
+            self.updatePosition()
+            if self.prevFocusRobotID != self.focusRobotID: 
+                self.updateColor()
+                self.prevFocusRobotID = self.focusRobotID
+            if self.movtTime == 0:
+                runState = self.processRobot()
+                self.movtTime = self.maxMovtTime
+            else:
+                self.movtTime -= 1
+            
+            #---draw all objects            
+            self.draw()
+            
+            #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
+            clock.tick(self.fps)
+            if runState == RunCode.STOP:
+                break    
+            
