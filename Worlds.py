@@ -84,7 +84,7 @@ class Worlds(object):
         self.font = pygame.font.SysFont("Arial", 14)
         #width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
-        self.draw_options.constraint_color = 200,200,200
+        self.draw_options.constraint_color = 150,150,150
 
         self.initializeRobots()
         if len(self.robots) <= 0: print('Create at least one robot'); return

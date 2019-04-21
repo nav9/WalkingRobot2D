@@ -241,7 +241,9 @@ class RobotBody:
         self.chassis_shape.color = (170, 170, 170)
                 
     def setImaginaryRobotColor(self):
-        self.chassis_shape.color = (110, 110, 110)        
+        self.chassis_shape.color = (110, 110, 110)  
+        for leg in self.legs:
+            leg.leg_shape.color = (110, 110, 110)
         
     def makeRobotDynamic(self):
         self.chassis_body.body_type = pymunk.Body.DYNAMIC
