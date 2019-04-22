@@ -9,6 +9,8 @@ from collections import defaultdict
 import hashlib
 import math
 import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
 #from threading import Thread, Lock
 
 # class ActionsNetwork:#For now, a single instance of this is created which all walking robots can contribute to and access
@@ -94,6 +96,18 @@ import numpy as np
 #                 self.motorCortex.generateNewActions(self.trainingExperienceCounter==0)
 #                 self.trainingExperienceCounter -= 1  
 
+class ActionNetwork:
+    def __init__(self):
+        self.graph = nx.MultiDiGraph()
+    
+    def addNode(self, node):
+        self.graph.add_node(tuple(node))
+    
+    def displayNetwork(self):
+        plt.subplot(121)
+        nx.draw(self.graph, with_labels=False, font_weight='bold')
+        plt.show()
+    
 class Directions:
     UP = 1
     DOWN = 2
@@ -157,7 +171,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
             self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (-self.legWd / 2, 0), (self.prevBodyWd / 2, 0))            
         self.motor = pymunk.SimpleMotor(self.leg_body, prevBody, self.relativeAnguVel) 
         self.space.add(self.pinJoint, self.motor)
-        #self.motor.rate = 0.1
+        self.motor.rate = 0
         self.motor.max_force = 10000000
         self.motor.legRateRange = np.linspace(-maxMotorRate, maxMotorRate, motorRateRangePieces)         
         
@@ -284,4 +298,9 @@ class RobotBody:
     def getBodyAngle(self):
         return round(math.degrees(self.chassis_body.angle)%360)
     
-    
+    def getBodyPosition(self):
+        pos = [self.chassis_body.angle]
+        for leg in self.legs:
+            pos.append(leg.leg_body.angle)
+        return pos
+            

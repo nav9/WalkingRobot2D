@@ -3,15 +3,17 @@
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
 from Worlds import *
-# import networkx as nx
+from WalkingRobot import ActionNetwork
 
 class Simulator(object):
+    
     def __init__(self):
+        self.actions = ActionNetwork()
         self.worlds = []
         self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
         #self.worlds.append(FlatGroundTraining())
-        self.worlds.append(ImaginationSupport())
+        self.worlds.append(ImaginationTwin(self.actions))
        
 
     def nextWorld(self):
@@ -19,7 +21,8 @@ class Simulator(object):
         if self.worldOrdinal < len(self.worlds):
             w = self.worlds[self.worldOrdinal]
             w.initialize()
-            w.runWorld()       
+            w.runWorld()    
+            self.actions.displayNetwork()
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
 
 
