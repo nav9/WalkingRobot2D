@@ -15,13 +15,13 @@ class Simulator(object):
         #self.worlds.append(FlatGroundTraining())
         self.worlds.append(ImaginationTwin(self.actions))
        
-
     def nextWorld(self):
         self.worldOrdinal += 1
         if self.worldOrdinal < len(self.worlds):
             w = self.worlds[self.worldOrdinal]
             w.initialize()
             w.runWorld()    
+            self.actions.saveNetwork()
             self.actions.displayNetwork()
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
 

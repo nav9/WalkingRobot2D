@@ -9,10 +9,11 @@
 ### pydev ###
 .pydevproject
 *.pyc
-.pyc
 
 # End of https://www.gitignore.io/api/pydev
 
+### networkx ###
+*.gpickle
 
 ### Eclipse ###
 .metadata

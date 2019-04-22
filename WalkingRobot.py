@@ -99,15 +99,30 @@ from pygame import _numpysurfarray
 
 class ActionNetwork:
     def __init__(self):
-        self.graph = nx.MultiDiGraph()
+        self.saveFile = 'actionNetwork.gpickle'
+        self.graph = None
+        self.__loadNetwork__()
     
     def addNode(self, node):
         self.graph.add_node(tuple(node))
     
     def displayNetwork(self):
-        plt.subplot(121)
+        plt.subplot(111)
         nx.draw(self.graph, with_labels=False, font_weight='bold')
         plt.show()
+    
+    def saveNetwork(self):
+        #nx.write_gml(self.graph, self.saveFile)
+        nx.write_gpickle(self.graph, self.saveFile)
+    
+    def __loadNetwork__(self):
+        try:
+            #self.graph = nx.read_gml(self.saveFile)
+            self.graph = nx.read_gpickle(self.saveFile)
+        except:
+            print('No '+self.saveFile+' found. Creating new action network.')
+        finally:
+            self.graph = nx.MultiDiGraph()
     
 class Directions:
     UP = 1
