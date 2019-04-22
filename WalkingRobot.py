@@ -11,6 +11,7 @@ import math
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+from pygame import _numpysurfarray
 #from threading import Thread, Lock
 
 # class ActionsNetwork:#For now, a single instance of this is created which all walking robots can contribute to and access
@@ -177,6 +178,9 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         
     def updatePosition(self, offsetXY):
         self.leg_body.position = self.leg_body.position + offsetXY 
+        
+    def getLegAngle(self):
+        return round(math.degrees(self.leg_body.angle)%360)        
 
 class RobotBody:
     def __init__(self, pymunkSpace, chassisCenterPoint):
@@ -285,22 +289,31 @@ class RobotBody:
         for leg in self.legs:
             leg.updatePosition(offsetXY)
     
-    def getFullBodyStatesAndMotorRates(self):
-        bodyStates = []; motorRates = []
-        bodyStates.append(self.chassis_body.angle)
-        bodyStates.append(self.chassis_body.position)
-        for leg in self.legs:
-            val = leg.getLegStatesAndMotorRates()
-            bodyStates.append(val[0])
-            motorRates.append(val[1])
-        return (bodyStates, motorRates)
+#     def getFullBodyStatesAndMotorRates(self):
+#         bodyStates = []; motorRates = []
+#         bodyStates.append(self.chassis_body.angle)
+#         bodyStates.append(self.chassis_body.position)
+#         for leg in self.legs:
+#             val = leg.getLegStatesAndMotorRates()
+#             bodyStates.append(val[0])
+#             motorRates.append(val[1])
+#         return (bodyStates, motorRates)
     
     def getBodyAngle(self):
         return round(math.degrees(self.chassis_body.angle)%360)
     
-    def getBodyPosition(self):
-        pos = [self.chassis_body.angle]
+    def getUniqueBodyPosition(self):
+        pos = [self.roundToNearest(self.getBodyAngle())]
         for leg in self.legs:
-            pos.append(leg.leg_body.angle)
+            pos.append(self.roundToNearest(leg.getLegAngle()))
+        print(pos)
         return pos
-            
+    
+    def roundToNearest(self, num):
+        roundOffPrecision = 5
+        rem = num % roundOffPrecision
+        if rem < roundOffPrecision / 2: num = int(num/roundOffPrecision) * roundOffPrecision
+        else: num = int((num+roundOffPrecision) / roundOffPrecision) * roundOffPrecision
+        return num
+    
+    

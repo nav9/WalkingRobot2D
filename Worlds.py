@@ -290,7 +290,7 @@ class ImaginationTwin(Worlds):#inherits
     def initializeImaginaryRobots(self):      
         for i in range(0, self.numImaginaryRobots, 1):
             self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset)))
-            self.actionNetwork.addNode(self.imaginaryRobots[i].getBodyPosition())
+            self.actionNetwork.addNode(self.imaginaryRobots[i].getUniqueBodyPosition())
             
     def deleteImaginaryRobots(self):
         for r in self.imaginaryRobots:
