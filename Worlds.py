@@ -44,31 +44,13 @@ class Worlds(object):
         self.cameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2) 
         self.cameraMoveDist = Vec2d(100, 50)
         self.UNDETERMINED = -1
-        
-    def createBoundary(self, worldX, worldY, bouColor):
-        #---top boundary        
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth/2, worldY+self.worldHeight-self.wallThickness/2)
-        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = bouColor; shape.friction = 1.0
-        self.space.add(shape); self.boundaryObjects.append(shape)
-        #---bottom boundary
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth/2, worldY+self.wallThickness/2) 
-        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = bouColor; shape.friction = 1.0
-        self.space.add(shape); self.boundaryObjects.append(shape)
-        #---left boundary
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.wallThickness/2, worldY+self.worldHeight/2)
-        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = bouColor; shape.friction = 1.0
-        self.space.add(shape); self.boundaryObjects.append(shape)
-        #---right boundary
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth-self.wallThickness/2, worldY+self.worldHeight/2)
-        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = bouColor; shape.friction = 1.0
-        self.space.add(shape); self.boundaryObjects.append(shape)          
-        
+                
     def initialize(self):
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
         self.fps = 50
-        self.maxMovtTime = 50 #how often in time the sequences of the robot get executed
-        self.movtTime = self.fps #start value of movt time. Can be anything from 0 to maxMovtTime
+        self.maxMovtTime = 10 #how often in time the sequences of the robot get executed
+        self.movtTime = 0 #start value of movt time. Can be anything from 0 to maxMovtTime
         self.iterations = 20        
         #self.space.damping = 0.999 
         #self.focusRobotChanged = False
@@ -89,7 +71,24 @@ class Worlds(object):
         self.initializeRobots()
         if len(self.robots) <= 0: print('Create at least one robot'); return
 
-
+    def createBoundary(self, worldX, worldY, bouColor):
+        #---top boundary        
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth/2, worldY+self.worldHeight-self.wallThickness/2)
+        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = bouColor; shape.friction = 1.0
+        self.space.add(shape); self.boundaryObjects.append(shape)
+        #---bottom boundary
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth/2, worldY+self.wallThickness/2) 
+        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = bouColor; shape.friction = 1.0
+        self.space.add(shape); self.boundaryObjects.append(shape)
+        #---left boundary
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.wallThickness/2, worldY+self.worldHeight/2)
+        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = bouColor; shape.friction = 1.0
+        self.space.add(shape); self.boundaryObjects.append(shape)
+        #---right boundary
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth-self.wallThickness/2, worldY+self.worldHeight/2)
+        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = bouColor; shape.friction = 1.0
+        self.space.add(shape); self.boundaryObjects.append(shape)
+        
     def delete(self):
         for ob in self.boundaryObjects:
             self.space.remove(ob)
