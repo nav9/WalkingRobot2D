@@ -306,7 +306,7 @@ class ImaginationTwin(Worlds):#inherits
         #---imaginary world (the world seen above)
         self.createBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)
-        ubp = self.robots[0].getUniqueBodyPosition()
+        ubp = self.robots[0].getUniqueBodyAngles()
         self.actionNetwork.addNode(ubp)
         self.robots[0].currentActionNode = ubp        
         self.initializeImaginaryRobots()
@@ -337,6 +337,7 @@ class ImaginationTwin(Worlds):#inherits
                 print('no successor. runcode now IMAGINE and start new epoch')
                 self.runState = RunCode.IMAGINE
                 self.behaviour.startNewEpoch()
+                self.setImaginaryRobotAnglesToRealRobotAngle()
                 self.sequenceLength = 1 #should be at least 1
                 self.gen = 0
                 #*************position all imaginary robots at angles of robot
@@ -375,7 +376,8 @@ class ImaginationTwin(Worlds):#inherits
         if rs == RunCode.NEXTGEN:#reset for next generation
             self.gen += 1
             self.createNewActionNodeIfPossible()
-            self.deleteImaginaryRobots(); self.initializeImaginaryRobots()            
+            self.deleteImaginaryRobots(); self.initializeImaginaryRobots()  
+            self.setImaginaryRobotAnglesToRealRobotAngle()          
             self.behaviour.startNewGen()         
             if self.gen == self.maxGens:#completion of one epoch
                 self.sequenceLength += 1 
@@ -392,9 +394,15 @@ class ImaginationTwin(Worlds):#inherits
                         fittestImaginaryRobot = i
             if fittestImaginaryRobot >= 0:
                 expe = self.imaginaryRobots[fittestImaginaryRobot].getValues()
-                node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyPosition()
+                node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyAngles()
                 self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
         
+    def setImaginaryRobotAnglesToRealRobotAngle(self):
+        pos = self.robots[0].getPositions()
+        angles = self.robots[0].getUniqueBodyAngles()
+        for r in self.imaginaryRobots:
+            p = pos[:]; a = angles[:]
+            r.setBodyPositionAndAngles(p, a, Vec2d(0, self.imaginaryWorldYOffset))
         
     def generateInfoString(self):
         genFittestRoboString = "-"; currFittestRoboString = "-"

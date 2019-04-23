@@ -283,7 +283,7 @@ class RobotBody:
         for leg in self.legs:
             print(leg.experience)
             leg.motor.rate = leg.experience[seqId]
-            
+    
     def stopMotion(self):
         for leg in self.legs:
             leg.motor.rate = 0
@@ -338,12 +338,28 @@ class RobotBody:
     def getBodyAngle(self):
         return round(math.degrees(self.chassis_body.angle)%360)
     
-    def getUniqueBodyPosition(self):
-        pos = [self.roundToNearest(self.getBodyAngle())]
+    def getUniqueBodyAngles(self):
+        ang = [self.roundToNearest(self.getBodyAngle())]
         for leg in self.legs:
-            pos.append(self.roundToNearest(leg.getLegAngle()))
-        return pos
+            ang.append(self.roundToNearest(leg.getLegAngle()))
+        return ang
     
+    def setBodyPositionAndAngles(self, pos, angles, offset):
+        p = pos.pop(0)
+        self.chassis_body.position = Vec2d(p[0], p[1]) + offset
+        self.chassis_body.angle = math.radians(angles.pop(0))
+        for leg in self.legs:
+            p = pos.pop(0)
+            leg.leg_body.position = Vec2d(p[0], p[1]) + offset
+            leg.leg_body.angle = math.radians(angles.pop(0))
+        return pos    
+    
+    def getPositions(self):
+        pos = [Vec2d(self.chassis_body.position)]
+        for leg in self.legs:
+            pos.append(Vec2d(leg.leg_body.position))
+        return pos
+        
     def roundToNearest(self, num):
         roundOffPrecision = 5
         rem = num % roundOffPrecision
