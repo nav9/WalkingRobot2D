@@ -198,66 +198,70 @@ class Worlds(object):
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 
-# class FlatGroundTraining(Worlds):#inherits
-#     def __init__(self):
-#         super(FlatGroundTraining, self).__init__()
-#         self.worldWidth = 2000 #overriding
-#         self.numRobots = 4 #min 4 robots required for DE
-#         self.elevFromBottomWall = 10
-#         self.groundThickness = 10
-#         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
-#   
-#     def initialize(self):
-#         super(FlatGroundTraining, self).initialize()
-#         groundX = self.worldX+self.wallThickness/2; groundLen = self.worldWidth-2 * self.wallThickness; groundY = self.elevFromBottomWall
-#         ground_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); groundStart = Vec2d(groundX, groundY); groundPosition = Vec2d(groundX+groundLen, groundY)
-#         ground_body.position = groundStart
-#         ground_shape = pymunk.Segment(ground_body, groundStart, groundPosition, self.groundThickness); ground_shape.friction = 1.0        
-#         self.space.add(ground_shape); self.worldObjects.append(ground_shape)  
-#         self.behaviour = DifferentialEvolution(self.robots)
-#         self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength
-#         self.maxSequenceLength = 10 #The number of dT times a leg is moved
-#         self.gen = 0 #start gen
-#         self.maxGens = 20 
-#         
-#     def processRobot(self):
-#         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
-#             return RunCode.STOP
-#         
-#         runCode = self.behaviour.run(self.sequenceLength)
-#         if runCode == RunCode.NEXTGEN:#reset for next generation
-#             self.gen += 1
-#             self.deleteRobots(); self.initializeRobots()            
-#             self.behaviour.startNewGen()         
-#             if self.gen == self.maxGens:#completion of one epoch
-#                 self.sequenceLength += 1 
-#                 self.gen = 0
-#                 self.behaviour.startNewEpoch()
-#         #---info dashboard
-#         genFittestRoboString = "-"; currFittestRoboString = "-"
-#         if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
-#         if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)
-#         self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
-#         self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
-#         self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
-#         self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
-#         
-#     def delete(self):
-#         super(FlatGroundTraining, self).delete()   
-#         for ob in self.worldObjects:
-#             self.space.remove(ob)
-#         self.worldObjects[:] = []  
-#     
-#     def updatePosition(self):  
-#         updateBy = super(FlatGroundTraining, self).updatePosition()    
-# #         self.behaviour.updateChassisBodyPositionForFitness(updateBy[0]) 
-#         if self.behaviour.currentFittestRobot != self.focusRobotID:
-#             self.focusRobotID = self.behaviour.currentFittestRobot
-#         if self.behaviour.unfitThisFullGen[self.focusRobotID]:
-#             self.focusRobotID = self.UNDETERMINED
-#         if updateBy != (0, 0):
-#             for ob in self.worldObjects:
-#                 ob.body.position += updateBy     
+class FlatGroundTraining(Worlds):#inherits
+    def __init__(self):
+        super(FlatGroundTraining, self).__init__()
+        self.screenHeight = 620 #overriding
+        self.worldWidth = 2000 #overriding
+        self.numRobots = 30 #min 4 robots required for DE
+        self.elevFromBottomWall = 10
+        self.groundThickness = 10
+        self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
+        self.elevFromBottomWall = 0
+        self.groundColor = 0,170,0        
+   
+    def initialize(self):
+        super(FlatGroundTraining, self).initialize() 
+        self.createGround(0, self.elevFromBottomWall, self.groundColor)
+        self.behaviour = DifferentialEvolution(self.robots)
+        self.sequenceLength = 3 #start seq len. Should start with anything from 1 to maxSequenceLength
+        self.maxSequenceLength = 10 #The number of dT times a leg is moved
+        self.gen = 0 #start gen
+        self.maxGens = 50 
+         
+    def createGround(self, groundX, groundY, grColor):
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2)
+        shape = pymunk.Poly.create_box(body, (self.worldWidth-2*self.wallThickness, self.wallThickness)); shape.color = grColor; shape.friction = 1.0
+        self.space.add(shape); self.worldObjects.append(shape)   
+                 
+    def processRobot(self):
+        if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
+            return RunCode.STOP
+         
+        runCode = self.behaviour.run(self.sequenceLength)
+        if runCode == RunCode.NEXTGEN:#reset for next generation
+            self.gen += 1
+            self.deleteRobots(); self.initializeRobots()            
+            self.behaviour.startNewGen()         
+            if self.gen == self.maxGens:#completion of one epoch
+                self.sequenceLength += 1 
+                self.gen = 0
+                self.behaviour.startNewEpoch()
+        #---info dashboard
+        genFittestRoboString = "-"; currFittestRoboString = "-"
+        if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
+        if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)
+        self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
+        self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
+        self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
+        self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
+         
+    def delete(self):
+        super(FlatGroundTraining, self).delete()   
+        for ob in self.worldObjects:
+            self.space.remove(ob)
+        self.worldObjects[:] = []  
+     
+    def updatePosition(self):  
+        updateBy = super(FlatGroundTraining, self).updatePosition()    
+#         self.behaviour.updateChassisBodyPositionForFitness(updateBy[0]) 
+        if self.behaviour.currentFittestRobot != self.focusRobotID:
+            self.focusRobotID = self.behaviour.currentFittestRobot
+        if self.behaviour.unfitThisFullGen[self.focusRobotID]:
+            self.focusRobotID = self.UNDETERMINED
+        if updateBy != (0, 0):
+            for ob in self.worldObjects:
+                ob.body.position += updateBy     
                             
                     
 #------------------------------------------------------------------------------------------------
@@ -475,6 +479,6 @@ class ImaginationTwin(Worlds):#inherits
             clock.tick(self.fps)
             if self.runState == RunCode.STOP:
                 break    
-            #---actions to do after simulation
-        self.actions.saveNetwork()
-        
+        #---actions to do after simulation
+        self.actionNetwork.saveNetwork()
+        #TODO: Also save variables like movtTime etc. that are crucial 
