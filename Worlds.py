@@ -268,6 +268,7 @@ class ImaginationTwin(Worlds):#inherits
     def __init__(self, actions):        
         super(ImaginationTwin, self).__init__()
         self.actionNetwork = actions
+
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 2000 #overriding
         self.worldHeight = 300
@@ -281,6 +282,8 @@ class ImaginationTwin(Worlds):#inherits
         self.imaginationColor = 100,100,100
         self.imaginationGroundColor = 100,150,100
         self.groundColor = 0,170,0
+        self.runState = RunCode.CONTINUE
+        self.nextNode = None
         
     def createGround(self, groundX, groundY, grColor):
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2)
@@ -289,8 +292,7 @@ class ImaginationTwin(Worlds):#inherits
         
     def initializeImaginaryRobots(self):      
         for i in range(0, self.numImaginaryRobots, 1):
-            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset)))
-            self.actionNetwork.addNode(self.imaginaryRobots[i].getUniqueBodyPosition())
+            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset)))            
             
     def deleteImaginaryRobots(self):
         for r in self.imaginaryRobots:
@@ -304,29 +306,96 @@ class ImaginationTwin(Worlds):#inherits
         #---imaginary world (the world seen above)
         self.createBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)
+        ubp = self.robots[0].getUniqueBodyPosition()
+        self.actionNetwork.addNode(ubp)
+        self.robots[0].currentActionNode = ubp        
         self.initializeImaginaryRobots()
         self.behaviour = ImaginationDifferentialEvolution(self.imaginaryRobots)
         self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength
         self.maxSequenceLength = 1 #The number of dT times a leg is moved
         self.gen = 0 #start gen
-        self.maxGens = 20             
+        self.maxGens = 5          
         
     def processRobot(self):
+        if self.runState == RunCode.EXPERIENCE:
+            print('runcode is EXPERIENCE')
+            if self.sequenceLength > self.maxSequenceLength:
+                self.robots[0].stopMotion()
+                self.robots[0].currentActionNode = self.nextNode
+                self.runState = RunCode.CONTINUE
+                print('no experience, so CONTINUE')
+            else: 
+                print('runExperienceForEachLeg')
+                #---run experience for each leg
+                self.robots[0].setMotorRateForSequence(self.sequenceLength-1)
+                self.sequenceLength += 1
+                
+        if self.runState == RunCode.CONTINUE:#bottom robot's movement
+            print('runcode is CONTINUE. Get best successor node')
+            successors = self.actionNetwork.getBestSuccessorNode(self.robots[0].currentActionNode)
+            if successors == None:#no successor node found, so start imagining
+                print('no successor. runcode now IMAGINE and start new epoch')
+                self.runState = RunCode.IMAGINE
+                self.behaviour.startNewEpoch()
+                self.sequenceLength = 1 #should be at least 1
+                self.gen = 0
+                #*************position all imaginary robots at angles of robot
+            else:#successor found so get the experience action to perform
+                print('successor found')
+                greatestWeight = -1; imaginedExperience = []
+                for successor in successors:
+                    self.nextNode = successor
+                    edge = self.actionNetwork.getEdge(self.robots[0].currentActionNode, self.nextNode)
+                    for e in edge:#choose next node as per best weight
+                        wt = edge[e]['weight']
+                        print('weight='+str(wt))
+                        if wt > greatestWeight:
+                            greatestWeight = wt
+                            imaginedExperience = list(edge[e]['experience'])
+                            print('exp='+str(imaginedExperience))
+                        else: continue
+                #---make preparations to run the node's experience
+                self.robots[0].setExperience(imaginedExperience)
+                self.sequenceLength = 1 #should be at least 1
+                print('runcode is now EXPERIENCE')
+                
+                self.runState = RunCode.EXPERIENCE
+        if self.runState == RunCode.IMAGINE:#imaginary robot's movement
+            print('imaginaion being run')
+            self.runImagination()
+    
+    def runImagination(self):
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
-            return RunCode.STOP
+            self.runState = RunCode.CONTINUE
+            self.infoString = ''  
+            print('imagination done. Continuing now')          
+            return
         
-        runCode = self.behaviour.run(self.sequenceLength)
-        if runCode == RunCode.NEXTGEN:#reset for next generation
+        rs = self.behaviour.run(self.sequenceLength)
+        if rs == RunCode.NEXTGEN:#reset for next generation
             self.gen += 1
+            self.createNewActionNodeIfPossible()
             self.deleteImaginaryRobots(); self.initializeImaginaryRobots()            
             self.behaviour.startNewGen()         
             if self.gen == self.maxGens:#completion of one epoch
                 self.sequenceLength += 1 
                 self.gen = 0
                 self.behaviour.startNewEpoch()
-        self.generateInfoString()
-
-                     
+        self.generateInfoString()        
+                
+    def createNewActionNodeIfPossible(self):
+        if False in self.behaviour.unfitThisFullGen:
+            maxi = 0; fittestImaginaryRobot = -1
+            for i in range(0, len(self.behaviour.unfitThisFullGen), 1):
+                if not self.behaviour.unfitThisFullGen[i] and self.behaviour.fit[i] > maxi:
+                        maxi = self.behaviour.fit[i]
+                        fittestImaginaryRobot = i
+            if fittestImaginaryRobot >= 0:
+                expe = self.imaginaryRobots[fittestImaginaryRobot].getValues()
+                node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyPosition()
+                self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
+        
+        
     def generateInfoString(self):
         genFittestRoboString = "-"; currFittestRoboString = "-"
         if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
@@ -355,7 +424,7 @@ class ImaginationTwin(Worlds):#inherits
                 
     def updateColor(self):
         for obj in self.robots:
-            obj.setNormalRobotColor()        
+            obj.setNormalRobotColor()
         for obj in self.imaginaryRobots:
             if self.focusRobotID >= 0:
                 if obj == self.imaginaryRobots[self.focusRobotID]: obj.setFocusRobotColor() 
@@ -363,7 +432,7 @@ class ImaginationTwin(Worlds):#inherits
             else: obj.setImaginaryRobotColor()                 
     
     def runWorld(self):
-        runState = RunCode.CONTINUE
+        self.runState = RunCode.CONTINUE
         clock = pygame.time.Clock()
         simulating = True        
         #prevTime = time.time();
@@ -387,7 +456,7 @@ class ImaginationTwin(Worlds):#inherits
                 self.updateColor()
                 self.prevFocusRobotID = self.focusRobotID
             if self.movtTime == 0:
-                runState = self.processRobot()
+                self.processRobot()
                 self.movtTime = self.maxMovtTime
             else:
                 self.movtTime -= 1
@@ -397,6 +466,6 @@ class ImaginationTwin(Worlds):#inherits
             
             #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
             clock.tick(self.fps)
-            if runState == RunCode.STOP:
+            if self.runState == RunCode.STOP:
                 break    
             

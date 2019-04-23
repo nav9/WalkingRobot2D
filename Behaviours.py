@@ -11,6 +11,8 @@ class RunCode:
     CONTINUE = 1
     RESET = 2
     NEXTGEN = 3
+    IMAGINE = 4
+    EXPERIENCE = 5
 
 # Note: At least 4 robots are required for Differential Evolution to work
 class DifferentialEvolution:#(AbstractRobotBehaviour):    
@@ -276,6 +278,7 @@ class ImaginationDifferentialEvolution:#(AbstractRobotBehaviour):
                 
         runState = RunCode.CONTINUE
         if self.generatingSeqForThisGen:#sequence is being generated
+            print('generating seq for this gen')
             i = 0
             for r in self.robots:
                 if len(self.temp) == 0:

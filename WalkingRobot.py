@@ -105,6 +105,16 @@ class ActionNetwork:
     
     def addNode(self, node):
         self.graph.add_node(tuple(node))
+        
+    def addEdge(self, node1, node2, wt, expe):
+        self.graph.add_edge(tuple(node1), tuple(node2), weight=wt, experience=tuple(expe))
+    
+    def getEdge(self, node1, node2):
+        return self.graph.get_edge_data(tuple(node1), tuple(node2))
+    
+    def getBestSuccessorNode(self, currNode):#edges going out of currNode
+        if self.graph.out_degree[tuple(currNode)] == 0: return None 
+        else: return self.graph.successors(tuple(currNode))
     
     def displayNetwork(self):
         plt.subplot(111)
@@ -112,12 +122,10 @@ class ActionNetwork:
         plt.show()
     
     def saveNetwork(self):
-        #nx.write_gml(self.graph, self.saveFile)
         nx.write_gpickle(self.graph, self.saveFile)
     
     def __loadNetwork__(self):
         try:
-            #self.graph = nx.read_gml(self.saveFile)
             self.graph = nx.read_gpickle(self.saveFile)
         except:
             print('No '+self.saveFile+' found. Creating new action network.')
@@ -207,8 +215,9 @@ class RobotBody:
         self.chassis_body = None #chassis body
         self.chassis_shape = None #chassis shape 
         self.legs = []
+        self.currentActionNode = []#node on the action network        
         self.numLegsOnEachSide = 1
-        self.brain = None        
+#         self.brain = None        
         self.space = pymunkSpace
         self.__createBody__(chassisCenterPoint)
         #self.actionNetwork = globalActionNetwork
@@ -235,11 +244,17 @@ class RobotBody:
 #             leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT); self.legs.append(leftLegB)            
 #             rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT); self.legs.append(rightLegA)
 #             rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT); self.legs.append(rightLegB)  
-            
-                                    
+                
         self.makeRobotDynamic()
     
-    def reinitializeWithRandomValues(self, seqLen):        
+    def setExperience(self, expe):       
+        for leg in self.legs:
+            leg.experience[:] = []
+        while len(expe) > 0:
+            for leg in self.legs:
+                leg.experience.append(expe.pop(0))
+             
+    def reinitializeWithRandomValues(self, seqLen):       
         for leg in self.legs:
             leg.experience[:] = []
             for i in range(0, seqLen, 1):
@@ -264,9 +279,15 @@ class RobotBody:
                 j += 1
     
     def setMotorRateForSequence(self, seqId):
+        print(seqId)
         for leg in self.legs:
+            print(leg.experience)
             leg.motor.rate = leg.experience[seqId]
             
+    def stopMotion(self):
+        for leg in self.legs:
+            leg.motor.rate = 0
+                        
     def setFocusRobotColor(self):
         self.chassis_shape.color = (190, 0, 0)
         
@@ -321,7 +342,6 @@ class RobotBody:
         pos = [self.roundToNearest(self.getBodyAngle())]
         for leg in self.legs:
             pos.append(self.roundToNearest(leg.getLegAngle()))
-        print(pos)
         return pos
     
     def roundToNearest(self, num):
