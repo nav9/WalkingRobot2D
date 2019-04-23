@@ -67,7 +67,7 @@ class Worlds(object):
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
         self.fps = 50
-        self.maxMovtTime = 10 #how often in time the sequences of the robot get executed
+        self.maxMovtTime = 50 #how often in time the sequences of the robot get executed
         self.movtTime = self.fps #start value of movt time. Can be anything from 0 to maxMovtTime
         self.iterations = 20        
         #self.space.damping = 0.999 
@@ -289,16 +289,7 @@ class ImaginationTwin(Worlds):#inherits
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2)
         shape = pymunk.Poly.create_box(body, (self.worldWidth-2*self.wallThickness, self.wallThickness)); shape.color = grColor; shape.friction = 1.0
         self.space.add(shape); self.worldObjects.append(shape)        
-        
-    def initializeImaginaryRobots(self):      
-        for i in range(0, self.numImaginaryRobots, 1):
-            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset)))            
-            
-    def deleteImaginaryRobots(self):
-        for r in self.imaginaryRobots:
-            r.delete()
-        self.imaginaryRobots[:] = []            
-    
+                 
     def initialize(self):
         #---actual world (the world seen below)
         super(ImaginationTwin, self).initialize()
@@ -309,12 +300,12 @@ class ImaginationTwin(Worlds):#inherits
         ubp = self.robots[0].getUniqueBodyAngles()
         self.actionNetwork.addNode(ubp)
         self.robots[0].currentActionNode = ubp        
-        self.initializeImaginaryRobots()
+        self.initializeImaginaryRobots(); self.setImaginaryRobotAnglesToRealRobotAngle()
         self.behaviour = ImaginationDifferentialEvolution(self.imaginaryRobots)
         self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength
         self.maxSequenceLength = 1 #The number of dT times a leg is moved
         self.gen = 0 #start gen
-        self.maxGens = 5          
+        self.maxGens = 2         
         
     def processRobot(self):
         if self.runState == RunCode.EXPERIENCE:
@@ -349,11 +340,9 @@ class ImaginationTwin(Worlds):#inherits
                     edge = self.actionNetwork.getEdge(self.robots[0].currentActionNode, self.nextNode)
                     for e in edge:#choose next node as per best weight
                         wt = edge[e]['weight']
-                        print('weight='+str(wt))
                         if wt > greatestWeight:
                             greatestWeight = wt
                             imaginedExperience = list(edge[e]['experience'])
-                            print('exp='+str(imaginedExperience))
                         else: continue
                 #---make preparations to run the node's experience
                 self.robots[0].setExperience(imaginedExperience)
@@ -365,6 +354,15 @@ class ImaginationTwin(Worlds):#inherits
             print('imaginaion being run')
             self.runImagination()
     
+    def initializeImaginaryRobots(self):      
+        for i in range(0, self.numImaginaryRobots, 1):
+            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, -self.imaginaryWorldYOffset)))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
+            
+    def deleteImaginaryRobots(self):
+        for r in self.imaginaryRobots:
+            r.delete()
+        self.imaginaryRobots[:] = []    
+            
     def runImagination(self):
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
             self.runState = RunCode.CONTINUE
@@ -447,7 +445,8 @@ class ImaginationTwin(Worlds):#inherits
         while simulating:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
-                    sys.exit(0)
+                    #sys.exit(0)
+                    return
                 if event.type == KEYDOWN:
                     if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
                     if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])

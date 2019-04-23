@@ -12,6 +12,7 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from pygame import _numpysurfarray
+from matplotlib.animation import FuncAnimation
 #from threading import Thread, Lock
 
 # class ActionsNetwork:#For now, a single instance of this is created which all walking robots can contribute to and access
@@ -117,10 +118,14 @@ class ActionNetwork:
         else: return self.graph.successors(tuple(currNode))
     
     def displayNetwork(self):
-        plt.subplot(111)
-        nx.draw(self.graph, with_labels=False, font_weight='bold')
-        plt.show()
-    
+        #plt.subplot(111)
+        #nx.draw_kamada_kawai(self.graph)
+        spring_pos = nx.spring_layout(self.graph)
+        nx.draw_networkx(self.graph, pos=spring_pos, arrows=True, with_labels=False, node_size=20)
+        #nx.draw_circular(self.graph)
+        #nx.draw(self.graph, with_labels=False, font_weight='bold')
+        plt.show()   
+        
     def saveNetwork(self):
         nx.write_gpickle(self.graph, self.saveFile)
     
@@ -279,9 +284,7 @@ class RobotBody:
                 j += 1
     
     def setMotorRateForSequence(self, seqId):
-        print(seqId)
         for leg in self.legs:
-            print(leg.experience)
             leg.motor.rate = leg.experience[seqId]
     
     def stopMotion(self):

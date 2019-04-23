@@ -291,7 +291,7 @@ class ImaginationDifferentialEvolution:#(AbstractRobotBehaviour):
                             leg.experience.append(v[j])
                             j += 1
                 i += 1
-        #sequence generated. Now just execute as-is for entire epoch
+        #---sequence generated. Now just execute as-is for entire epoch
         for r in self.robots:
             r.setMotorRateForSequence(self.seqNum)                                   
         self.seqNum += 1  
