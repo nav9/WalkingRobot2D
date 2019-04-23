@@ -2,6 +2,7 @@
 # Created: April 2019
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
+import math
 import random
 from random import uniform
 from WalkingRobot import RobotBody
@@ -21,7 +22,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.decimalPrecision = 2
         self.robots = robo     
         self.repeatSeq = 0; 
-        self.maxSeqRepetitions = 100 #how many times to repeat the sequence of seqNum's  
+        self.maxSeqRepetitions = 10 #how many times to repeat the sequence of seqNum's  
         self.seqNum = 0 #ordinal of the sequence of movements of an experience
         self.temp = []
         self.NOTFIT = 0
@@ -71,7 +72,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
                 self.temp[:] = []                   
             return
         #---proceed with DE 
-        leastFitRobot = self.fit.index(min(self.fit)) 
+        #leastFitRobot = self.fit.index(min(self.fit)) 
         for i in range(len(self.robots)):
             sel[:] = []
             for s in oldSel:
@@ -99,8 +100,20 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
                     if uniform(0,1) <= self.crProba:
                         mutant[ii] = curr[ii]                        
                 self.robots[i].setValuesWithClamping(mutant, seqLen) 
-            self.robots[leastFitRobot].reinitializeWithRandomValues(seqLen)
-        
+        #---reinitialize 25% of least fit robots
+        tempFit = self.fit[:] #copy
+        minVal = min(self.fit)#self.fit[leastFitRobot]
+        leastFitIndices = set([])
+        reinitNum = math.floor(0.25*len(self.robots))
+        while len(leastFitIndices) < reinitNum:
+            for i in range(len(self.robots)):
+                if self.fit[i] <= minVal: 
+                    leastFitIndices.add(i)
+                if len(leastFitIndices) >= reinitNum: break#out of for
+            tempFit = [i for i in tempFit if i != minVal]
+            minVal = min(tempFit)
+        for i in leastFitIndices:
+            self.robots[i].reinitializeWithRandomValues(seqLen)
         
         #---beta is reduced to encourage exploitation and reduce exploration
         if self.vBeta > 1/40: 
@@ -257,7 +270,7 @@ class ImaginationDifferentialEvolution:#(AbstractRobotBehaviour):
                     if uniform(0,1) <= self.crProba:
                         mutant[ii] = curr[ii]                        
                 self.robots[i].setValuesWithClamping(mutant, seqLen) 
-            self.robots[leastFitRobot].reinitializeWithRandomValues(seqLen)        
+        self.robots[leastFitRobot].reinitializeWithRandomValues(seqLen)        
         
         #---beta is reduced to encourage exploitation and reduce exploration
         if self.vBeta > 1/40: 

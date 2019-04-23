@@ -27,7 +27,7 @@ class Worlds(object):
         self.screenHeight = 400 #keep at at least 350. Can get overridden in child class
         self.boundaryObjects = []
         self.worldObjects = []
-        self.worldWidth = 1000 #may get overridden in child class
+        self.worldWidth = 2000 #may get overridden in child class
         self.worldHeight = 500 #may get overridden in child class
         self.wallThickness = 15
         self.boundaryColor = 170,170,170
@@ -200,9 +200,10 @@ class Worlds(object):
 class FlatGroundTraining(Worlds):#inherits
     def __init__(self):
         super(FlatGroundTraining, self).__init__()
-        self.screenHeight = 620 #overriding
-        self.worldWidth = 2000 #overriding
-        self.numRobots = 30 #min 4 robots required for DE
+        self.screenHeight = 320 #overriding
+        self.worldHeight = 280 #overriding
+        self.worldWidth = 3000 #overriding
+        self.numRobots = 15 #min 4 robots required for DE
         self.elevFromBottomWall = 10
         self.groundThickness = 10
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
