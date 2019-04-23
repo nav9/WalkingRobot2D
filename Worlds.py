@@ -268,7 +268,7 @@ class ImaginationTwin(Worlds):#inherits
     def __init__(self, actions):        
         super(ImaginationTwin, self).__init__()
         self.actionNetwork = actions
-
+        self.screenWidth = 500
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 2000 #overriding
         self.worldHeight = 300
@@ -312,7 +312,7 @@ class ImaginationTwin(Worlds):#inherits
             print('runcode is EXPERIENCE')
             if self.sequenceLength > self.maxSequenceLength:
                 self.robots[0].stopMotion()
-                self.robots[0].currentActionNode = self.nextNode
+                self.robots[0].currentActionNode = tuple(self.nextNode)
                 self.runState = RunCode.CONTINUE
                 print('no experience, so CONTINUE')
             else: 
@@ -331,7 +331,6 @@ class ImaginationTwin(Worlds):#inherits
                 self.setImaginaryRobotAnglesToRealRobotAngle()
                 self.sequenceLength = 1 #should be at least 1
                 self.gen = 0
-                #*************position all imaginary robots at angles of robot
             else:#successor found so get the experience action to perform
                 print('successor found')
                 greatestWeight = -1; imaginedExperience = []
@@ -356,7 +355,7 @@ class ImaginationTwin(Worlds):#inherits
     
     def initializeImaginaryRobots(self):      
         for i in range(0, self.numImaginaryRobots, 1):
-            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, -self.imaginaryWorldYOffset)))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
+            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset)))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
             
     def deleteImaginaryRobots(self):
         for r in self.imaginaryRobots:
@@ -394,12 +393,13 @@ class ImaginationTwin(Worlds):#inherits
                 expe = self.imaginaryRobots[fittestImaginaryRobot].getValues()
                 node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyAngles()
                 self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
+        self.actionNetwork.displayNetwork()
         
     def setImaginaryRobotAnglesToRealRobotAngle(self):
         pos = self.robots[0].getPositions()
         angles = self.robots[0].getUniqueBodyAngles()
         for r in self.imaginaryRobots:
-            p = pos[:]; a = angles[:]
+            p = pos[:]; a = angles[:] #copying values instead of references
             r.setBodyPositionAndAngles(p, a, Vec2d(0, self.imaginaryWorldYOffset))
         
     def generateInfoString(self):
@@ -446,13 +446,13 @@ class ImaginationTwin(Worlds):#inherits
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
                     #sys.exit(0)
-                    return
+                    simulating = False
                 if event.type == KEYDOWN:
                     if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
                     if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
                     if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
                     if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)                    
-
+            if not simulating: break #coz break within event for loop won't exit while
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
             for x in range(self.iterations): #iterations to get a more stable simulation
@@ -475,4 +475,6 @@ class ImaginationTwin(Worlds):#inherits
             clock.tick(self.fps)
             if self.runState == RunCode.STOP:
                 break    
-            
+            #---actions to do after simulation
+        self.actions.saveNetwork()
+        

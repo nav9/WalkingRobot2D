@@ -21,8 +21,7 @@ class Simulator(object):
             w = self.worlds[self.worldOrdinal]
             w.initialize()
             w.runWorld()    
-            self.actions.saveNetwork()
-            self.actions.displayNetwork()
+            
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
 
 

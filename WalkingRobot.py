@@ -13,6 +13,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from pygame import _numpysurfarray
 from matplotlib.animation import FuncAnimation
+
 #from threading import Thread, Lock
 
 # class ActionsNetwork:#For now, a single instance of this is created which all walking robots can contribute to and access
@@ -119,12 +120,27 @@ class ActionNetwork:
     
     def displayNetwork(self):
         #plt.subplot(111)
+        plt.clf(); 
         #nx.draw_kamada_kawai(self.graph)
-        spring_pos = nx.spring_layout(self.graph)
+        #spring_pos = nx.spring_layout(self.graph)
+        #spring_pos = nx.planar_layout(self.graph)        
+        #spring_pos = nx.circular_layout(self.graph)
+        spring_pos = nx.kamada_kawai_layout(self.graph)
         nx.draw_networkx(self.graph, pos=spring_pos, arrows=True, with_labels=False, node_size=20)
         #nx.draw_circular(self.graph)
         #nx.draw(self.graph, with_labels=False, font_weight='bold')
-        plt.show()   
+        plt.pause(0.001)
+        plt.show(block=False)   
+# __all__ = ['bipartite_layout',
+#            'circular_layout',
+#            'kamada_kawai_layout',
+#            'random_layout',
+#            'rescale_layout',
+#            'shell_layout',
+#            'spring_layout',
+#            'spectral_layout',
+#            'planar_layout',
+#            'fruchterman_reingold_layout']        
         
     def saveNetwork(self):
         nx.write_gpickle(self.graph, self.saveFile)
@@ -350,6 +366,7 @@ class RobotBody:
     def setBodyPositionAndAngles(self, pos, angles, offset):
         p = pos.pop(0)
         self.chassis_body.position = Vec2d(p[0], p[1]) + offset
+        self.chassis_body.startPosition = Vec2d(p[0], p[1]) + offset
         self.chassis_body.angle = math.radians(angles.pop(0))
         for leg in self.legs:
             p = pos.pop(0)
