@@ -45,7 +45,7 @@ class Worlds(object):
         self.cameraMoveDist = Vec2d(100, 50)
         self.UNDETERMINED = -1
         #self.maxMovtTime = 50 #how often in time the sequences of the robot get executed        
-                
+
     def initialize(self):
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
@@ -56,9 +56,8 @@ class Worlds(object):
         #self.focusRobotChanged = False
         self.prevFocusRobotID = self.UNDETERMINED #At first none of the robots will be in focus since fitness hasn't been determined
         self.focusRobotID = self.UNDETERMINED #At first none of the robots will be in focus since fitness hasn't been determined
-        self.infoString = ""   
-        
-        self.createBoundary(0, 0, self.boundaryColor)
+        self.infoString = ""           
+        self.createWorldBoundary(0, 0, self.boundaryColor)
             
         pygame.init()
         pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
@@ -71,7 +70,7 @@ class Worlds(object):
         self.initializeRobots()
         if len(self.robots) <= 0: print('Create at least one robot'); return
 
-    def createBoundary(self, worldX, worldY, bouColor):
+    def createWorldBoundary(self, worldX, worldY, bouColor):
         #---top boundary        
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth/2, worldY+self.worldHeight-self.wallThickness/2)
         shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = bouColor; shape.friction = 1.0
@@ -303,7 +302,7 @@ class ImaginationTwin(Worlds):#inherits
         super(ImaginationTwin, self).initialize()
         self.createGround(0, self.elevFromBottomWall, self.groundColor)
         #---imaginary world (the world seen above)
-        self.createBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
+        self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)
         ubp = self.robots[0].getUniqueBodyAngles()
         self.actionNetwork.addNode(ubp)
@@ -315,7 +314,8 @@ class ImaginationTwin(Worlds):#inherits
         self.gen = 0 #start gen
         self.maxGens = 2         
         
-    def processRobot(self):
+    def processRobot(self):    
+        resetMovtTime = True    
         if self.runState == RunCode.EXPERIENCE:
             if self.sequenceLength > self.maxSequenceLength:
                 self.robots[0].stopMotion()
@@ -335,6 +335,7 @@ class ImaginationTwin(Worlds):#inherits
                 self.setImaginaryRobotAnglesToRealRobotAngle()
                 self.sequenceLength = 1 #should be at least 1
                 self.gen = 0
+                resetMovtTime = False
             else:#successor found so get the experience action to perform
                 greatestWeight = 0; imaginedExperience = []
                 for successor in successors:
@@ -348,27 +349,22 @@ class ImaginationTwin(Worlds):#inherits
                         else: continue
                 #---make preparations to run the node's experience
                 self.robots[0].setExperience(imaginedExperience)
-                self.sequenceLength = 1 #should be at least 1
-                
+                self.sequenceLength = 1 #should be at least 1                
                 self.runState = RunCode.EXPERIENCE
+                resetMovtTime = False
+        
         if self.runState == RunCode.IMAGINE:#imaginary robot's movement
-            self.runImagination()
+            resetMovtTime = self.runImagination()
+        return resetMovtTime
     
-    def initializeImaginaryRobots(self):      
-        for i in range(0, self.numImaginaryRobots, 1):
-            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset), self.legsCode))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
-            
-    def deleteImaginaryRobots(self):
-        for r in self.imaginaryRobots:
-            r.delete()
-        self.imaginaryRobots[:] = []    
-            
     def runImagination(self):
+        resetMovtTime = True
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
             self.runState = RunCode.CONTINUE
-            self.infoString = ''           
-            return
-        
+            self.infoString = ''
+            resetMovtTime = False    
+            return resetMovtTime
+
         rs = self.behaviour.run(self.sequenceLength)
         if rs == RunCode.NEXTGEN:#reset for next generation
             self.gen += 1
@@ -380,7 +376,9 @@ class ImaginationTwin(Worlds):#inherits
                 self.sequenceLength += 1 
                 self.gen = 0
                 self.behaviour.startNewEpoch()
-        self.generateInfoString()        
+        self.generateInfoString()  
+        return resetMovtTime
+          
                 
     def createNewActionNodeIfPossible(self):
         if False in self.behaviour.unfitThisFullGen:
@@ -395,6 +393,48 @@ class ImaginationTwin(Worlds):#inherits
                 self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
         self.actionNetwork.displayNetwork()
         
+    def runWorld(self):
+        self.runState = RunCode.CONTINUE
+        clock = pygame.time.Clock()
+        simulating = True        
+        #prevTime = time.time();
+        while simulating:
+            for event in pygame.event.get():
+                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
+                    #sys.exit(0)
+                    simulating = False
+                if event.type == KEYDOWN:
+                    if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
+                    if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
+                    if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
+                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)                    
+            if not simulating: break #coz break within event for loop won't exit while
+            #---Update physics
+            dt = 1.0 / float(self.fps) / float(self.iterations)
+            for x in range(self.iterations): #iterations to get a more stable simulation
+                self.space.step(dt)
+            #---Update world based on camera focus
+            self.updatePosition()
+            if self.prevFocusRobotID != self.focusRobotID: 
+                self.updateColor()
+                self.prevFocusRobotID = self.focusRobotID
+            if self.movtTime == 0:
+                resetMovT = self.processRobot()
+                if resetMovT: self.movtTime = self.maxMovtTime
+            else:
+                self.movtTime -= 1
+            
+            #---draw all objects            
+            self.draw()
+            
+            #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
+            clock.tick(self.fps)
+            if self.runState == RunCode.STOP:
+                break    
+        #---actions to do after simulation
+        self.actionNetwork.saveNetwork()
+        #TODO: Also save variables like movtTime etc. that are crucial 
+
     def setImaginaryRobotAnglesToRealRobotAngle(self):
         pos = self.robots[0].getPositions()
         angles = self.robots[0].getUniqueBodyAngles()
@@ -437,44 +477,13 @@ class ImaginationTwin(Worlds):#inherits
                 else: obj.setImaginaryRobotColor()
             else: obj.setImaginaryRobotColor()                 
     
-    def runWorld(self):
-        self.runState = RunCode.CONTINUE
-        clock = pygame.time.Clock()
-        simulating = True        
-        #prevTime = time.time();
-        while simulating:
-            for event in pygame.event.get():
-                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
-                    #sys.exit(0)
-                    simulating = False
-                if event.type == KEYDOWN:
-                    if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
-                    if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
-                    if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
-                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)                    
-            if not simulating: break #coz break within event for loop won't exit while
-            #---Update physics
-            dt = 1.0 / float(self.fps) / float(self.iterations)
-            for x in range(self.iterations): #iterations to get a more stable simulation
-                self.space.step(dt)
-            #---Update world based on camera focus
-            self.updatePosition()
-            if self.prevFocusRobotID != self.focusRobotID: 
-                self.updateColor()
-                self.prevFocusRobotID = self.focusRobotID
-            if self.movtTime == 0:
-                self.processRobot()
-                self.movtTime = self.maxMovtTime
-            else:
-                self.movtTime -= 1
             
-            #---draw all objects            
-            self.draw()
+    def initializeImaginaryRobots(self):      
+        for i in range(0, self.numImaginaryRobots, 1):
+            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset), self.legsCode))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
             
-            #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
-            clock.tick(self.fps)
-            if self.runState == RunCode.STOP:
-                break    
-        #---actions to do after simulation
-        self.actionNetwork.saveNetwork()
-        #TODO: Also save variables like movtTime etc. that are crucial 
+    def deleteImaginaryRobots(self):
+        for r in self.imaginaryRobots:
+            r.delete()
+        self.imaginaryRobots[:] = []    
+        

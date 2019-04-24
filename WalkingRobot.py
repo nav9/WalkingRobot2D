@@ -119,7 +119,7 @@ class ActionNetwork:
         if self.graph.out_degree[tuple(currNode)] == 0: return None 
         else: return self.graph.successors(tuple(currNode))
     
-    def displayNetwork(self):        
+    def displayNetwork(self):    
         self.fig.patch.set_facecolor('black')
         plt.clf(); 
         plt.rcParams['axes.facecolor'] = 'black'
@@ -135,7 +135,8 @@ class ActionNetwork:
         #nx.draw_circular(self.graph)
         #nx.draw(self.graph, with_labels=False, font_weight='bold')
         plt.pause(0.001)
-        plt.show(block=False)   
+        plt.show(block=False)  
+         
 # __all__ = ['bipartite_layout',
 #            'circular_layout',
 #            'kamada_kawai_layout',
@@ -157,8 +158,16 @@ class ActionNetwork:
         except:
             print('No '+self.actionFile+' found. Creating new action network.')
             self.graph = nx.MultiDiGraph()
-        self.displayNetwork()
-            
+        if not nx.is_empty(self.graph):
+            self.displayNetwork()
+            self.actionNetworkProperties()
+    
+    def actionNetworkProperties(self):
+        print('Action network properties:')
+        print('Num nodes: '+str(nx.number_of_nodes(self.graph)))
+        print('Num edges: '+str(nx.number_of_edges(self.graph)))
+        print('Density: '+str(nx.density(self.graph)))
+        print('Num self loops: '+str(nx.number_of_selfloops(self.graph)))
     
 class Directions:
     UP = 1
