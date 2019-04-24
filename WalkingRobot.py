@@ -103,6 +103,7 @@ class ActionNetwork:
     def __init__(self, execLen, legs):
         self.actionFile = 'actionNetwork_'+str(execLen)+'_'+legs+'.gpickle'
         self.graph = None
+        self.fig = plt.figure()
         self.__loadNetwork__()
     
     def addNode(self, node):
@@ -118,15 +119,19 @@ class ActionNetwork:
         if self.graph.out_degree[tuple(currNode)] == 0: return None 
         else: return self.graph.successors(tuple(currNode))
     
-    def displayNetwork(self):
-        #plt.subplot(111)
+    def displayNetwork(self):        
+        self.fig.patch.set_facecolor('black')
         plt.clf(); 
+        plt.rcParams['axes.facecolor'] = 'black'
+        plt.rcParams['patch.facecolor'] = 'black'
+        self.fig.canvas.toolbar.pack_forget()#remove bottom bar
         #nx.draw_kamada_kawai(self.graph)
         #spring_pos = nx.spring_layout(self.graph)
         #spring_pos = nx.planar_layout(self.graph)        
         #spring_pos = nx.circular_layout(self.graph)
         spring_pos = nx.kamada_kawai_layout(self.graph)
-        nx.draw_networkx(self.graph, pos=spring_pos, arrows=True, with_labels=False, node_size=20)
+        #nx.draw_networkx(self.graph, pos=spring_pos, arrows=True, with_labels=False, node_size=20, edge_color='green', arrowsize=1, arrowstyle='fancy')
+        nx.draw_networkx(self.graph, pos=spring_pos, arrows=True, with_labels=False, node_size=20, edge_color='green', node_color='green')
         #nx.draw_circular(self.graph)
         #nx.draw(self.graph, with_labels=False, font_weight='bold')
         plt.pause(0.001)
@@ -152,7 +157,7 @@ class ActionNetwork:
         except:
             print('No '+self.actionFile+' found. Creating new action network.')
             self.graph = nx.MultiDiGraph()
-#         finally:
+        self.displayNetwork()
             
     
 class Directions:
