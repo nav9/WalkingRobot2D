@@ -21,9 +21,7 @@ class Simulator(object):
             w = self.worlds[self.worldOrdinal]
             w.initialize()
             w.runWorld()    
-            
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
-
 
 #-----------------------------------------------
 #-----------------------------------------------

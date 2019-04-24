@@ -11,7 +11,7 @@ import pymunk.pygame_util
 import pymunk
 from pygame.locals import *
 from pygame.color import *
-from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_LEFTBRACKET, K_RIGHTBRACKET, K_r, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
+from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_LEFTBRACKET, K_RIGHTBRACKET, K_n, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
 from pygame.color import THECOLORS
 from WalkingRobot import RobotBody
 from Behaviours import DifferentialEvolution, ImaginationDifferentialEvolution, RunCode
@@ -275,9 +275,9 @@ class ImaginationTwin(Worlds):#inherits
         self.legsCode = legCode
         self.maxMovtTime = execLen        
         self.actionNetwork = actions
-        self.screenWidth = 500
+        self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        
-        self.worldWidth = 2000 #overriding
+        self.worldWidth = 3000 #overriding
         self.worldHeight = 300
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1
@@ -322,8 +322,7 @@ class ImaginationTwin(Worlds):#inherits
                 self.robots[0].currentActionNode = tuple(self.nextNode)
                 self.nextNode = None
                 self.runState = RunCode.CONTINUE
-            else: 
-                #---run experience for each leg
+            else: #---run experience for each leg
                 self.robots[0].setMotorRateForSequence(self.sequenceLength-1)
                 self.sequenceLength += 1
                 
@@ -368,7 +367,7 @@ class ImaginationTwin(Worlds):#inherits
         rs = self.behaviour.run(self.sequenceLength)
         if rs == RunCode.NEXTGEN:#reset for next generation
             self.gen += 1
-            self.createNewActionNodeIfPossible()
+            self.createNewActionNodeIfPossible()#***************YOU DON'T CREATE NODE NOW
             self.deleteImaginaryRobots(); self.initializeImaginaryRobots()  
             self.setImaginaryRobotAnglesToRealRobotAngle()          
             self.behaviour.startNewGen()         
@@ -378,8 +377,7 @@ class ImaginationTwin(Worlds):#inherits
                 self.behaviour.startNewEpoch()
         self.generateInfoString()  
         return resetMovtTime
-          
-                
+        
     def createNewActionNodeIfPossible(self):
         if False in self.behaviour.unfitThisFullGen:
             maxi = 0; fittestImaginaryRobot = -1
@@ -391,13 +389,14 @@ class ImaginationTwin(Worlds):#inherits
                 expe = self.imaginaryRobots[fittestImaginaryRobot].getValues()
                 node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyAngles()
                 self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
-        self.actionNetwork.displayNetwork()
+                self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying       
         
     def runWorld(self):
         self.runState = RunCode.CONTINUE
         clock = pygame.time.Clock()
         simulating = True        
-        #prevTime = time.time();
+        #prevTime = time.time()
+        
         while simulating:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
@@ -407,7 +406,10 @@ class ImaginationTwin(Worlds):#inherits
                     if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
                     if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
                     if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
-                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)                    
+                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)
+                    if event.key == K_n: 
+                        print('Getting ready to display action network...'); 
+                        self.actionNetwork.displayNetwork()                     
             if not simulating: break #coz break within event for loop won't exit while
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
@@ -425,12 +427,13 @@ class ImaginationTwin(Worlds):#inherits
                 self.movtTime -= 1
             
             #---draw all objects            
-            self.draw()
+            self.draw()                
             
             #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
             clock.tick(self.fps)
             if self.runState == RunCode.STOP:
-                break    
+                break  
+              
         #---actions to do after simulation
         self.actionNetwork.saveNetwork()
         #TODO: Also save variables like movtTime etc. that are crucial 
