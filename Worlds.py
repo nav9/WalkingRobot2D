@@ -49,7 +49,7 @@ class Worlds(object):
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
         self.fps = 50
-        self.maxMovtTime = 10 #how often in time the sequences of the robot get executed
+        self.maxMovtTime = 50 #how often in time the sequences of the robot get executed
         self.movtTime = 0 #start value of movt time. Can be anything from 0 to maxMovtTime
         self.iterations = 20        
         #self.space.damping = 0.999 
@@ -313,30 +313,25 @@ class ImaginationTwin(Worlds):#inherits
         
     def processRobot(self):
         if self.runState == RunCode.EXPERIENCE:
-            print('runcode is EXPERIENCE')
             if self.sequenceLength > self.maxSequenceLength:
                 self.robots[0].stopMotion()
                 self.robots[0].currentActionNode = tuple(self.nextNode)
+                self.nextNode = None
                 self.runState = RunCode.CONTINUE
-                print('no experience, so CONTINUE')
             else: 
-                print('runExperienceForEachLeg')
                 #---run experience for each leg
                 self.robots[0].setMotorRateForSequence(self.sequenceLength-1)
                 self.sequenceLength += 1
                 
         if self.runState == RunCode.CONTINUE:#bottom robot's movement
-            print('runcode is CONTINUE. Get best successor node')
             successors = self.actionNetwork.getBestSuccessorNode(self.robots[0].currentActionNode)
             if successors == None:#no successor node found, so start imagining
-                print('no successor. runcode now IMAGINE and start new epoch')
                 self.runState = RunCode.IMAGINE
                 self.behaviour.startNewEpoch()
                 self.setImaginaryRobotAnglesToRealRobotAngle()
                 self.sequenceLength = 1 #should be at least 1
                 self.gen = 0
             else:#successor found so get the experience action to perform
-                print('successor found')
                 greatestWeight = -1; imaginedExperience = []
                 for successor in successors:
                     self.nextNode = successor
@@ -350,11 +345,9 @@ class ImaginationTwin(Worlds):#inherits
                 #---make preparations to run the node's experience
                 self.robots[0].setExperience(imaginedExperience)
                 self.sequenceLength = 1 #should be at least 1
-                print('runcode is now EXPERIENCE')
                 
                 self.runState = RunCode.EXPERIENCE
         if self.runState == RunCode.IMAGINE:#imaginary robot's movement
-            print('imaginaion being run')
             self.runImagination()
     
     def initializeImaginaryRobots(self):      
@@ -369,8 +362,7 @@ class ImaginationTwin(Worlds):#inherits
     def runImagination(self):
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
             self.runState = RunCode.CONTINUE
-            self.infoString = ''  
-            print('imagination done. Continuing now')          
+            self.infoString = ''           
             return
         
         rs = self.behaviour.run(self.sequenceLength)

@@ -144,14 +144,16 @@ class ActionNetwork:
         
     def saveNetwork(self):
         nx.write_gpickle(self.graph, self.saveFile)
+        print('Saved network to '+self.saveFile)
     
     def __loadNetwork__(self):
         try:
             self.graph = nx.read_gpickle(self.saveFile)
         except:
             print('No '+self.saveFile+' found. Creating new action network.')
-        finally:
             self.graph = nx.MultiDiGraph()
+#         finally:
+            
     
 class Directions:
     UP = 1
@@ -283,7 +285,7 @@ class RobotBody:
                 leg.experience.append(thisRate)                                    
     
     def getValues(self):
-        ex = [];
+        ex = []
         for leg in self.legs:
             ex.extend(leg.experience)
         return ex
