@@ -21,7 +21,7 @@ class Worlds(object):
         #self.focusRobotXY = Vec2d(0, 0)#will be overridden below        
         self.screen = None
         self.draw_options = None       
-        
+        self.decimalPrecision = 2
         #NOTE: Pymunk physics coordinates start from the lower right-hand corner of the screen
         self.screenWidth = 1300; #can get overridden in child class
         self.screenHeight = 400 #keep at at least 350. Can get overridden in child class
@@ -290,7 +290,7 @@ class ImaginationTwin(Worlds):#inherits
         self.imaginationGroundColor = 100,150,100
         self.groundColor = 0,170,0
         self.runState = RunCode.CONTINUE
-        self.nextNode = None
+        self.nextNode = None        
         
     def createGround(self, groundX, groundY, grColor):
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2)
@@ -306,15 +306,19 @@ class ImaginationTwin(Worlds):#inherits
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)
         ubp = self.robots[0].getUniqueBodyAngles()
         self.actionNetwork.addNode(ubp)
-        self.robots[0].currentActionNode = ubp        
+        self.robots[0].currentActionNode = ubp  
+        self.cumulativeUpdateBy = Vec2d(0,0)      
         self.initializeImaginaryRobots(); self.setImaginaryRobotAnglesToRealRobotAngle()
         self.behaviour = ImaginationDifferentialEvolution(self.imaginaryRobots)
         self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength
         self.maxSequenceLength = 1 #The number of dT times a leg is moved
         self.gen = 0 #start gen
-        self.maxGens = 2         
+        self.maxGens = 5        
         
-    def processRobot(self):    
+    def processRobot(self):
+        if self.robots[0].getPosition()[0] - self.cumulativeUpdateBy[0] > self.worldWidth - 200:
+            self.runState = RunCode.STOP
+            return False
         resetMovtTime = True    
         if self.runState == RunCode.EXPERIENCE:
             if self.sequenceLength > self.maxSequenceLength:
@@ -327,6 +331,7 @@ class ImaginationTwin(Worlds):#inherits
                 self.sequenceLength += 1
                 
         if self.runState == RunCode.CONTINUE:#bottom robot's movement
+            self.infoString = "  x: "+str(round(self.robots[0].getPosition()[0]-self.cumulativeUpdateBy[0], self.decimalPrecision))
             successors = self.actionNetwork.getSuccessorNodes(self.robots[0].currentActionNode)
             if successors == None:#no successor node found, so start imagining
                 self.runState = RunCode.IMAGINE
@@ -360,7 +365,7 @@ class ImaginationTwin(Worlds):#inherits
         resetMovtTime = True
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
             self.runState = RunCode.CONTINUE
-            self.infoString = ''
+            self.infoString = ""
             resetMovtTime = False    
             return resetMovtTime
 
@@ -454,7 +459,7 @@ class ImaginationTwin(Worlds):#inherits
         self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
         self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
         self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
-                
+        
     def delete(self):
         super(ImaginationTwin, self).delete()   
         for ob in self.worldObjects:
@@ -463,7 +468,7 @@ class ImaginationTwin(Worlds):#inherits
     
     def updatePosition(self):  
         updateBy = super(ImaginationTwin, self).updatePosition()    
-#         self.behaviour.updateChassisBodyPositionForFitness(updateBy[0]) 
+        self.cumulativeUpdateBy += updateBy
         if self.behaviour.currentFittestRobot != self.focusRobotID:
             self.focusRobotID = self.behaviour.currentFittestRobot
         if self.behaviour.unfitThisFullGen[self.focusRobotID]:
@@ -481,7 +486,6 @@ class ImaginationTwin(Worlds):#inherits
                 else: obj.setImaginaryRobotColor()
             else: obj.setImaginaryRobotColor()                 
     
-            
     def initializeImaginaryRobots(self):      
         for i in range(0, self.numImaginaryRobots, 1):
             self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset), self.legsCode))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
