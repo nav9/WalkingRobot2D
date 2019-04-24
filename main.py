@@ -7,13 +7,13 @@ from WalkingRobot import ActionNetwork
 
 class Simulator(object):
     
-    def __init__(self):
-        self.actions = ActionNetwork()
+    def __init__(self, execLen, legs):
+        self.actions = ActionNetwork(execLen, legs)
         self.worlds = []
         self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
         #self.worlds.append(FlatGroundTraining())
-        self.worlds.append(ImaginationTwin(self.actions))
+        self.worlds.append(ImaginationTwin(self.actions, execLen, legs))
        
     def nextWorld(self):
         self.worldOrdinal += 1
@@ -31,7 +31,10 @@ class Simulator(object):
 #-----------------------------------------------
 #-----------------------------------------------
 if __name__ == '__main__':
-    sim = Simulator()
+    execLen = 50 #how many times motor gets executed per second
+    # - Single leg part, -- Two leg parts, # Chassis
+    legs = '--#--'
+    sim = Simulator(execLen, legs)
     while sim.nextWorld():
         pass
         

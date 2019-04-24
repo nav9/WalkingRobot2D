@@ -100,8 +100,8 @@ from matplotlib.animation import FuncAnimation
 #                 self.trainingExperienceCounter -= 1  
 
 class ActionNetwork:
-    def __init__(self):
-        self.saveFile = 'actionNetwork.gpickle'
+    def __init__(self, execLen, legs):
+        self.actionFile = 'actionNetwork_'+str(execLen)+'_'+legs+'.gpickle'
         self.graph = None
         self.__loadNetwork__()
     
@@ -114,7 +114,7 @@ class ActionNetwork:
     def getEdge(self, node1, node2):
         return self.graph.get_edge_data(tuple(node1), tuple(node2))
     
-    def getBestSuccessorNode(self, currNode):#edges going out of currNode
+    def getSuccessorNodes(self, currNode):#edges going out of currNode
         if self.graph.out_degree[tuple(currNode)] == 0: return None 
         else: return self.graph.successors(tuple(currNode))
     
@@ -143,14 +143,14 @@ class ActionNetwork:
 #            'fruchterman_reingold_layout']        
         
     def saveNetwork(self):
-        nx.write_gpickle(self.graph, self.saveFile)
-        print('Saved network to '+self.saveFile)
+        nx.write_gpickle(self.graph, self.actionFile)
+        print('Saved network to '+self.actionFile)
     
     def __loadNetwork__(self):
         try:
-            self.graph = nx.read_gpickle(self.saveFile)
+            self.graph = nx.read_gpickle(self.actionFile)
         except:
-            print('No '+self.saveFile+' found. Creating new action network.')
+            print('No '+self.actionFile+' found. Creating new action network.')
             self.graph = nx.MultiDiGraph()
 #         finally:
             
@@ -229,7 +229,8 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         return round(math.degrees(self.leg_body.angle)%360)        
 
 class RobotBody:
-    def __init__(self, pymunkSpace, chassisCenterPoint):
+    def __init__(self, pymunkSpace, chassisCenterPoint, legCode):
+        self.legsCode = legCode
         self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1) #to prevent collisions between robot body parts
         self.ori = Directions()  #leg at left or right of chassis
         self.prevBodyWd = 30 #chassis width 
@@ -239,7 +240,6 @@ class RobotBody:
         self.chassis_shape = None #chassis shape 
         self.legs = []
         self.currentActionNode = []#node on the action network        
-        self.numLegsOnEachSide = 1
 #         self.brain = None        
         self.space = pymunkSpace
         self.__createBody__(chassisCenterPoint)
@@ -256,20 +256,26 @@ class RobotBody:
         self.chassis_shape.filter = self.ownBodyShapeFilter
         self.setNormalRobotColor() 
         self.chassis_shape.friction = 10.0
-        self.space.add(self.chassis_shape, self.chassis_body)  
-        for i in range(0, self.numLegsOnEachSide, 1):
-            leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT); self.legs.append(leftLegA)
-            leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT); self.legs.append(leftLegB)             
-            rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT); self.legs.append(rightLegA) 
-            rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT); self.legs.append(rightLegB)  
-                        
-#             leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT); self.legs.append(leftLegA)
-#             leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT); self.legs.append(leftLegB)            
-#             rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT); self.legs.append(rightLegA)
-#             rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT); self.legs.append(rightLegB)  
-                
+        self.space.add(self.chassis_shape, self.chassis_body) 
+        self.createLegs()
         self.makeRobotDynamic()
     
+    def createLegs(self):
+        s = self.legsCode.split("#")
+        lt = s[0]; rt = s[1]; rt = rt[::-1]#reverse string rt
+        for s in lt.split(","):#number of left legs
+            if len(s) == 1:
+                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT); self.legs.append(leftLegA)
+            if len(s) == 2:
+                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT); self.legs.append(leftLegA)
+                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT); self.legs.append(leftLegB)                
+        for s in rt.split(","):#number of right legs
+            if len(s) == 1:
+                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT); self.legs.append(rightLegA)
+            if len(s) == 2:
+                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT); self.legs.append(rightLegA) 
+                rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT); self.legs.append(rightLegB)                        
+        
     def setExperience(self, expe):       
         for leg in self.legs:
             leg.experience[:] = []

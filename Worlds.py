@@ -44,12 +44,12 @@ class Worlds(object):
         self.cameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2) 
         self.cameraMoveDist = Vec2d(100, 50)
         self.UNDETERMINED = -1
+        #self.maxMovtTime = 50 #how often in time the sequences of the robot get executed        
                 
     def initialize(self):
         self.space = pymunk.Space()
         self.space.gravity = (0.0, -1900.0)
         self.fps = 50
-        self.maxMovtTime = 50 #how often in time the sequences of the robot get executed
         self.movtTime = 0 #start value of movt time. Can be anything from 0 to maxMovtTime
         self.iterations = 20        
         #self.space.damping = 0.999 
@@ -144,7 +144,7 @@ class Worlds(object):
         
     def initializeRobots(self):      
         for i in range(0, self.numRobots, 1):
-            self.robots.append(RobotBody(self.space, self.robotInitPos))             
+            self.robots.append(RobotBody(self.space, self.robotInitPos, self.legsCode))             
     
     def displayStats(self, displayStr):
         self.screen.blit(self.font.render(displayStr, 1, THECOLORS["green"]), self.statsPos)
@@ -198,8 +198,10 @@ class Worlds(object):
 #------------------------------------------------------------------------------------------------
 
 class FlatGroundTraining(Worlds):#inherits
-    def __init__(self):
+    def __init__(self, execLen, legsCode):
         super(FlatGroundTraining, self).__init__()
+        self.legsCode = legsCode
+        self.maxMovtTime = execLen
         self.screenHeight = 320 #overriding
         self.worldHeight = 280 #overriding
         self.worldWidth = 3000 #overriding
@@ -269,8 +271,10 @@ class FlatGroundTraining(Worlds):#inherits
 #------------------------------------------------------------------------------------------------
 
 class ImaginationTwin(Worlds):#inherits
-    def __init__(self, actions):        
+    def __init__(self, actions, execLen, legCode):        
         super(ImaginationTwin, self).__init__()
+        self.legsCode = legCode
+        self.maxMovtTime = execLen        
         self.actionNetwork = actions
         self.screenWidth = 500
         self.screenHeight = 620 #keep at at least 350        
@@ -324,7 +328,7 @@ class ImaginationTwin(Worlds):#inherits
                 self.sequenceLength += 1
                 
         if self.runState == RunCode.CONTINUE:#bottom robot's movement
-            successors = self.actionNetwork.getBestSuccessorNode(self.robots[0].currentActionNode)
+            successors = self.actionNetwork.getSuccessorNodes(self.robots[0].currentActionNode)
             if successors == None:#no successor node found, so start imagining
                 self.runState = RunCode.IMAGINE
                 self.behaviour.startNewEpoch()
@@ -332,13 +336,13 @@ class ImaginationTwin(Worlds):#inherits
                 self.sequenceLength = 1 #should be at least 1
                 self.gen = 0
             else:#successor found so get the experience action to perform
-                greatestWeight = -1; imaginedExperience = []
+                greatestWeight = 0; imaginedExperience = []
                 for successor in successors:
                     self.nextNode = successor
                     edge = self.actionNetwork.getEdge(self.robots[0].currentActionNode, self.nextNode)
                     for e in edge:#choose next node as per best weight
                         wt = edge[e]['weight']
-                        if wt > greatestWeight:
+                        if wt > greatestWeight:#edge where robot moved max dist
                             greatestWeight = wt
                             imaginedExperience = list(edge[e]['experience'])
                         else: continue
@@ -352,7 +356,7 @@ class ImaginationTwin(Worlds):#inherits
     
     def initializeImaginaryRobots(self):      
         for i in range(0, self.numImaginaryRobots, 1):
-            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset)))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
+            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset), self.legsCode))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
             
     def deleteImaginaryRobots(self):
         for r in self.imaginaryRobots:
