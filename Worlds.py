@@ -366,19 +366,20 @@ class ImaginationTwin(Worlds):#inherits
 
         rs = self.behaviour.run(self.sequenceLength)
         if rs == RunCode.NEXTGEN:#reset for next generation
-            self.gen += 1
-            self.createNewActionNodeIfPossible()#***************YOU DON'T CREATE NODE NOW
+            self.gen += 1            
+            if self.gen == self.maxGens:#completion of one epoch
+                self.createNewActionNodeIfRobotIsFit()                                      
             self.deleteImaginaryRobots(); self.initializeImaginaryRobots()  
             self.setImaginaryRobotAnglesToRealRobotAngle()          
             self.behaviour.startNewGen()         
             if self.gen == self.maxGens:#completion of one epoch
                 self.sequenceLength += 1 
-                self.gen = 0
+                self.gen = 0                      
                 self.behaviour.startNewEpoch()
         self.generateInfoString()  
         return resetMovtTime
         
-    def createNewActionNodeIfPossible(self):
+    def createNewActionNodeIfRobotIsFit(self):
         if False in self.behaviour.unfitThisFullGen:
             maxi = 0; fittestImaginaryRobot = -1
             for i in range(0, len(self.behaviour.unfitThisFullGen), 1):
