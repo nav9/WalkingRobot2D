@@ -6,6 +6,7 @@ import sys
 import time
 import math
 import pygame
+import random
 from pymunk import Vec2d
 import pymunk.pygame_util
 import pymunk
@@ -255,7 +256,6 @@ class FlatGroundTraining(Worlds):#inherits
      
     def updatePosition(self):  
         updateBy = super(FlatGroundTraining, self).updatePosition()    
-#         self.behaviour.updateChassisBodyPositionForFitness(updateBy[0]) 
         if self.behaviour.currentFittestRobot != self.focusRobotID:
             self.focusRobotID = self.behaviour.currentFittestRobot
         if self.behaviour.unfitThisFullGen[self.focusRobotID]:
@@ -291,7 +291,7 @@ class ImaginationTwin(Worlds):#inherits
         self.groundColor = 0,170,0
         self.runState = RunCode.CONTINUE
         self.nextNode = None        
-                 
+        
     def initialize(self):
         #---actual world (the world seen below)
         super(ImaginationTwin, self).initialize()
@@ -299,6 +299,7 @@ class ImaginationTwin(Worlds):#inherits
         #---imaginary world (the world seen above)
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)
+        print('Body position: '+str(self.worldObjects[0].body.position))
         ubp = self.robots[0].getUniqueBodyAngles()
         self.actionNetwork.addNode(ubp)
         self.robots[0].currentActionNode = ubp  
@@ -390,6 +391,7 @@ class ImaginationTwin(Worlds):#inherits
                 expe = self.imaginaryRobots[fittestImaginaryRobot].getValues()
                 node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyAngles()
                 self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
+                print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(maxi)+' exp:'+str(expe))
                 self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying       
         
     def runWorld(self):
@@ -439,11 +441,13 @@ class ImaginationTwin(Worlds):#inherits
         self.actionNetwork.saveNetwork() 
         
     def createGround(self, groundX, groundY, grColor):
-        self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor)
-        self.createBox(400, groundY+20, 10, 10, grColor)
-        
-    def createBox(self, x, y, w, h, co):
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(x, y)
+        self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor, pymunk.Body.KINEMATIC)
+        debrisStartCol = 600; boxMinSz = 5; boxMaxSz = 30
+#         for i in range(0, 100, 1):
+#             self.createBox(random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness), groundY+self.worldHeight/2, random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), grColor)
+
+    def createBox(self, x, y, w, h, co, bodytype):
+        body = pymunk.Body(body_type=bodytype); body.position = Vec2d(x, y)
         shape = pymunk.Poly.create_box(body, (w, h)); shape.color = co; shape.friction = 1.0
         self.space.add(shape); self.worldObjects.append(shape)           
         

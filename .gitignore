@@ -14,6 +14,7 @@
 
 ### networkx ###
 *.gpickle
+*.zip
 
 ### Eclipse ###
 .metadata
