@@ -291,11 +291,6 @@ class ImaginationTwin(Worlds):#inherits
         self.groundColor = 0,170,0
         self.runState = RunCode.CONTINUE
         self.nextNode = None        
-        
-    def createGround(self, groundX, groundY, grColor):
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2)
-        shape = pymunk.Poly.create_box(body, (self.worldWidth-2*self.wallThickness, self.wallThickness)); shape.color = grColor; shape.friction = 1.0
-        self.space.add(shape); self.worldObjects.append(shape)        
                  
     def initialize(self):
         #---actual world (the world seen below)
@@ -441,9 +436,17 @@ class ImaginationTwin(Worlds):#inherits
                 break  
               
         #---actions to do after simulation
-        self.actionNetwork.saveNetwork()
-        #TODO: Also save variables like movtTime etc. that are crucial 
-
+        self.actionNetwork.saveNetwork() 
+        
+    def createGround(self, groundX, groundY, grColor):
+        self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor)
+        self.createBox(400, groundY+20, 10, 10, grColor)
+        
+    def createBox(self, x, y, w, h, co):
+        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(x, y)
+        shape = pymunk.Poly.create_box(body, (w, h)); shape.color = co; shape.friction = 1.0
+        self.space.add(shape); self.worldObjects.append(shape)           
+        
     def setImaginaryRobotAnglesToRealRobotAngle(self):
         pos = self.robots[0].getPositions()
         angles = self.robots[0].getUniqueBodyAngles()
@@ -476,6 +479,8 @@ class ImaginationTwin(Worlds):#inherits
         if updateBy != (0, 0):
             for ob in self.worldObjects:
                 ob.body.position += updateBy   
+            for obj in self.imaginaryRobots:
+                obj.updatePosition(updateBy)                
                 
     def updateColor(self):
         for obj in self.robots:
