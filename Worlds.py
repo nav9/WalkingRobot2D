@@ -296,9 +296,11 @@ class ImaginationTwin(Worlds):#inherits
         #---actual world (the world seen below)
         super(ImaginationTwin, self).initialize()
         self.createGround(0, self.elevFromBottomWall, self.groundColor)
+        self.createDebris(self.elevFromBottomWall, self.imaginationColor)
         #---imaginary world (the world seen above)
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)
+        self.copyDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)
         print('Body position: '+str(self.worldObjects[0].body.position))
         ubp = self.robots[0].getUniqueBodyAngles()
         self.actionNetwork.addNode(ubp)
@@ -441,15 +443,21 @@ class ImaginationTwin(Worlds):#inherits
         self.actionNetwork.saveNetwork() 
         
     def createGround(self, groundX, groundY, grColor):
-        self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor, pymunk.Body.KINEMATIC)
-        debrisStartCol = 600; boxMinSz = 5; boxMaxSz = 30
-#         for i in range(0, 100, 1):
-#             self.createBox(random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness), groundY+self.worldHeight/2, random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), grColor)
+        self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor)
 
-    def createBox(self, x, y, w, h, co, bodytype):
-        body = pymunk.Body(body_type=bodytype); body.position = Vec2d(x, y)
-        shape = pymunk.Poly.create_box(body, (w, h)); shape.color = co; shape.friction = 1.0
-        self.space.add(shape); self.worldObjects.append(shape)           
+    def createDebris(self, groundY, debColor):
+        debrisStartCol = 600; debrisMaxHt = 100; boxMinSz = 5; boxMaxSz = 30
+        for i in range(0, 100, 1):
+            self.createBox(random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness), random.randint(groundY+2*self.wallThickness, groundY+debrisMaxHt), random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), debColor)        
+        
+    def copyDebrisToImaginary(self, groundY, debColor):
+        for i in range(1, len(self.worldObjects), 1):
+            self.createBox(self.worldObjects[i].body.position[0], groundY+self.worldObjects[i].body.position[1], self.worldObjects[i].body.width, self.worldObjects[i].body.height, debColor)        
+    
+    def createBox(self, x, y, wd, ht, colour):
+        body = pymunk.Body(body_type = pymunk.Body.KINEMATIC); body.position = Vec2d(x, y); body.width = wd; body.height = ht
+        shape = pymunk.Poly.create_box(body, (wd, ht)); shape.color = colour; shape.friction = 1.0; 
+        self.space.add(shape); self.worldObjects.append(shape)  
         
     def setImaginaryRobotAnglesToRealRobotAngle(self):
         pos = self.robots[0].getPositions()
