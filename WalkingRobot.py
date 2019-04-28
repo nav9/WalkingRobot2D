@@ -124,21 +124,20 @@ class ActionNetwork:
         else: return self.graph.successors(tuple(currNode))
     
     def displayNetwork(self):    
-        pass
-#         plt.clf(); 
-#         #posType = nx.planar_layout(self.graph)        
-#         #posType = nx.circular_layout(self.graph)
-#         #posType = nx.kamada_kawai_layout(self.graph)
-#         #posType = nx.random_layout(self.graph)
-#         posType = nx.spring_layout(self.graph)
-#         #posType = nx.fruchterman_reingold_layout(self.graph)
-#         #nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', arrowsize=1, arrowstyle='fancy')
-#         nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', node_color='green')
-#         #nx.draw_circular(self.graph)
-#         #nx.draw(self.graph, with_labels=False, font_weight='bold')
-#         plt.pause(0.001)
-#         plt.show(block=False)  
-#         print('Num nodes in action network: '+str(nx.number_of_nodes(self.graph)))     
+        plt.clf(); 
+        #posType = nx.planar_layout(self.graph)        
+        #posType = nx.circular_layout(self.graph)
+        #posType = nx.kamada_kawai_layout(self.graph)
+        #posType = nx.random_layout(self.graph)
+        posType = nx.spring_layout(self.graph)
+        #posType = nx.fruchterman_reingold_layout(self.graph)
+        #nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', arrowsize=1, arrowstyle='fancy')
+        nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', node_color='green', alpha=0.5, arrowsize=5)
+        #nx.draw_circular(self.graph)
+        #nx.draw(self.graph, with_labels=False, font_weight='bold')
+        plt.pause(0.001)
+        plt.show(block=False)  
+        print('Num nodes in action network: '+str(nx.number_of_nodes(self.graph)))     
         
     def saveNetwork(self):
         nx.write_gpickle(self.graph, self.actionFile)

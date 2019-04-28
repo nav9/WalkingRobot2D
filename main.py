@@ -31,7 +31,7 @@ class Simulator(object):
 #-----------------------------------------------
 #-----------------------------------------------
 if __name__ == '__main__':
-    execLen = 50 #how many times motor gets executed per second
+    execLen = 10 #how many times motor gets executed per second
     # - Single leg part, -- Two leg parts, # Chassis
     legs = '--#--'
     sim = Simulator(execLen, legs)

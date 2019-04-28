@@ -215,13 +215,12 @@ class ImaginationDifferentialEvolution:#(AbstractRobotBehaviour):
         self.fit[:] = []   
         for r in self.robots:
             self.fit.append(round(r.chassis_body.position[0] - r.chassis_body.startPosition[0], self.decimalPrecision))
-#         #---assign zero fitness to any robot that became ulta
-#         for r in range(len(self.robots)):
-#             ang = self.robots[r].getBodyAngle()            
-#             if ang > 90 and ang < 270:
-#                 self.unfitThisFullGen[r] = True
-#             if self.unfitThisFullGen[r]:
-#                 self.fit[r] = self.NOTFIT  
+        #---assign zero fitness to any robot that became ulta
+        for r in range(len(self.robots)):
+            ang = self.robots[r].getBodyAngle()            
+            if ang > 90 and ang < 270:
+                self.unfitThisFullGen[r] = True
+                self.fit[r] = self.NOTFIT  
     
     def differentialEvolution(self, seqLen):
         self.calcFitness(); oldSel = []; sel = []; i = 0; mutant = []
@@ -319,9 +318,9 @@ class ImaginationDifferentialEvolution:#(AbstractRobotBehaviour):
             r.setMotorRateForSequence(self.seqNum)                                   
         self.seqNum += 1  
         
-        if not False in self.unfitThisFullGen:
-            self.seqNum = seqLen
-            self.repeatSeq = self.maxSeqRepetitions#no point running this sequence any more. Proceed to next one
+#         if not False in self.unfitThisFullGen:
+#             self.seqNum = seqLen
+#             self.repeatSeq = self.maxSeqRepetitions#no point running this sequence any more. Proceed to next one
                         
         if self.seqNum >= seqLen:#finished one sequence experience
             self.seqNum = 0
