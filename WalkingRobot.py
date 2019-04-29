@@ -214,7 +214,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         return Vec2d(v)
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
-        maxMotorRate = 5
+        maxMotorRate = 15
         motorRateRangePieces = (maxMotorRate * 2 + 1) * 10
         #---link left leg A with Chassis
         if self.legLeftOrRight == self.ori.LEFT:

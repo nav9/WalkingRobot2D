@@ -185,7 +185,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
 
 
 # Note: At least 4 robots are required for Differential Evolution to work
-class ImaginationDifferentialEvolution:#(AbstractRobotBehaviour):    
+class ImaginationDifferentialEvolution:  
     def __init__(self, robo): 
         self.infoString = ""  
         self.decimalPrecision = 2
@@ -206,7 +206,7 @@ class ImaginationDifferentialEvolution:#(AbstractRobotBehaviour):
         self.startNewGen()
         
     def resetDE(self):
-        self.epochFittestRobot = self.UNDETERMINED
+        self.epochFittestRobot = self.UNDETERMINED #TODO: shift to a constants class
         self.epochBestFitness = 0
         self.currentBestFitness = 0
         self.currentFittestRobot = self.UNDETERMINED
@@ -215,12 +215,12 @@ class ImaginationDifferentialEvolution:#(AbstractRobotBehaviour):
         self.fit[:] = []   
         for r in self.robots:
             self.fit.append(round(r.chassis_body.position[0] - r.chassis_body.startPosition[0], self.decimalPrecision))
-        #---assign zero fitness to any robot that became ulta
-        for r in range(len(self.robots)):
-            ang = self.robots[r].getBodyAngle()            
-            if ang > 90 and ang < 270:
-                self.unfitThisFullGen[r] = True
-                self.fit[r] = self.NOTFIT  
+#         #---assign zero fitness to any robot that became ulta
+#         for r in range(len(self.robots)):
+#             ang = self.robots[r].getBodyAngle()            
+#             if ang > 90 and ang < 270:
+#                 self.unfitThisFullGen[r] = True
+#                 self.fit[r] = self.NOTFIT  
     
     def differentialEvolution(self, seqLen):
         self.calcFitness(); oldSel = []; sel = []; i = 0; mutant = []

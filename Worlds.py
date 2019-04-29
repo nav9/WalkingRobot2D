@@ -301,7 +301,6 @@ class ImaginationTwin(Worlds):#inherits
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)
         self.copyDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)
-        print('Body position: '+str(self.worldObjects[0].body.position))
         ubp = self.robots[0].getUniqueBodyAngles()
         self.actionNetwork.addNode(ubp)
         self.robots[0].currentActionNode = ubp  
@@ -314,7 +313,6 @@ class ImaginationTwin(Worlds):#inherits
         self.maxGens = 5        
         
     def processRobot(self):
-        print(self.runState)
         if self.robots[0].getPosition()[0] - self.cumulativeUpdateBy[0] > self.worldWidth - 200:
             self.runState = RunCode.STOP
             return False
@@ -363,18 +361,16 @@ class ImaginationTwin(Worlds):#inherits
     def runImagination(self):
         resetMovtTime = True
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
-            print('msl')
             self.runState = RunCode.CONTINUE
             self.infoString = ""
             resetMovtTime = False    
             return resetMovtTime
 
         rs = self.behaviour.run(self.sequenceLength)
-        print('return rs '+str(rs))
         if rs == RunCode.NEXTGEN:#reset for next generation
             self.gen += 1            
             if self.gen == self.maxGens:#completion of one epoch
-                self.createNewActionNodeIfRobotIsFit()                                      
+                self.createNewActionNodes()                                      
             self.deleteImaginaryRobots(); self.initializeImaginaryRobots()  
             self.setImaginaryRobotAnglesToRealRobotAngle()          
             self.behaviour.startNewGen()         
@@ -385,19 +381,25 @@ class ImaginationTwin(Worlds):#inherits
         self.generateInfoString()  
         return resetMovtTime
         
-    def createNewActionNodeIfRobotIsFit(self):#TODO: create it even if not fit
-        if False in self.behaviour.unfitThisFullGen:
-            maxi = 0; fittestImaginaryRobot = -1
-            for i in range(0, len(self.behaviour.unfitThisFullGen), 1):
-                if not self.behaviour.unfitThisFullGen[i] and self.behaviour.fit[i] > maxi:
-                    maxi = self.behaviour.fit[i]
-                    fittestImaginaryRobot = i
-            if fittestImaginaryRobot >= 0:
-                expe = self.imaginaryRobots[fittestImaginaryRobot].getValues()
-                node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyAngles()
-                self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
-                print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(maxi)+' exp:'+str(expe))
-                #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying       
+    def createNewActionNodes(self):
+        for i in range(0, len(self.imaginaryRobots), 1):
+            expe = self.imaginaryRobots[i].getValues()
+            node = self.imaginaryRobots[i].getUniqueBodyAngles()
+            self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, self.behaviour.fit[i], expe)
+            print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(self.behaviour.fit[i])+' exp:'+str(expe))
+        #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying               
+#         if False in self.behaviour.unfitThisFullGen:
+#             maxi = 0; fittestImaginaryRobot = -1
+#             for i in range(0, len(self.behaviour.unfitThisFullGen), 1):
+#                 if not self.behaviour.unfitThisFullGen[i] and self.behaviour.fit[i] > maxi:
+#                     maxi = self.behaviour.fit[i]
+#                     fittestImaginaryRobot = i
+#             if fittestImaginaryRobot >= 0:
+#                 expe = self.imaginaryRobots[fittestImaginaryRobot].getValues()
+#                 node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyAngles()
+#                 self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
+#                 print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(maxi)+' exp:'+str(expe))
+#                 #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying       
         
     def runWorld(self):
         self.runState = RunCode.CONTINUE
