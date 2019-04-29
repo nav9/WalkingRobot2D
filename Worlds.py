@@ -295,8 +295,8 @@ class ImaginationTwin(Worlds):#inherits
     def initialize(self):
         #---actual world (the world seen below)
         super(ImaginationTwin, self).initialize()
+        self.createDebris(self.elevFromBottomWall, self.imaginationColor)        
         self.createGround(0, self.elevFromBottomWall, self.groundColor)
-        self.createDebris(self.elevFromBottomWall, self.imaginationColor)
         #---imaginary world (the world seen above)
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
         self.copyDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)
@@ -328,15 +328,11 @@ class ImaginationTwin(Worlds):#inherits
                 self.sequenceLength += 1
                 
         if self.runState == RunCode.CONTINUE:#bottom robot's movement
+            resetMovtTime = False
             self.infoString = "  x: "+str(round(self.robots[0].getPosition()[0]-self.cumulativeUpdateBy[0], self.decimalPrecision))
             successors = self.actionNetwork.getSuccessorNodes(self.robots[0].currentActionNode)
             if successors == None:#no successor node found, so start imagining
-                self.runState = RunCode.IMAGINE
-                self.behaviour.startNewEpoch()
-                self.setImaginaryRobotAnglesToRealRobotAngle()
-                self.sequenceLength = 1 #should be at least 1
-                self.gen = 0
-                resetMovtTime = False
+                self.setForImagination()                
             else:#successor found so get the experience action to perform
                 greatestWeight = -1; imaginedExperience = []
                 for successor in successors:
@@ -353,12 +349,20 @@ class ImaginationTwin(Worlds):#inherits
                     self.robots[0].setExperience(imaginedExperience)
                     self.sequenceLength = 1 #should be at least 1                
                     self.runState = RunCode.EXPERIENCE
-                    resetMovtTime = False
+                else:
+                    self.setForImagination()
         
         if self.runState == RunCode.IMAGINE:#imaginary robot's movement
             resetMovtTime = self.runImagination()
         return resetMovtTime
     
+    def setForImagination(self):
+        self.runState = RunCode.IMAGINE
+        self.behaviour.startNewEpoch()
+        self.setImaginaryRobotAnglesToRealRobotAngle()
+        self.sequenceLength = 1 #should be at least 1
+        self.gen = 0        
+        
     def runImagination(self):
         resetMovtTime = True
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
