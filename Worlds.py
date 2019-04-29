@@ -299,8 +299,8 @@ class ImaginationTwin(Worlds):#inherits
         self.createDebris(self.elevFromBottomWall, self.imaginationColor)
         #---imaginary world (the world seen above)
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
-        self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)
         self.copyDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)
+        self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
         ubp = self.robots[0].getUniqueBodyAngles()
         self.actionNetwork.addNode(ubp)
         self.robots[0].currentActionNode = ubp  
@@ -349,10 +349,11 @@ class ImaginationTwin(Worlds):#inherits
                             imaginedExperience = list(edge[e]['experience'])
                         else: continue
                 #---make preparations to run the node's experience
-                self.robots[0].setExperience(imaginedExperience)
-                self.sequenceLength = 1 #should be at least 1                
-                self.runState = RunCode.EXPERIENCE
-                resetMovtTime = False
+                if len(imaginedExperience) > 0:
+                    self.robots[0].setExperience(imaginedExperience)
+                    self.sequenceLength = 1 #should be at least 1                
+                    self.runState = RunCode.EXPERIENCE
+                    resetMovtTime = False
         
         if self.runState == RunCode.IMAGINE:#imaginary robot's movement
             resetMovtTime = self.runImagination()
@@ -456,7 +457,7 @@ class ImaginationTwin(Worlds):#inherits
             self.createBox(random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness), random.randint(groundY+2*self.wallThickness, groundY+debrisMaxHt), random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), debColor)        
         
     def copyDebrisToImaginary(self, groundY, debColor):
-        startObject = 5
+        startObject = 2
         for i in range(startObject, len(self.worldObjects), 1):
             self.createBox(self.worldObjects[i].body.position[0], groundY+self.worldObjects[i].body.position[1], self.worldObjects[i].body.width, self.worldObjects[i].body.height, debColor)        
     
