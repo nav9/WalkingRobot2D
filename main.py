@@ -33,7 +33,7 @@ class Simulator(object):
 if __name__ == '__main__':
     execLen = 10 #how many times motor gets executed per second
     # - Single leg part, -- Two leg parts, # Chassis
-    legs = '--#--'
+    legs = '---#---'
     sim = Simulator(execLen, legs)
     while sim.nextWorld():
         pass

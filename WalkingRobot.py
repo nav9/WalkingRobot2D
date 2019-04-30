@@ -139,8 +139,8 @@ class Brain:
         
     def robotDirection(self, prevPos, currPos): 
         ang = round(math.degrees(math.atan2((currPos[1]-prevPos[1]), (currPos[0]-prevPos[0])))) % 360
-        if ang > 370 or ang <= 85: direc = self.ori['RIGHT']
-        if ang > 85 and ang <= 135: direc = self.ori['UP']
+        if ang > 370 or ang <= 91: direc = self.ori['RIGHT']
+        if ang > 91 and ang <= 135: direc = self.ori['UP']
         if ang > 135 and ang <= 225: direc = self.ori['LEFT']
         if ang > 225 and ang <= 370: direc = self.ori['DOWN']  
         return direc
@@ -255,7 +255,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         return Vec2d(v)
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
-        maxMotorRate = 11
+        maxMotorRate = 15
         motorRateRangePieces = (maxMotorRate * 2 + 1) * 10
         #---link left leg A with Chassis
         if self.legLeftOrRight == self.ori['LEFT']:
@@ -311,13 +311,21 @@ class RobotBody:
             if len(s) == 2:
                 leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['LEFT']); self.legs.append(leftLegA)
                 leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); self.legs.append(leftLegB)                
+            if len(s) == 3:
+                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['LEFT']); self.legs.append(leftLegA)
+                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); self.legs.append(leftLegB)                 
+                leftLegC = LegPart(self.space, self.ownBodyShapeFilter, leftLegB.leg_body, leftLegB.legWd, self.ori['LEFT']); self.legs.append(leftLegC)                                 
         for s in rt.split(","):#number of right legs
             if len(s) == 1:
                 rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(rightLegA)
             if len(s) == 2:
                 rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(rightLegA) 
                 rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori['RIGHT']); self.legs.append(rightLegB)                        
-        
+            if len(s) == 3:
+                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(leftLegA)
+                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['RIGHT']); self.legs.append(leftLegB)                 
+                leftLegC = LegPart(self.space, self.ownBodyShapeFilter, leftLegB.leg_body, leftLegB.legWd, self.ori['RIGHT']); self.legs.append(leftLegC)                                 
+                        
     def setExperience(self, expe):       
         for leg in self.legs: leg.experience[:] = []
         while len(expe) > 0: 
