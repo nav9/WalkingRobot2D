@@ -5,7 +5,7 @@
 import math
 import random
 from random import uniform
-from WalkingRobot import RobotBody
+from WalkingRobot import *
 
 class RunCode:
     STOP = 0
@@ -14,6 +14,10 @@ class RunCode:
     NEXTGEN = 3
     IMAGINE = 4
     EXPERIENCE = 5
+
+class Constants:
+    UNDETERMINED = -1
+    NOTFIT = 0
 
 # Note: At least 4 robots are required for Differential Evolution to work
 class DifferentialEvolution:#(AbstractRobotBehaviour):    
@@ -25,8 +29,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.maxSeqRepetitions = 50 #how many times to repeat the sequence of seqNum's  
         self.seqNum = 0 #ordinal of the sequence of movements of an experience
         self.temp = []
-        self.NOTFIT = 0
-        self.UNDETERMINED = -1
+        self.const = Constants()
         self.resetDE()
         #---Differential Evolution parameters
         self.masterBeta = 2.0 #beta is real number belongs to [0 -> 2]
@@ -37,10 +40,10 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.startNewGen()
         
     def resetDE(self):
-        self.epochFittestRobot = self.UNDETERMINED
-        self.epochBestFitness = 0
-        self.currentBestFitness = 0
-        self.currentFittestRobot = self.UNDETERMINED
+        self.epochFittestRobot = self.const.UNDETERMINED
+        self.epochBestFitness = self.const.NOTFIT
+        self.currentBestFitness = self.const.NOTFIT
+        self.currentFittestRobot = self.const.UNDETERMINED
 
     def calcFitness(self):     
         self.fit[:] = []   
@@ -64,7 +67,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         if self.currentBestFitness > self.epochBestFitness:
             self.epochBestFitness = self.currentBestFitness
             self.epochFittestRobot = self.fit.index(self.epochBestFitness)
-            
+        
         #---if none are fit, re-initialize all randomly coz there's no point doing DE
         if not False in self.unfitThisFullGen:
             for r in self.robots:
@@ -186,16 +189,16 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
 
 # Note: At least 4 robots are required for Differential Evolution to work
 class ImaginationDifferentialEvolution:  
-    def __init__(self, robo): 
+    def __init__(self, iRobo, realRob): 
         self.infoString = ""  
         self.decimalPrecision = 2
-        self.robots = robo     
+        self.robots = iRobo 
+        self.realRobo = realRob
         self.repeatSeq = 0; 
         self.maxSeqRepetitions = 3 #how many times to repeat the sequence of seqNum's  
         self.seqNum = 0 #ordinal of the sequence of movements of an experience
         self.temp = []
-        self.NOTFIT = 0
-        self.UNDETERMINED = -1
+        self.const = Constants()
         self.resetDE()
         #---Differential Evolution parameters
         self.masterBeta = 2.0 #beta is real number belongs to [0 -> 2]
@@ -206,15 +209,16 @@ class ImaginationDifferentialEvolution:
         self.startNewGen()
         
     def resetDE(self):
-        self.epochFittestRobot = self.UNDETERMINED #TODO: shift to a constants class
-        self.epochBestFitness = 0
-        self.currentBestFitness = 0
-        self.currentFittestRobot = self.UNDETERMINED
+        self.epochFittestRobot = self.const.UNDETERMINED #TODO: shift to a constants class
+        self.epochBestFitness = self.const.NOTFIT
+        self.currentBestFitness = self.const.NOTFIT
+        self.currentFittestRobot = self.const.UNDETERMINED
 
     def calcFitness(self):     
         self.fit[:] = []   
         for r in self.robots:
-            self.fit.append(round(r.chassis_body.position[0] - r.chassis_body.startPosition[0], self.decimalPrecision))
+            self.fit.append(self.realRobo[0].brain.getFitness(r.chassis_body.startPosition, r.chassis_body.position))
+            #self.fit.append(round(r.chassis_body.position[0] - r.chassis_body.startPosition[0], self.decimalPrecision))
 #         #---assign zero fitness to any robot that became ulta
 #         for r in range(len(self.robots)):
 #             ang = self.robots[r].getBodyAngle()            

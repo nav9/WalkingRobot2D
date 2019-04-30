@@ -13,6 +13,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from pygame import _numpysurfarray
 from matplotlib.animation import FuncAnimation
+from Behaviours import Constants
 
 #from threading import Thread, Lock
 
@@ -99,6 +100,68 @@ from matplotlib.animation import FuncAnimation
 #                 self.motorCortex.generateNewActions(self.trainingExperienceCounter==0)
 #                 self.trainingExperienceCounter -= 1  
 
+class Directions:
+    def __init__(self):
+        self.dirn = {'UP':1, 'DOWN':2, 'LEFT':3, 'RIGHT':4, 'TOPRIGHT':5, 'TOPLEFT':6, 'BOTTOMRIGHT':7, 'BOTTOMLEFT':8}
+    def getDirn(self): 
+        return self.dirn        
+    
+class Brain:
+    def __init__(self, pos):
+        d = Directions()
+        self.ori = d.getDirn()
+        self.direction = self.ori['RIGHT']
+        self.maxStuck = 20 #max iterations before deciding to get unstuck by going in different direction
+        self.stuck = 0 #counter 
+        self.maxRoaming = 5 #max iterations to roam in non-main direction
+        self.roaming = 0 #counter
+        self.prevPos = pos
+        self.const = Constants()
+        
+    def movementThinking(self, currPos):
+        if self.roaming > 0:
+            self.roaming -= 1
+            if self.roaming == 0: self.setToMainDirection()#stop roaming
+        dist = abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2))
+        print('dist for stuck: '+str(dist))
+        if dist <= 2: #TODO: make this a proportion of the body length  
+            self.stuck += 1
+            if self.stuck == self.maxStuck: self.moveInDifferentDirection()
+        else: 
+            self.prevPos = currPos
+            self.stuck = 0
+            
+    def getFitness(self, prevPos, currPos):
+        if self.robotDirection(prevPos, currPos) == self.direction: return abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2))
+        else: return self.const.NOTFIT 
+        
+    def robotDirection(self, prevPos, currPos): 
+        ang = round(math.degrees(math.atan2((currPos[1]-prevPos[1]), (currPos[0]-prevPos[0])))) % 360
+#         if ang > 338 or ang <= 23: direc = self.ori['RIGHT'];print('right')
+#         if ang > 23 and ang <= 68: direc = self.ori['TOPRIGHT'];print('topright')
+#         if ang > 68 and ang <= 113: direc = self.ori['UP'];print('up')
+#         if ang > 113 and ang <= 158: direc = self.ori['TOPLEFT'];print('topleft')
+#         if ang > 158 and ang <= 203: direc = self.ori['LEFT'];print('left')
+#         if ang > 203 and ang <= 248: direc = self.ori['BOTTOMLEFT'];print('bottomleft')
+#         if ang > 248 and ang <= 293: direc = self.ori['DOWN'];print('down')
+#         if ang > 293 and ang <= 338: direc = self.ori['BOTTOMRIGHT'];print('bottomright')
+        if ang > 315 or ang <= 45: direc = self.ori['RIGHT'];print('right')
+        if ang > 45 and ang <= 135: direc = self.ori['UP'];print('up')
+        if ang > 135 and ang <= 225: direc = self.ori['LEFT'];print('left')
+        if ang > 225 and ang <= 315: direc = self.ori['DOWN'];print('down')    
+        return direc
+    
+    def moveInDifferentDirection(self):
+        d = None
+        while d != self.direction and d != self.mainDirection:
+            d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
+        self.direction = d
+        print('Stuck. Direction chosen: '+str(d))
+        self.roaming = self.maxRoaming
+        
+    def setToMainDirection(self): self.direction = self.ori['RIGHT']; print('stop roaming')
+    def getDirection(self): return self.direction
+
 class ActionNetwork:
     def __init__(self, execLen, legs):
         self.actionFile = 'actionNetwork_'+str(execLen)+'_'+legs+'.gpickle'
@@ -110,14 +173,9 @@ class ActionNetwork:
         self.fig.canvas.toolbar.pack_forget()#remove bottom bar        
         self.__loadNetwork__()
     
-    def addNode(self, node):
-        self.graph.add_node(tuple(node))
-        
-    def addEdge(self, node1, node2, wt, expe):
-        self.graph.add_edge(tuple(node1), tuple(node2), weight=wt, experience=tuple(expe))
-    
-    def getEdge(self, node1, node2):
-        return self.graph.get_edge_data(tuple(node1), tuple(node2))
+    def addNode(self, node): self.graph.add_node(tuple(node))        
+    def addEdge(self, node1, node2, wt, expe, fit, dirn): self.graph.add_edge(tuple(node1), tuple(node2), weight=wt, experience=tuple(expe), fitness=fit, direction=dirn)    
+    def getEdge(self, node1, node2): return self.graph.get_edge_data(tuple(node1), tuple(node2))
     
     def getSuccessorNodes(self, currNode):#edges going out of currNode
         if self.graph.out_degree[tuple(currNode)] == 0: return None 
@@ -159,18 +217,13 @@ class ActionNetwork:
         print('Num edges: '+str(nx.number_of_edges(self.graph)))
         print('Density: '+str(nx.density(self.graph)))
         print('Num self loops: '+str(nx.number_of_selfloops(self.graph)))
-    
-class Directions:
-    UP = 1
-    DOWN = 2
-    LEFT = 3    
-    RIGHT = 4
 
 class LegPart:#This is one leg part. Could be part A that's connected to the chassis or part B that's connected to part A
     def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight):
         self.space = pymunk.Space()
-        self.ori = Directions()
-        self.legLeftOrRight = self.ori.LEFT  # default. Will be overridden in ctor. Whether the leg is at the right of the chassis or the left
+        d = Directions()
+        self.ori = d.getDirn()
+        self.legLeftOrRight = self.ori['LEFT']  # default. Will be overridden in ctor. Whether the leg is at the right of the chassis or the left
         self.prevBodyXY = 0
         self.prevBodyWd = 0  # chassis width
         self.legWd = 20 #leg thickness (width)
@@ -192,34 +245,29 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
     
     def __createLegPart__(self):
         self.leg_body = pymunk.Body(self.legMass, pymunk.moment_for_box(self.legMass, (self.legWd, self.legHt)))
-        if self.legLeftOrRight == self.ori.LEFT:
-            self.leg_body.position = self.prevBodyXY - ((self.prevBodyWd / 2) + (self.legWd / 2), 0)            
-        if self.legLeftOrRight == self.ori.RIGHT:
-            self.leg_body.position = self.prevBodyXY + ((self.prevBodyWd / 2) + (self.legWd / 2), 0)
+        if self.legLeftOrRight == self.ori['LEFT']: self.leg_body.position = self.prevBodyXY - ((self.prevBodyWd / 2) + (self.legWd / 2), 0)            
+        if self.legLeftOrRight == self.ori['RIGHT']: self.leg_body.position = self.prevBodyXY + ((self.prevBodyWd / 2) + (self.legWd / 2), 0)
         self.leg_shape = pymunk.Poly.create_box(self.leg_body, (self.legWd, self.legHt))            
         self.leg_shape.filter = self.shapeFilter
         self.leg_shape.color = 200, 200, 200  
         self.leg_shape.friction = 10.0 
         self.space.add(self.leg_shape, self.leg_body) 
         
-    def delete(self):
-        self.space.remove(self.leg_shape, self.leg_body, self.pinJoint, self.motor)
+    def delete(self): self.space.remove(self.leg_shape, self.leg_body, self.pinJoint, self.motor)
     
     def getTip(self):  
         v = self.leg_shape.get_vertices()    
-        if self.legLeftOrRight == self.ori.LEFT:            
-            v = v[2].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future
-        if self.legLeftOrRight == self.ori.RIGHT:
-            v = v[1].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future        
+        if self.legLeftOrRight == self.ori['LEFT']: v = v[2].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future
+        if self.legLeftOrRight == self.ori['RIGHT']: v = v[1].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future        
         return Vec2d(v)
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
         maxMotorRate = 11
         motorRateRangePieces = (maxMotorRate * 2 + 1) * 10
         #---link left leg A with Chassis
-        if self.legLeftOrRight == self.ori.LEFT:
+        if self.legLeftOrRight == self.ori['LEFT']:
             self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (self.legWd / 2, 0), (-self.prevBodyWd / 2, 0))
-        if self.legLeftOrRight == self.ori.RIGHT:
+        if self.legLeftOrRight == self.ori['RIGHT']:
             self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (-self.legWd / 2, 0), (self.prevBodyWd / 2, 0))            
         self.motor = pymunk.SimpleMotor(self.leg_body, prevBody, self.relativeAnguVel) 
         self.space.add(self.pinJoint, self.motor)
@@ -227,17 +275,15 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.motor.max_force = 10000000
         self.motor.legRateRange = np.linspace(-maxMotorRate, maxMotorRate, motorRateRangePieces)         
         
-    def updatePosition(self, offsetXY):
-        self.leg_body.position = self.leg_body.position + offsetXY 
-        
-    def getLegAngle(self):
-        return round(math.degrees(self.leg_body.angle)%360)        
+    def updatePosition(self, offsetXY): self.leg_body.position = self.leg_body.position + offsetXY         
+    def getLegAngle(self): return round(math.degrees(self.leg_body.angle)%360)        
 
 class RobotBody:
     def __init__(self, pymunkSpace, chassisCenterPoint, legCode):
         self.legsCode = legCode
         self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1) #to prevent collisions between robot body parts
-        self.ori = Directions()  #leg at left or right of chassis
+        d = Directions()  #leg at left or right of chassis
+        self.ori = d.getDirn()
         self.prevBodyWd = 30 #chassis width 
         self.chassisHt = 20 #chassis height
         self.chassisMass = 10
@@ -245,18 +291,16 @@ class RobotBody:
         self.chassis_shape = None #chassis shape 
         self.legs = []
         self.currentActionNode = []#node on the action network        
-#         self.brain = None        
+        self.brain = None       
         self.space = pymunkSpace
         self.__createBody__(chassisCenterPoint)
-        #self.actionNetwork = globalActionNetwork
-        #self.__activateBrain__()
         
     def __createBody__(self, chassisXY):
         self.chassis_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.prevBodyWd, self.chassisHt)))
         self.chassis_body.body_type = pymunk.Body.KINEMATIC
         self.chassis_body.position = chassisXY
         self.chassis_body.startPosition = Vec2d(self.chassis_body.position[0], self.chassis_body.position[1])
-#         self.chassis_body.startAngle = self.chassis_body.angle        
+        self.brain = Brain(self.chassis_body.startPosition)    
         self.chassis_shape = pymunk.Poly.create_box(self.chassis_body, (self.prevBodyWd, self.chassisHt))
         self.chassis_shape.filter = self.ownBodyShapeFilter
         self.setNormalRobotColor() 
@@ -270,23 +314,21 @@ class RobotBody:
         lt = s[0]; rt = s[1]; rt = rt[::-1]#reverse string rt
         for s in lt.split(","):#number of left legs
             if len(s) == 1:
-                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT); self.legs.append(leftLegA)
+                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['LEFT']); self.legs.append(leftLegA)
             if len(s) == 2:
-                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.LEFT); self.legs.append(leftLegA)
-                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori.LEFT); self.legs.append(leftLegB)                
+                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['LEFT']); self.legs.append(leftLegA)
+                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); self.legs.append(leftLegB)                
         for s in rt.split(","):#number of right legs
             if len(s) == 1:
-                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT); self.legs.append(rightLegA)
+                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(rightLegA)
             if len(s) == 2:
-                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori.RIGHT); self.legs.append(rightLegA) 
-                rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori.RIGHT); self.legs.append(rightLegB)                        
+                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(rightLegA) 
+                rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori['RIGHT']); self.legs.append(rightLegB)                        
         
     def setExperience(self, expe):       
-        for leg in self.legs:
-            leg.experience[:] = []
-        while len(expe) > 0:
-            for leg in self.legs:
-                leg.experience.append(expe.pop(0))
+        for leg in self.legs: leg.experience[:] = []
+        while len(expe) > 0: 
+            for leg in self.legs: leg.experience.append(expe.pop(0))
              
     def reinitializeWithRandomValues(self, seqLen):       
         for leg in self.legs:
@@ -297,8 +339,7 @@ class RobotBody:
     
     def getValues(self):
         ex = []
-        for leg in self.legs:
-            ex.extend(leg.experience)
+        for leg in self.legs: ex.extend(leg.experience)
         return ex
     
     def setValuesWithClamping(self, ex, seqLen):
@@ -307,29 +348,22 @@ class RobotBody:
             leg.experience[:] = []
             for i in range(0, seqLen, 1): 
                 v = ex[j]
-                if v < leg.motor.legRateRange[0] or v > leg.motor.legRateRange[-1]:
-                    v = random.choice(leg.motor.legRateRange)
+                if v < leg.motor.legRateRange[0] or v > leg.motor.legRateRange[-1]: v = random.choice(leg.motor.legRateRange)
                 leg.experience.append(v)
                 j += 1
     
     def setMotorRateForSequence(self, seqId):
-        for leg in self.legs:
-            leg.motor.rate = leg.experience[seqId]
+        for leg in self.legs: leg.motor.rate = leg.experience[seqId]
     
     def stopMotion(self):
-        for leg in self.legs:
-            leg.motor.rate = 0
+        for leg in self.legs: leg.motor.rate = 0
                         
-    def setFocusRobotColor(self):
-        self.chassis_shape.color = (190, 0, 0)
-        
-    def setNormalRobotColor(self):
-        self.chassis_shape.color = (170, 170, 170)
+    def setFocusRobotColor(self): self.chassis_shape.color = (190, 0, 0)
+    def setNormalRobotColor(self): self.chassis_shape.color = (170, 170, 170)
                 
     def setImaginaryRobotColor(self):
         self.chassis_shape.color = (110, 110, 110)  
-        for leg in self.legs:
-            leg.leg_shape.color = (110, 110, 110)
+        for leg in self.legs: leg.leg_shape.color = (110, 110, 110)
         
     def makeRobotDynamic(self):
         self.chassis_body.body_type = pymunk.Body.DYNAMIC
@@ -338,15 +372,8 @@ class RobotBody:
         
     def delete(self):
         self.space.remove(self.chassis_shape); self.space.remove(self.chassis_body)
-        for legPart in self.legs:
-            legPart.delete()
-        self.legs[:] = []#clear the list
-        
-#     def __activateBrain__(self):
-#         self.brain = Brain(self)
-        
-#     def brainActivity(self):
-#         self.brain.getSensoryInputsAndDecideWhatToDo()
+        for legPart in self.legs: legPart.delete()
+        self.legs[:] = [] #clear the list
         
     def getPosition(self):
         return self.chassis_body.position
@@ -354,8 +381,7 @@ class RobotBody:
     def updatePosition(self, offsetXY):
         self.chassis_body.position += offsetXY 
         self.chassis_body.startPosition += offsetXY
-        for leg in self.legs:
-            leg.updatePosition(offsetXY)
+        for leg in self.legs: leg.updatePosition(offsetXY)
     
 #     def getFullBodyStatesAndMotorRates(self):
 #         bodyStates = []; motorRates = []
@@ -367,13 +393,11 @@ class RobotBody:
 #             motorRates.append(val[1])
 #         return (bodyStates, motorRates)
     
-    def getBodyAngle(self):
-        return round(math.degrees(self.chassis_body.angle)%360)
+    def getBodyAngle(self): return round(math.degrees(self.chassis_body.angle)%360)
     
     def getUniqueBodyAngles(self):
         ang = [self.roundToNearest(self.getBodyAngle())]
-        for leg in self.legs:
-            ang.append(self.roundToNearest(leg.getLegAngle()))
+        for leg in self.legs: ang.append(self.roundToNearest(leg.getLegAngle()))
         return ang
     
     def setBodyPositionAndAngles(self, pos, angles, offset):
@@ -389,8 +413,7 @@ class RobotBody:
     
     def getPositions(self):
         pos = [Vec2d(self.chassis_body.position)]
-        for leg in self.legs:
-            pos.append(Vec2d(leg.leg_body.position))
+        for leg in self.legs: pos.append(Vec2d(leg.leg_body.position))
         return pos
         
     def roundToNearest(self, num):
