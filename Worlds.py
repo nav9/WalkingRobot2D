@@ -330,7 +330,7 @@ class ImaginationTwin(Worlds):#inherits
         
         if self.runState == RunCode.CONTINUE:#bottom robot's movement
             resetMovtTime = False
-            self.infoString = "  x: "+str(round(self.robots[0].getPosition()[0] - self.cumulativeUpdateBy[0], self.decimalPrecision))
+            self.experienceInfoString()
             successors = self.actionNetwork.getSuccessorNodes(self.robots[0].currentActionNode)
             if successors == None:#no successor node found, so start imagining
                 self.setForImagination()                
@@ -358,6 +358,11 @@ class ImaginationTwin(Worlds):#inherits
             resetMovtTime = self.runImagination()
         return resetMovtTime
     
+    def experienceInfoString(self):
+        self.infoString = ""
+        self.infoStringStuckAndRoamingDir()
+        self.infoString += "  x: "+str(round(self.robots[0].getPosition()[0] - self.cumulativeUpdateBy[0], self.decimalPrecision))
+                
     def setForImagination(self):
         #self.robots[0].brain.movementThinking(self.robots[0].getPosition())
         self.runState = RunCode.IMAGINE
@@ -395,7 +400,7 @@ class ImaginationTwin(Worlds):#inherits
             node = self.imaginaryRobots[i].getUniqueBodyAngles()
             weight = 1 #kept 1 for now since weight assignment should happen at a higher level
             self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, weight, expe, self.behaviour.fit[i], self.robots[0].brain.getDirection())
-            print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(self.behaviour.fit[i])+' exp:'+str(expe))
+            #print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(self.behaviour.fit[i])+' exp:'+str(expe))
         #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying               
 #         if False in self.behaviour.unfitThisFullGen:
 #             maxi = 0; fittestImaginaryRobot = -1
@@ -484,11 +489,21 @@ class ImaginationTwin(Worlds):#inherits
         genFittestRoboString = "-"; currFittestRoboString = "-"
         if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
         if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)        
-        self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
+        self.infoString = ""
+        self.infoStringStuckAndRoamingDir()
+        self.infoString += "  SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
         self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
         self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
         self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
         
+    def infoStringStuckAndRoamingDir(self):
+        self.infoString += "Stuck: "+str(self.robots[0].brain.stuck > 0)
+        self.infoString += "  Roam: "+str(self.robots[0].brain.roaming > 0)
+        #---get direction
+        dirn = self.robots[0].brain.direction
+        for d, v in self.robots[0].brain.ori.items():
+            if dirn == v: self.infoString += " Dir: "+d 
+                
     def delete(self):
         super(ImaginationTwin, self).delete()   
         for ob in self.worldObjects:
