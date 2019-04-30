@@ -293,13 +293,11 @@ class ImaginationTwin(Worlds):#inherits
         self.nextNode = None        
         
     def initialize(self):
-        #---actual world (the world seen below)
         super(ImaginationTwin, self).initialize()
-        self.createDebris(self.elevFromBottomWall, self.imaginationColor)        
+        self.createDebris(self.elevFromBottomWall, self.imaginationColor)
+        self.copyDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)       
         self.createGround(0, self.elevFromBottomWall, self.groundColor)
-        #---imaginary world (the world seen above)
-        self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
-        self.copyDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)
+        self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)       
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
         ubp = self.robots[0].getUniqueBodyAngles()
         self.actionNetwork.addNode(ubp)
@@ -361,7 +359,7 @@ class ImaginationTwin(Worlds):#inherits
     def experienceInfoString(self):
         self.infoString = ""
         self.infoStringStuckAndRoamingDir()
-        self.infoString += "  x: "+str(round(self.robots[0].getPosition()[0] - self.cumulativeUpdateBy[0], self.decimalPrecision))
+        self.infoString += ",  x: "+str(round(self.robots[0].getPosition()[0] - self.cumulativeUpdateBy[0], self.decimalPrecision))
                 
     def setForImagination(self):
         #self.robots[0].brain.movementThinking(self.robots[0].getPosition())
@@ -469,8 +467,7 @@ class ImaginationTwin(Worlds):#inherits
             self.createBox(random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness), random.randint(groundY+2*self.wallThickness, groundY+debrisMaxHt), random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), debColor)        
         
     def copyDebrisToImaginary(self, groundY, debColor):
-        startObject = 2
-        for i in range(startObject, len(self.worldObjects), 1):
+        for i in range(0, len(self.worldObjects), 1):
             self.createBox(self.worldObjects[i].body.position[0], groundY+self.worldObjects[i].body.position[1], self.worldObjects[i].body.width, self.worldObjects[i].body.height, debColor)        
     
     def createBox(self, x, y, wd, ht, colour):
@@ -491,14 +488,17 @@ class ImaginationTwin(Worlds):#inherits
         if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)        
         self.infoString = ""
         self.infoStringStuckAndRoamingDir()
-        self.infoString += "  SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
+        self.infoString += ",  SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
         self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
         self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
         self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
         
     def infoStringStuckAndRoamingDir(self):
-        self.infoString += "Stuck: "+str(self.robots[0].brain.stuck > 0)
-        self.infoString += "  Roam: "+str(self.robots[0].brain.roaming > 0)
+        disp = "-"
+        if self.robots[0].brain.stuck > 0: disp = "Y"
+        self.infoString += "Stuck: "+disp; disp = "-"
+        if self.robots[0].brain.roaming > 0: disp = "Y"
+        self.infoString += "  Roam: "+disp
         #---get direction
         dirn = self.robots[0].brain.direction
         for d, v in self.robots[0].brain.ori.items():

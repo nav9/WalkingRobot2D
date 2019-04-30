@@ -102,11 +102,7 @@ from Behaviours import Constants
 
 class Directions:
     def __init__(self):
-        self.dirn = {'UP':1, 
-                     'DOWN':2, 
-                     'LEFT':3, 
-                     'RIGHT':4, 
-                     #'TOPRIGHT':5, 'TOPLEFT':6, 'BOTTOMRIGHT':7, 'BOTTOMLEFT':8
+        self.dirn = {'UP':1, 'DOWN':2, 'LEFT':3, 'RIGHT':4, #'TOPRIGHT':5, 'TOPLEFT':6, 'BOTTOMRIGHT':7, 'BOTTOMLEFT':8
                      }
     def getDirn(self): 
         return self.dirn        
@@ -116,10 +112,10 @@ class Brain:
         d = Directions()
         self.ori = d.getDirn()
         self.direction = self.ori['RIGHT']
-        self.stuckThresh = 15 #TODO: Currently pixels. Make this a proportion of the body length
+        self.stuckThresh = 2 #TODO: Currently pixels. Make this a proportion of the body length
         self.maxStuck = 2 #max iterations before deciding to get unstuck by going in different direction
         self.stuck = 0 #counter 
-        self.maxRoaming = 5 #max iterations to roam in non-main direction
+        self.maxRoaming = 2 #max iterations to roam in non-main direction
         self.roaming = 0 #counter
         self.prevPos = pos
         self.const = Constants()
@@ -130,7 +126,6 @@ class Brain:
             self.roaming -= 1
             if self.roaming == 0: self.setToMainDirection()#stop roaming
         dist = abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2))
-        print('Stuck chk: '+str(dist)+'/'+str(self.stuckThresh))
         if dist <= self.stuckThresh:   
             self.stuck += 1
             if self.stuck == self.maxStuck: self.moveInDifferentDirection()
@@ -144,18 +139,10 @@ class Brain:
         
     def robotDirection(self, prevPos, currPos): 
         ang = round(math.degrees(math.atan2((currPos[1]-prevPos[1]), (currPos[0]-prevPos[0])))) % 360
-#         if ang > 338 or ang <= 23: direc = self.ori['RIGHT'];print('right')
-#         if ang > 23 and ang <= 68: direc = self.ori['TOPRIGHT'];print('topright')
-#         if ang > 68 and ang <= 113: direc = self.ori['UP'];print('up')
-#         if ang > 113 and ang <= 158: direc = self.ori['TOPLEFT'];print('topleft')
-#         if ang > 158 and ang <= 203: direc = self.ori['LEFT'];print('left')
-#         if ang > 203 and ang <= 248: direc = self.ori['BOTTOMLEFT'];print('bottomleft')
-#         if ang > 248 and ang <= 293: direc = self.ori['DOWN'];print('down')
-#         if ang > 293 and ang <= 338: direc = self.ori['BOTTOMRIGHT'];print('bottomright')
-        if ang > 315 or ang <= 45: direc = self.ori['RIGHT']
-        if ang > 45 and ang <= 135: direc = self.ori['UP']
+        if ang > 370 or ang <= 85: direc = self.ori['RIGHT']
+        if ang > 85 and ang <= 135: direc = self.ori['UP']
         if ang > 135 and ang <= 225: direc = self.ori['LEFT']
-        if ang > 225 and ang <= 315: direc = self.ori['DOWN']  
+        if ang > 225 and ang <= 370: direc = self.ori['DOWN']  
         return direc
     
     def moveInDifferentDirection(self):
@@ -163,7 +150,6 @@ class Brain:
         while d == self.direction:
             d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
         self.direction = d
-        print('Stuck. New direction chosen: '+str(d)+'. Roam')
         self.roaming = self.maxRoaming
         
     def setToMainDirection(self): self.direction = self.ori['RIGHT']; print('stop roaming')
