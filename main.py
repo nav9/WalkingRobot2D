@@ -14,7 +14,8 @@ class Simulator(object):
         self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
         #self.worlds.append(FlatGroundTraining(execLen, legs))
-        self.worlds.append(ImaginationTwin(self.actions, execLen, legs))
+        #self.worlds.append(ImaginationTwin(self.actions, execLen, legs))
+        self.worlds.append(Womb(execLen, legs))
        
     def nextWorld(self):
         self.worldOrdinal += 1

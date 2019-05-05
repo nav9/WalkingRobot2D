@@ -82,7 +82,7 @@ from DE import Constants
 #                 ang = round((math.degrees(math.atan2((legTip[1]-chCen[1]), (legTip[0]-chCen[0])))-bodyAng)/self.angleAccuracy)
 #                 self.body.actionNetwork.addAction([i, dist, ang, self.body.legs[i].motor.rate]) #HASH: [legID, distance, angle, motorRate]
 #         
-# class Brain:        
+# class LearningRobotBrain:        
 #     def __init__(self, bodyRef):
 #         self.experience = 20 #number of action iterations it can handle
 #         self.trainingExperienceCounter = 0        
@@ -107,7 +107,7 @@ class Directions:
     def getDirn(self): 
         return self.dirn        
     
-class Brain:
+class LearningRobotBrain:
     def __init__(self, pos):
         d = Directions()
         self.ori = d.getDirn()
@@ -155,7 +155,7 @@ class Brain:
     def setToMainDirection(self): self.direction = self.ori['RIGHT']
     def getDirection(self): return self.direction
 
-class ActionNetwork:
+class TempActionNetwork:
     def __init__(self, execLen, legs):
         self.actionFile = 'actionNetwork_'+str(execLen)+'_'+legs+'.gpickle'
         self.graph = None
@@ -211,7 +211,7 @@ class ActionNetwork:
         print('Density: '+str(nx.density(self.graph)))
         print('Num self loops: '+str(nx.number_of_selfloops(self.graph)))
 
-class LegPart:#This is one leg part. Could be part A that's connected to the chassis or part B that's connected to part A
+class LearningRobotLegPart:#This is one leg part. Could be part A that's connected to the chassis or part B that's connected to part A
     def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight):
         self.space = pymunk.Space()
         d = Directions()
@@ -271,7 +271,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
     def updatePosition(self, offsetXY): self.leg_body.position = self.leg_body.position + offsetXY         
     def getLegAngle(self): return round(math.degrees(self.leg_body.angle)%360)        
 
-class RobotBody:
+class LearningRobot:
     def __init__(self, pymunkSpace, chassisCenterPoint, legCode):
         self.legsCode = legCode
         self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1) #to prevent collisions between robot body parts
@@ -294,7 +294,7 @@ class RobotBody:
         self.chassis_body.body_type = pymunk.Body.KINEMATIC
         self.chassis_body.position = chassisXY
         self.chassis_body.startPosition = Vec2d(self.chassis_body.position[0], self.chassis_body.position[1])
-        self.brain = Brain(self.chassis_body.startPosition)    
+        self.brain = LearningRobotBrain(self.chassis_body.startPosition)    
         self.chassis_shape = pymunk.Poly.create_box(self.chassis_body, (self.prevBodyWd, self.chassisHt))
         self.chassis_shape.filter = self.ownBodyShapeFilter
         self.setNormalRobotColor() 
@@ -308,24 +308,24 @@ class RobotBody:
         lt = s[0]; rt = s[1]; rt = rt[::-1]#reverse string rt
         for s in lt.split(","):#number of left legs
             if len(s) == 1:
-                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['LEFT']); self.legs.append(leftLegA)
+                leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['LEFT']); self.legs.append(leftLegA)
             if len(s) == 2:
-                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['LEFT']); self.legs.append(leftLegA)
-                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); self.legs.append(leftLegB)                
+                leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['LEFT']); self.legs.append(leftLegA)
+                leftLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); self.legs.append(leftLegB)                
             if len(s) == 3:
-                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['LEFT']); self.legs.append(leftLegA)
-                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); self.legs.append(leftLegB)                 
-                leftLegC = LegPart(self.space, self.ownBodyShapeFilter, leftLegB.leg_body, leftLegB.legWd, self.ori['LEFT']); self.legs.append(leftLegC)                                 
+                leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['LEFT']); self.legs.append(leftLegA)
+                leftLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); self.legs.append(leftLegB)                 
+                leftLegC = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegB.leg_body, leftLegB.legWd, self.ori['LEFT']); self.legs.append(leftLegC)                                 
         for s in rt.split(","):#number of right legs
             if len(s) == 1:
-                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(rightLegA)
+                rightLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(rightLegA)
             if len(s) == 2:
-                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(rightLegA) 
-                rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori['RIGHT']); self.legs.append(rightLegB)                        
+                rightLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(rightLegA) 
+                rightLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori['RIGHT']); self.legs.append(rightLegB)                        
             if len(s) == 3:
-                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(leftLegA)
-                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['RIGHT']); self.legs.append(leftLegB)                 
-                leftLegC = LegPart(self.space, self.ownBodyShapeFilter, leftLegB.leg_body, leftLegB.legWd, self.ori['RIGHT']); self.legs.append(leftLegC)                                 
+                leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(leftLegA)
+                leftLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['RIGHT']); self.legs.append(leftLegB)                 
+                leftLegC = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegB.leg_body, leftLegB.legWd, self.ori['RIGHT']); self.legs.append(leftLegC)                                 
                         
     def setExperience(self, expe):       
         for leg in self.legs: leg.experience[:] = []
@@ -384,16 +384,6 @@ class RobotBody:
         self.chassis_body.position += offsetXY 
         self.chassis_body.startPosition += offsetXY
         for leg in self.legs: leg.updatePosition(offsetXY)
-    
-#     def getFullBodyStatesAndMotorRates(self):
-#         bodyStates = []; motorRates = []
-#         bodyStates.append(self.chassis_body.angle)
-#         bodyStates.append(self.chassis_body.position)
-#         for leg in self.legs:
-#             val = leg.getLegStatesAndMotorRates()
-#             bodyStates.append(val[0])
-#             motorRates.append(val[1])
-#         return (bodyStates, motorRates)
     
     def getBodyAngle(self): return round(math.degrees(self.chassis_body.angle)%360)
     
