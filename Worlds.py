@@ -18,6 +18,7 @@ from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from DE import DifferentialEvolution, ImaginationDifferentialEvolution, RunCode
 from LearningRobot import LearningRobot
+from RandomLearning import RandomLearning
 
 class Worlds(object):
     def __init__(self):
@@ -554,53 +555,43 @@ class Womb(Worlds):#inherits
         self.maxMovtTime = execLen
         self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        
-        self.worldWidth = 1890 #overriding
-        self.worldHeight = 600 #overriding        
-        self.numRobots = 15 
-#         self.elevFromBottomWall = 0
-#         self.groundThickness = 10
-        self.robotInitPos = Vec2d(self.screenWidth/2, 50)      
+        self.worldWidth = 900 #overriding
+        self.worldHeight = 620 #overriding        
+        self.numRobots = 378
    
     def initialize(self):
         super(Womb, self).initialize() 
-        #self.createGround(0, self.elevFromBottomWall, self.groundColor)
-        self.behaviour = DifferentialEvolution(self.robots)
-        self.sequenceLength = 3 #start seq len. Should start with anything from 1 to maxSequenceLength
-        self.maxSequenceLength = 10 #The number of dT times a leg is moved
-        self.gen = 0 #start gen
-        self.maxGens = 50 
-         
-    def initializeRobots(self):#overriding      
-        for i in range(0, self.numRobots, 1):
-            self.robots.append(LearningRobot(self.space, self.robotInitPos, self.legsCode)) 
-                     
-#     def createGround(self, groundX, groundY, grColor):
-#         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2)
-#         shape = pymunk.Poly.create_box(body, (self.worldWidth-2*self.wallThickness, self.wallThickness)); shape.color = grColor; shape.friction = 1.0
-#         self.space.add(shape); self.worldObjects.append(shape)   
-                 
+        self.removeBoundary()
+        self.behaviour = RandomLearning()
+        
+    def initializeRobots(self):#overriding  
+        widthSep = 50; heightSep = 30; counter= 0
+        for i in range(0, self.worldHeight, heightSep):
+            if counter >= self.numRobots: break
+            for j in range(0, self.worldWidth, widthSep):
+                self.robots.append(LearningRobot(self.space, Vec2d(j, i), self.legsCode))
+                counter += 1 
+                if counter >= self.numRobots: break
+
     def processRobot(self):
-        if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
-            return RunCode.STOP
+        pass
+#         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
+#             return RunCode.STOP
+
+#         #---info dashboard
+#         genFittestRoboString = "-"; currFittestRoboString = "-"
+#         if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
+#         if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)
+#         self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
+#         self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
+#         self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
+#         self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
          
-        runCode = self.behaviour.run(self.sequenceLength)
-        if runCode == RunCode.NEXTGEN:#reset for next generation
-            self.gen += 1
-            self.deleteRobots(); self.initializeRobots()            
-            self.behaviour.startNewGen()         
-            if self.gen == self.maxGens:#completion of one epoch
-                self.sequenceLength += 1 
-                self.gen = 0
-                self.behaviour.startNewEpoch()
-        #---info dashboard
-        genFittestRoboString = "-"; currFittestRoboString = "-"
-        if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
-        if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)
-        self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
-        self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
-        self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
-        self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
-         
+    def removeBoundary(self):
+        for ob in self.boundaryObjects:
+            self.space.remove(ob)
+        self.boundaryObjects[:] = []#clear the list
+                         
     def delete(self):
         super(Womb, self).delete()   
         for ob in self.worldObjects:
@@ -609,10 +600,6 @@ class Womb(Worlds):#inherits
      
     def updatePosition(self):  
         updateBy = super(Womb, self).updatePosition()    
-#         if self.behaviour.currentFittestRobot != self.focusRobotID:
-#             self.focusRobotID = self.behaviour.currentFittestRobot
-#         if self.behaviour.unfitThisFullGen[self.focusRobotID]:
-#             self.focusRobotID = self.UNDETERMINED
         if updateBy != (0, 0):
             for ob in self.worldObjects:
                 ob.body.position += updateBy     

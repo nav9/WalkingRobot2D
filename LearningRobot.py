@@ -301,7 +301,7 @@ class LearningRobot:
         self.chassis_shape.friction = 10.0
         self.space.add(self.chassis_shape, self.chassis_body) 
         self.createLegs()
-        self.makeRobotDynamic()
+        #self.makeRobotDynamic()
     
     def createLegs(self):
         s = self.legsCode.split("#")
@@ -326,37 +326,7 @@ class LearningRobot:
                 leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.prevBodyWd, self.ori['RIGHT']); self.legs.append(leftLegA)
                 leftLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['RIGHT']); self.legs.append(leftLegB)                 
                 leftLegC = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegB.leg_body, leftLegB.legWd, self.ori['RIGHT']); self.legs.append(leftLegC)                                 
-                        
-    def setExperience(self, expe):       
-        for leg in self.legs: leg.experience[:] = []
-        while len(expe) > 0: 
-            for leg in self.legs: leg.experience.append(expe.pop(0))
-             
-    def reinitializeWithRandomValues(self, seqLen):       
-        for leg in self.legs:
-            leg.experience[:] = []
-            for i in range(0, seqLen, 1):
-                thisRate = random.choice(leg.motor.legRateRange)
-                leg.experience.append(thisRate)                                    
-    
-    def getValues(self):
-        ex = []
-        for leg in self.legs: ex.extend(leg.experience)
-        return ex
-    
-    def setValuesWithClamping(self, ex, seqLen):
-        j = 0
-        for leg in self.legs:
-            leg.experience[:] = []
-            for i in range(0, seqLen, 1): 
-                v = ex[j]
-                if v < leg.motor.legRateRange[0] or v > leg.motor.legRateRange[-1]: v = random.choice(leg.motor.legRateRange)
-                leg.experience.append(v)
-                j += 1
-    
-    def setMotorRateForSequence(self, seqId):
-        for leg in self.legs: leg.motor.rate = leg.experience[seqId]
-    
+
     def stopMotion(self):
         for leg in self.legs: leg.motor.rate = 0
                         
@@ -377,55 +347,82 @@ class LearningRobot:
         for legPart in self.legs: legPart.delete()
         self.legs[:] = [] #clear the list
         
-    def getPosition(self):
-        return self.chassis_body.position
-        
+    def getPosition(self): return self.chassis_body.position
+    def getBodyAngle(self): return round(math.degrees(self.chassis_body.angle)%360)
+            
     def updatePosition(self, offsetXY):
         self.chassis_body.position += offsetXY 
         self.chassis_body.startPosition += offsetXY
         for leg in self.legs: leg.updatePosition(offsetXY)
-    
-    def getBodyAngle(self): return round(math.degrees(self.chassis_body.angle)%360)
-    
-    def getUniqueBodyAngles(self):
-        ang = [self.roundToNearest(self.getBodyAngle())]
-        for leg in self.legs: ang.append(self.roundToNearest(leg.getLegAngle()))
-        return ang
-    
-    def setBodyPositionAndAngles(self, pos, angles, offset):
-        p = pos.pop(0)
-        self.chassis_body.position = Vec2d(p[0], p[1]) + offset
-        self.chassis_body.startPosition = Vec2d(p[0], p[1]) + offset
-        self.chassis_body.angle = math.radians(angles.pop(0))
-        for leg in self.legs:
-            p = pos.pop(0)
-            leg.leg_body.position = Vec2d(p[0], p[1]) + offset
-            leg.leg_body.angle = math.radians(angles.pop(0))
-        return pos    
-    
-    def getPositions(self):
-        pos = [Vec2d(self.chassis_body.position)]
-        for leg in self.legs: pos.append(Vec2d(leg.leg_body.position))
-        return pos
-        
-    def roundToNearest(self, num):
-        roundOffPrecision = 5
-        rem = num % roundOffPrecision
-        if rem < roundOffPrecision / 2: num = int(num/roundOffPrecision) * roundOffPrecision
-        else: num = int((num+roundOffPrecision) / roundOffPrecision) * roundOffPrecision
-        return num
-    
-    def getLegQuadrants(self):
-        quads = []
-        for i in range(0, len(self.body.legs), 1):
-            quads.append(self.__getQuadrant__(self.body.legs[i].getTip()))
-        return quads
-            
-    def __getQuadrant__(self, pt):#pt should be Vec2d or tuple
-        translateOffset = -Vec2d(self.chassis_body.position)
-        tPt = pt + translateOffset #translate
-        theta = -self.getBodyAngle() #for clockwise rotation
-        tPt[0] = tPt[0] * math.cos(theta) - tPt[1] * math.sin(theta) #rotate
-        tPt[1] = tPt[0] * math.sin(theta) + tPt[1] * math.cos(theta) #rotate
-        return (math.floor(tPt[0]/self.quadrantAccuracy), math.floor(tPt[1]/self.quadrantAccuracy))
-        
+                                
+#     def setExperience(self, expe):       
+#         for leg in self.legs: leg.experience[:] = []
+#         while len(expe) > 0: 
+#             for leg in self.legs: leg.experience.append(expe.pop(0))
+#              
+#     def reinitializeWithRandomValues(self, seqLen):       
+#         for leg in self.legs:
+#             leg.experience[:] = []
+#             for i in range(0, seqLen, 1):
+#                 thisRate = random.choice(leg.motor.legRateRange)
+#                 leg.experience.append(thisRate)                                    
+#     
+#     def getValues(self):
+#         ex = []
+#         for leg in self.legs: ex.extend(leg.experience)
+#         return ex
+#     
+#     def setValuesWithClamping(self, ex, seqLen):
+#         j = 0
+#         for leg in self.legs:
+#             leg.experience[:] = []
+#             for i in range(0, seqLen, 1): 
+#                 v = ex[j]
+#                 if v < leg.motor.legRateRange[0] or v > leg.motor.legRateRange[-1]: v = random.choice(leg.motor.legRateRange)
+#                 leg.experience.append(v)
+#                 j += 1
+#     
+#     def setMotorRateForSequence(self, seqId):
+#         for leg in self.legs: leg.motor.rate = leg.experience[seqId]   
+#     def getUniqueBodyAngles(self):
+#         ang = [self.roundToNearest(self.getBodyAngle())]
+#         for leg in self.legs: ang.append(self.roundToNearest(leg.getLegAngle()))
+#         return ang
+#     
+#     def setBodyPositionAndAngles(self, pos, angles, offset):
+#         p = pos.pop(0)
+#         self.chassis_body.position = Vec2d(p[0], p[1]) + offset
+#         self.chassis_body.startPosition = Vec2d(p[0], p[1]) + offset
+#         self.chassis_body.angle = math.radians(angles.pop(0))
+#         for leg in self.legs:
+#             p = pos.pop(0)
+#             leg.leg_body.position = Vec2d(p[0], p[1]) + offset
+#             leg.leg_body.angle = math.radians(angles.pop(0))
+#         return pos    
+#     
+#     def getPositions(self):
+#         pos = [Vec2d(self.chassis_body.position)]
+#         for leg in self.legs: pos.append(Vec2d(leg.leg_body.position))
+#         return pos
+#         
+#     def roundToNearest(self, num):
+#         roundOffPrecision = 5
+#         rem = num % roundOffPrecision
+#         if rem < roundOffPrecision / 2: num = int(num/roundOffPrecision) * roundOffPrecision
+#         else: num = int((num+roundOffPrecision) / roundOffPrecision) * roundOffPrecision
+#         return num
+#     
+#     def getLegQuadrants(self):
+#         quads = []
+#         for i in range(0, len(self.body.legs), 1):
+#             quads.append(self.__getQuadrant__(self.body.legs[i].getTip()))
+#         return quads
+#             
+#     def __getQuadrant__(self, pt):#pt should be Vec2d or tuple
+#         translateOffset = -Vec2d(self.chassis_body.position)
+#         tPt = pt + translateOffset #translate
+#         theta = -self.getBodyAngle() #for clockwise rotation
+#         tPt[0] = tPt[0] * math.cos(theta) - tPt[1] * math.sin(theta) #rotate
+#         tPt[1] = tPt[0] * math.sin(theta) + tPt[1] * math.cos(theta) #rotate
+#         return (math.floor(tPt[0]/self.quadrantAccuracy), math.floor(tPt[1]/self.quadrantAccuracy))
+#         
