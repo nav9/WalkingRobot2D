@@ -18,7 +18,7 @@ from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from DE import DifferentialEvolution, ImaginationDifferentialEvolution, RunCode
 from LearningRobot import LearningRobot
-from BehaviourStates import ActionGenerator
+from BehaviourStates import *
 
 class Worlds(object):
     def __init__(self):
@@ -550,14 +550,14 @@ class ImaginationTwin(Worlds):#inherits
 
 class Heaven(Worlds):#inherits
     def __init__(self, legsCode, actionNet):
-        super(Heaven, self).__init__()
         self.legsCode = legsCode
-        self.actions = actionNet
+        self.actions = actionNet        
+        super(Heaven, self).__init__()
         self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 900 #overriding
         self.worldHeight = 620 #overriding        
-        self.numRobots = 378
+        self.numRobots = 24 #378
     
     def runWorld(self): #may get overridden in child class
         clock = pygame.time.Clock()
@@ -579,7 +579,7 @@ class Heaven(Worlds):#inherits
             #---Update world based on player focus
             self.updatePosition()
             for robo in self.robots:
-                robo.process()
+                robo.run()
             #---draw all objects
             self.draw()            
             clock.tick(self.fps)
@@ -587,16 +587,17 @@ class Heaven(Worlds):#inherits
     def initialize(self):
         super(Heaven, self).initialize() 
         self.removeBoundary()
-        self.behaviour = ActionGenerator()
     
     def initializeRobots(self):#overriding  
-        widthSep = 50; heightSep = 30; counter= 0
-        for i in range(0, self.worldHeight, heightSep):
+        widthSep = 100; heightSep = 100; counter = 0
+        for i in range(100, self.worldHeight, heightSep):
             if counter >= self.numRobots: break
-            for j in range(0, self.worldWidth, widthSep):
-                self.robots.append(LearningRobot(self.space, Vec2d(j, i), self.legsCode))
+            for j in range(100, self.worldWidth, widthSep):
+                self.robots.append(LearningRobot(self.space, Vec2d(j, i), self.legsCode, self.actions))
                 counter += 1 
                 if counter >= self.numRobots: break
+        for robo in self.robots:
+            robo.setState(BrainStateRandom(robo))
 
     def removeBoundary(self):
         for ob in self.boundaryObjects:
