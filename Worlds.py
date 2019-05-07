@@ -18,7 +18,7 @@ from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from DE import DifferentialEvolution, ImaginationDifferentialEvolution, RunCode
 from LearningRobot import LearningRobot
-from RandomLearning import RandomLearning
+from BehaviourStates import ActionGenerator
 
 class Worlds(object):
     def __init__(self):
@@ -548,22 +548,47 @@ class ImaginationTwin(Worlds):#inherits
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 
-class Womb(Worlds):#inherits
-    def __init__(self, execLen, legsCode):
-        super(Womb, self).__init__()
+class Heaven(Worlds):#inherits
+    def __init__(self, legsCode, actionNet):
+        super(Heaven, self).__init__()
         self.legsCode = legsCode
-        self.maxMovtTime = execLen
+        self.actions = actionNet
         self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 900 #overriding
         self.worldHeight = 620 #overriding        
         self.numRobots = 378
-   
+    
+    def runWorld(self): #may get overridden in child class
+        clock = pygame.time.Clock()
+        simulating = True
+        while simulating:
+            for event in pygame.event.get():
+                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
+                    sys.exit(0)
+                if event.type == KEYDOWN:
+                    if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
+                    if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
+                    if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
+                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)                    
+            
+            #---Update physics
+            dt = 1.0 / float(self.fps) / float(self.iterations)
+            for x in range(self.iterations): #iterations to get a more stable simulation
+                self.space.step(dt)
+            #---Update world based on player focus
+            self.updatePosition()
+            for robo in self.robots:
+                robo.process()
+            #---draw all objects
+            self.draw()            
+            clock.tick(self.fps)
+
     def initialize(self):
-        super(Womb, self).initialize() 
+        super(Heaven, self).initialize() 
         self.removeBoundary()
-        self.behaviour = RandomLearning()
-        
+        self.behaviour = ActionGenerator()
+    
     def initializeRobots(self):#overriding  
         widthSep = 50; heightSep = 30; counter= 0
         for i in range(0, self.worldHeight, heightSep):
@@ -573,33 +598,19 @@ class Womb(Worlds):#inherits
                 counter += 1 
                 if counter >= self.numRobots: break
 
-    def processRobot(self):
-        pass
-#         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
-#             return RunCode.STOP
-
-#         #---info dashboard
-#         genFittestRoboString = "-"; currFittestRoboString = "-"
-#         if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
-#         if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)
-#         self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
-#         self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
-#         self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
-#         self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
-         
     def removeBoundary(self):
         for ob in self.boundaryObjects:
             self.space.remove(ob)
         self.boundaryObjects[:] = []#clear the list
                          
     def delete(self):
-        super(Womb, self).delete()   
+        super(Heaven, self).delete()   
         for ob in self.worldObjects:
             self.space.remove(ob)
         self.worldObjects[:] = []  
      
     def updatePosition(self):  
-        updateBy = super(Womb, self).updatePosition()    
+        updateBy = super(Heaven, self).updatePosition()    
         if updateBy != (0, 0):
             for ob in self.worldObjects:
                 ob.body.position += updateBy     

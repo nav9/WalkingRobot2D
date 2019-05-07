@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from pygame import _numpysurfarray
 from matplotlib.animation import FuncAnimation
 from DE import Constants
+from WalkingRobot import Directions
 
 #from threading import Thread, Lock
 
@@ -100,64 +101,64 @@ from DE import Constants
 #                 self.motorCortex.generateNewActions(self.trainingExperienceCounter==0)
 #                 self.trainingExperienceCounter -= 1  
 
-class Directions:
-    def __init__(self):
-        self.dirn = {'UP':1, 'DOWN':2, 'LEFT':3, 'RIGHT':4, #'TOPRIGHT':5, 'TOPLEFT':6, 'BOTTOMRIGHT':7, 'BOTTOMLEFT':8
-                     }
-    def getDirn(self): 
-        return self.dirn        
-    
-class LearningRobotBrain:
-    def __init__(self, pos):
-        d = Directions()
-        self.ori = d.getDirn()
-        self.direction = self.ori['RIGHT']
-        self.stuckThresh = 2 #TODO: Currently pixels. Make this a proportion of the body length
-        self.maxStuck = 2 #max iterations before deciding to get unstuck by going in different direction
-        self.stuck = 0 #counter 
-        self.maxRoaming = 5 #max iterations to roam in non-main direction
-        self.roaming = 0 #counter
-        self.prevPos = pos
-        self.const = Constants()
-        self.decimalPrecision = 2
-        
-    def movementThinking(self, currPos):
-        if self.roaming > 0:
-            self.roaming -= 1
-            if self.roaming == 0: self.setToMainDirection()#stop roaming
-        dist = abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2))
-        if dist <= self.stuckThresh:   
-            self.stuck += 1
-            if self.stuck == self.maxStuck: self.moveInDifferentDirection()
-        else: 
-            self.prevPos = currPos
-            self.stuck = 0
-            
-    def getFitness(self, prevPos, currPos):
-        if self.robotDirection(prevPos, currPos) == self.direction: return round(abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2)), self.decimalPrecision)
-        else: return self.const.NOTFIT 
-        
-    def robotDirection(self, prevPos, currPos): 
-        ang = round(math.degrees(math.atan2((currPos[1]-prevPos[1]), (currPos[0]-prevPos[0])))) % 360
-        if ang > 270 or ang <= 91: direc = self.ori['RIGHT']
-        if ang > 91 and ang <= 135: direc = self.ori['UP']
-        if ang > 135 and ang <= 225: direc = self.ori['LEFT']
-        if ang > 225 and ang <= 270: direc = self.ori['DOWN']  
-        return direc
-    
-    def moveInDifferentDirection(self):
-        d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
-        while d == self.direction:
-            d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
-        self.direction = d
-        self.roaming = self.maxRoaming
-        
-    def setToMainDirection(self): self.direction = self.ori['RIGHT']
-    def getDirection(self): return self.direction
+# class Directions:
+#     def __init__(self):
+#         self.dirn = {'UP':1, 'DOWN':2, 'LEFT':3, 'RIGHT':4, #'TOPRIGHT':5, 'TOPLEFT':6, 'BOTTOMRIGHT':7, 'BOTTOMLEFT':8
+#                      }
+#     def getDirn(self): 
+#         return self.dirn        
+#     
+# class LearningRobotBrain:
+#     def __init__(self, pos):
+#         d = Directions()
+#         self.ori = d.getDirn()
+#         self.direction = self.ori['RIGHT']
+#         self.stuckThresh = 2 #TODO: Currently pixels. Make this a proportion of the body length
+#         self.maxStuck = 2 #max iterations before deciding to get unstuck by going in different direction
+#         self.stuck = 0 #counter 
+#         self.maxRoaming = 5 #max iterations to roam in non-main direction
+#         self.roaming = 0 #counter
+#         self.prevPos = pos
+#         self.const = Constants()
+#         self.decimalPrecision = 2
+#         
+#     def movementThinking(self, currPos):
+#         if self.roaming > 0:
+#             self.roaming -= 1
+#             if self.roaming == 0: self.setToMainDirection()#stop roaming
+#         dist = abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2))
+#         if dist <= self.stuckThresh:   
+#             self.stuck += 1
+#             if self.stuck == self.maxStuck: self.moveInDifferentDirection()
+#         else: 
+#             self.prevPos = currPos
+#             self.stuck = 0
+#             
+#     def getFitness(self, prevPos, currPos):
+#         if self.robotDirection(prevPos, currPos) == self.direction: return round(abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2)), self.decimalPrecision)
+#         else: return self.const.NOTFIT 
+#         
+#     def robotDirection(self, prevPos, currPos): 
+#         ang = round(math.degrees(math.atan2((currPos[1]-prevPos[1]), (currPos[0]-prevPos[0])))) % 360
+#         if ang > 270 or ang <= 91: direc = self.ori['RIGHT']
+#         if ang > 91 and ang <= 135: direc = self.ori['UP']
+#         if ang > 135 and ang <= 225: direc = self.ori['LEFT']
+#         if ang > 225 and ang <= 270: direc = self.ori['DOWN']  
+#         return direc
+#     
+#     def moveInDifferentDirection(self):
+#         d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
+#         while d == self.direction:
+#             d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
+#         self.direction = d
+#         self.roaming = self.maxRoaming
+#         
+#     def setToMainDirection(self): self.direction = self.ori['RIGHT']
+#     def getDirection(self): return self.direction
 
-class TempActionNetwork:
-    def __init__(self, execLen, legs):
-        self.actionFile = 'actionNetwork_'+str(execLen)+'_'+legs+'.gpickle'
+class PartActionNetwork:#stores actions of each movable part as a node
+    def __init__(self, legs):
+        self.actionFile = 'actionNetwork_'+legs+'.gpickle'
         self.graph = None
         self.fig = plt.figure()
         self.fig.patch.set_facecolor('black')        
@@ -175,19 +176,9 @@ class TempActionNetwork:
         else: return self.graph.successors(tuple(currNode))
     
     def displayNetwork(self):    
-        plt.clf(); 
-        #posType = nx.planar_layout(self.graph)        
-        #posType = nx.circular_layout(self.graph)
-        #posType = nx.kamada_kawai_layout(self.graph)
-        #posType = nx.random_layout(self.graph)
-        posType = nx.spring_layout(self.graph)
-        #posType = nx.fruchterman_reingold_layout(self.graph)
-        #nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', arrowsize=1, arrowstyle='fancy')
+        plt.clf(); posType = nx.spring_layout(self.graph)
         nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', node_color='green', alpha=0.5, arrowsize=5)
-        #nx.draw_circular(self.graph)
-        #nx.draw(self.graph, with_labels=False, font_weight='bold')
-        plt.pause(0.001)
-        plt.show(block=False)  
+        plt.pause(0.001); plt.show(block=False)  
         print('Num nodes in action network: '+str(nx.number_of_nodes(self.graph)))     
         
     def saveNetwork(self):
@@ -248,11 +239,11 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         
     def delete(self): self.space.remove(self.leg_shape, self.leg_body, self.pinJoint, self.motor)
     
-    def getTip(self):  
-        v = self.leg_shape.get_vertices()    
-        if self.legLeftOrRight == self.ori['LEFT']: v = v[2].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future
-        if self.legLeftOrRight == self.ori['RIGHT']: v = v[1].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future        
-        return Vec2d(v)
+#     def getTip(self):  
+#         v = self.leg_shape.get_vertices()    
+#         if self.legLeftOrRight == self.ori['LEFT']: v = v[2].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future
+#         if self.legLeftOrRight == self.ori['RIGHT']: v = v[1].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future        
+#         return Vec2d(v)
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
         maxMotorRate = 5
@@ -269,7 +260,7 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         self.motor.legRateRange = np.linspace(-maxMotorRate, maxMotorRate, motorRateRangePieces)         
         
     def updatePosition(self, offsetXY): self.leg_body.position = self.leg_body.position + offsetXY         
-    def getLegAngle(self): return round(math.degrees(self.leg_body.angle)%360)        
+#     def getLegAngle(self): return round(math.degrees(self.leg_body.angle)%360)        
 
 class LearningRobot:
     def __init__(self, pymunkSpace, chassisCenterPoint, legCode):
@@ -283,18 +274,19 @@ class LearningRobot:
         self.chassis_body = None #chassis body
         self.chassis_shape = None #chassis shape 
         self.legs = []
-        self.currentActionNode = []#node on the action network        
-        self.brain = None       
+        self.currentActionNode = [] #node on the action network        
         self.space = pymunkSpace
         self.quadrantAccuracy = 3 #pixels
         self.__createBody__(chassisCenterPoint)
+        
+    def process(self):
+        pass
         
     def __createBody__(self, chassisXY):
         self.chassis_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.prevBodyWd, self.chassisHt)))
         self.chassis_body.body_type = pymunk.Body.KINEMATIC
         self.chassis_body.position = chassisXY
         self.chassis_body.startPosition = Vec2d(self.chassis_body.position[0], self.chassis_body.position[1])
-        self.brain = LearningRobotBrain(self.chassis_body.startPosition)    
         self.chassis_shape = pymunk.Poly.create_box(self.chassis_body, (self.prevBodyWd, self.chassisHt))
         self.chassis_shape.filter = self.ownBodyShapeFilter
         self.setNormalRobotColor() 
