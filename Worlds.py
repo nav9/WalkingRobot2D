@@ -71,7 +71,7 @@ class Worlds(object):
         #width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
         self.draw_options.constraint_color = 150,150,150
-        self.draw_options.flags = pymunk.SpaceDebugDrawOptions.DRAW_SHAPES
+        #self.draw_options.flags = pymunk.SpaceDebugDrawOptions.DRAW_SHAPES
         #self.draw_options.flags |= pymunk.SpaceDebugDrawOptions.DRAW_COLLISION_POINTS
 
         self.initializeRobots()
@@ -100,7 +100,7 @@ class Worlds(object):
             self.space.remove(ob)
         self.boundaryObjects[:] = []#clear the list
         for ob in self.robots:
-            self.space.remove(ob)
+            ob.delete()
         self.robots[:] = []
 
     def draw(self):        
@@ -663,13 +663,17 @@ class Heaven(Worlds):#inherits
         while simulating:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
-                    sys.exit(0)
+                    simulating = False #sys.exit(0)
                 if event.type == KEYDOWN:
                     if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
                     if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
                     if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
                     if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)                    
-            
+                    if event.key == K_n: 
+                        print('Getting ready to display action network...'); 
+                        self.actions.displayNetwork()
+            if not simulating: 
+                break               
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
             for x in range(self.iterations): #iterations to get a more stable simulation
@@ -681,6 +685,8 @@ class Heaven(Worlds):#inherits
             #---draw all objects
             self.draw()            
             clock.tick(self.fps)
+        #---actions to do after simulation
+        self.actions.saveNetwork() 
 
     def initialize(self):
         super(Heaven, self).initialize() 

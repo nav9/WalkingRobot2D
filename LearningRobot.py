@@ -169,7 +169,14 @@ class PartActionNetwork:#stores actions of each movable part as a node
         self.__loadNetwork__()
     
     def addNode(self, node): self.graph.add_node(tuple(node))        
-    def addEdge(self, node1, node2, wt, expe, fit, dirn): self.graph.add_edge(tuple(node1), tuple(node2), weight=wt, experience=tuple(expe), fitness=fit, direction=dirn)    
+    def addEdge(self, node1, node2, wt, rate, duration):
+        edge = self.graph.get_edge_data(tuple(node1), tuple(node2))
+        if not edge == None:
+            for e in edge:
+                if edge[e]['rate']==rate and edge[e]['duration']==duration:
+                    return #because edge is already present 
+        self.graph.add_edge(tuple(node1), tuple(node2), weight=wt, rate=rate, duration=duration)    
+        
     def getEdge(self, node1, node2): return self.graph.get_edge_data(tuple(node1), tuple(node2))
     
     def getSuccessorNodes(self, currNode):#edges going out of currNode
@@ -248,7 +255,7 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         return Vec2d(round(v[0], self.decimalPrecision), round(v[1], self.decimalPrecision))
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
-        maxMotorRate = 5; secondFraction = 10; minMovtDuration = 1/secondFraction; maxMovtDuration = 2
+        maxMotorRate = 5; fractionOfSec = 20; minMovtDuration = 1/fractionOfSec; maxMovtDuration = 2
         motorRateRangePieces = (maxMotorRate * 2 + 1) * 10
         #---link left leg A with Chassis
         if self.leftRight == self.ori['LEFT']:
@@ -260,11 +267,10 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         self.motor.rate = 0
         self.motor.max_force = 10000000
         self.motor.legRateRange = np.linspace(-maxMotorRate, maxMotorRate, motorRateRangePieces) 
-        self.motor.legMovtDurationRange = np.linspace(minMovtDuration, maxMovtDuration, secondFraction)         
+        self.motor.legMovtDurationRange = np.linspace(minMovtDuration, maxMovtDuration, fractionOfSec)         
         
     def updatePosition(self, offsetXY): self.leg_body.position = self.leg_body.position + offsetXY
-    def getNodeUID(self):
-        
+    def __getNodeUID__(self, quadrant):        
         return (self.id, self.leftRight, quadrant)         
 #     def getLegAngle(self): return round(math.degrees(self.leg_body.angle)%360)        
 
@@ -353,12 +359,32 @@ class LearningRobot:
         
     def getPosition(self): return self.chassis_body.position
     def getBodyAngle(self): return round(math.degrees(self.chassis_body.angle)%360)
-            
+    def getNodeUID(self, legRef):        
+        return legRef.__getNodeUID__(self.getQuadrantForLeg(legRef))    
+    
     def updatePosition(self, offsetXY):
         self.chassis_body.position += offsetXY 
         self.chassis_body.startPosition += offsetXY
         for leg in self.legs: leg.updatePosition(offsetXY)
-                                
+
+    def getLegQuadrants(self):
+        quads = []
+        for i in range(0, len(self.legs), 1):
+            quads.append(self.getQuadrantForLeg(i))
+        return quads
+    
+    def getQuadrantForLeg(self, l): 
+        if isinstance(l, int): return self.__getQuadrant__(self.legs[i].getTip())
+        else: return self.__getQuadrant__(l.getTip())
+    
+    def __getQuadrant__(self, pt):#pt should be Vec2d or tuple
+        translateOffset = -Vec2d(self.chassis_body.position)
+        tPt = pt + translateOffset #translate
+        theta = -self.getBodyAngle() #for clockwise rotation
+        tPt[0] = tPt[0] * math.cos(theta) - tPt[1] * math.sin(theta) #rotate
+        tPt[1] = tPt[0] * math.sin(theta) + tPt[1] * math.cos(theta) #rotate
+        return (math.floor(tPt[0]/self.quadrantAccuracy), math.floor(tPt[1]/self.quadrantAccuracy))
+                                    
 #     def setExperience(self, expe):       
 #         for leg in self.legs: leg.experience[:] = []
 #         while len(expe) > 0: 
@@ -416,17 +442,5 @@ class LearningRobot:
 #         else: num = int((num+roundOffPrecision) / roundOffPrecision) * roundOffPrecision
 #         return num
      
-    def getLegQuadrants(self):
-        quads = []
-        for i in range(0, len(self.legs), 1):
-            quads.append(self.__getQuadrant__(self.legs[i].getTip()))
-        return quads
-             
-    def __getQuadrant__(self, pt):#pt should be Vec2d or tuple
-        translateOffset = -Vec2d(self.chassis_body.position)
-        tPt = pt + translateOffset #translate
-        theta = -self.getBodyAngle() #for clockwise rotation
-        tPt[0] = tPt[0] * math.cos(theta) - tPt[1] * math.sin(theta) #rotate
-        tPt[1] = tPt[0] * math.sin(theta) + tPt[1] * math.cos(theta) #rotate
-        return (math.floor(tPt[0]/self.quadrantAccuracy), math.floor(tPt[1]/self.quadrantAccuracy))
+
          
