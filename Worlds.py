@@ -153,7 +153,10 @@ class Worlds(object):
             self.robots.append(RobotBody(self.space, self.robotInitPos, self.legsCode))             
     
     def displayStats(self, displayStr):
-        self.screen.blit(self.font.render(displayStr, 1, THECOLORS["green"]), self.statsPos)
+        if isinstance(displayStr, str): self.screen.blit(self.font.render(displayStr, 1, THECOLORS["green"]), self.statsPos)
+        else:
+            sep = 15
+            for i in range(0,len(displayStr),1): self.screen.blit(self.font.render(displayStr[i], 1, THECOLORS["green"]), self.statsPos+(0,i*sep))
 
     def runWorld(self): #may get overridden in child class
         runState = RunCode.CONTINUE
@@ -240,9 +243,9 @@ class TestWorld(Worlds):#inherits
                 self.space.step(dt)
             #---Update world based on player focus
             self.updatePosition()
-            self.infoString = "Tip1: "+str(r1.legs[0].getTip())+"Tip2: "+str(r1.legs[1].getTip())+"Tip3: "+str(r1.legs[2].getTip())+"Tip3: "+str(r1.legs[3].getTip())
-            self.infoString += "\r\n"
-            self.infoString += "Quadrants: "+str(r1.getLegQuadrants())
+            self.infoString = []
+            self.infoString.append("Tip1: "+str(r1.legs[0].getTip())+"Tip2: "+str(r1.legs[1].getTip())+"Tip3: "+str(r1.legs[2].getTip())+"Tip3: "+str(r1.legs[3].getTip()))
+            self.infoString.append("Quadrants: "+str(r1.getLegQuadrants()))
             #---draw all objects
             self.draw()            
             clock.tick(self.fps)
