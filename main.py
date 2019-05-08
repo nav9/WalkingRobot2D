@@ -31,7 +31,8 @@ class TestSimulator(object):
         if self.worldOrdinal < len(self.worlds):
             w = self.worlds[self.worldOrdinal]
             w.initialize()
-            w.runWorld()    
+            w.runWorld()   
+            w.delete() 
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
     
 class Demo1Simulator(object):
@@ -49,7 +50,8 @@ class Demo1Simulator(object):
             w = self.worlds[self.worldOrdinal]
             w.initialize()
             #time.sleep(5)
-            w.runWorld()    
+            w.runWorld()
+            w.delete()    
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
 
 class Demo2Simulator(object):
@@ -66,6 +68,7 @@ class Demo2Simulator(object):
             w = self.worlds[self.worldOrdinal]
             w.initialize()
             w.runWorld()    
+            w.delete()
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
 #-----------------------------------------------
 #-----------------------------------------------

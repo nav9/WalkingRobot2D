@@ -240,11 +240,11 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         
     def delete(self): self.space.remove(self.leg_shape, self.leg_body, self.pinJoint, self.motor)
     
-#     def getTip(self):  
-#         v = self.leg_shape.get_vertices()    
-#         if self.leftRight == self.ori['LEFT']: v = v[2].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future
-#         if self.leftRight == self.ori['RIGHT']: v = v[1].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future        
-#         return Vec2d(v)
+    def getTip(self):  
+        v = self.leg_shape.get_vertices()    
+        if self.leftRight == self.ori['LEFT']: v = v[2].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future
+        if self.leftRight == self.ori['RIGHT']: v = v[1].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future        
+        return Vec2d(v)
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
         maxMotorRate = 5; secondFraction = 10; minMovtDuration = 1/secondFraction; maxMovtDuration = 2

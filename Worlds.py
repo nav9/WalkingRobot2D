@@ -71,6 +71,8 @@ class Worlds(object):
         #width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
         self.draw_options.constraint_color = 150,150,150
+        self.draw_options.flags = pymunk.SpaceDebugDrawOptions.DRAW_SHAPES
+        #self.draw_options.flags |= pymunk.SpaceDebugDrawOptions.DRAW_COLLISION_POINTS
 
         self.initializeRobots()
         if len(self.robots) <= 0: print('Create at least one robot'); return
@@ -236,19 +238,24 @@ class TestWorld(Worlds):#inherits
             clock.tick(self.fps)
     
     def initializeRobots(self):#overriding  
-        widthSep = 100; heightSep = 100; counter = 0
+        widthSep = 100; heightSep = 100; counter = 0; sf = pymunk.ShapeFilter(group=1)
         for i in range(350, self.worldHeight, heightSep):
             if counter >= self.numRobots: break
             for j in range(450, self.worldWidth, widthSep):
-                self.robots.append(LearningRobot(self.space, Vec2d(j, i), self.legsCode, None))
-                x = self.robots[0].getPosition()[0]; y = self.robots[0].getPosition()[1]; w = 100
+                robo = LearningRobot(self.space, Vec2d(j, i), self.legsCode, None)
+                self.robots.append(robo); x = robo.getPosition()[0]; y = robo.getPosition()[1]; w = 100
                 for k in range(0, 100, self.robots[0].quadrantAccuracy):
                     l1 = pymunk.Segment(self.space.static_body, (x-w, y+k), (x+w, y+k), 0.1)
                     l2 = pymunk.Segment(self.space.static_body, (x-w, y-k), (x+w, y-k), 0.1)
                     l3 = pymunk.Segment(self.space.static_body, (x+k, y-w), (x+k, y+w), 0.1)
                     l4 = pymunk.Segment(self.space.static_body, (x-k, y-w), (x-k, y+w), 0.1)
-                    sf = pymunk.ShapeFilter(group=1); l1.filter = sf; l2.filter = sf; l3.filter = sf; l4.filter = sf;                   
+                    l1.filter = sf; l2.filter = sf; l3.filter = sf; l4.filter = sf;   
+                    l1.color = (100, 100, 100); l2.color = (100, 100, 100); l3.color = (100, 100, 100); l4.color = (100, 100, 100)
                     self.space.add(l1, l2, l3, l4)
+                    for leg in robo.legs:
+                        leg.tip = leg.getTip()
+                        tip = pymunk.Segment(self.space.static_body, leg.tip, leg.tip+(1,1), 0.1)
+                        tip.color = (0, 255, 0); self.space.add(tip)                    
                 counter += 1 
                 if counter >= self.numRobots: break
 #         for robo in self.robots:
@@ -261,9 +268,9 @@ class TestWorld(Worlds):#inherits
                          
     def delete(self):
         super(TestWorld, self).delete()   
-        for ob in self.worldObjects:
-            self.space.remove(ob)
+        for ob in self.worldObjects: self.space.remove(ob)
         self.worldObjects[:] = []  
+        for ob in self.space: self.space.remove(ob)
      
     def updatePosition(self):  
         updateBy = super(TestWorld, self).updatePosition()    
