@@ -18,8 +18,8 @@ from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from DE import DifferentialEvolution, ImaginationDifferentialEvolution, RunCode
 from LearningRobot import LearningRobot
-from BehaviourStates import *
-
+from BehaviourStates import *        
+                          
 class Worlds(object):
     def __init__(self):
         #self.focusRobotXY = Vec2d(0, 0)#will be overridden below        
@@ -196,7 +196,80 @@ class Worlds(object):
             clock.tick(self.fps)
             if runState == RunCode.STOP:
                 break                   
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
 
+class TestWorld(Worlds):#inherits
+    def __init__(self, legsCode):
+        self.legsCode = legsCode
+        super(TestWorld, self).__init__()
+        self.screenWidth = 900
+        self.screenHeight = 620 #keep at at least 350        
+        self.worldWidth = 900 #overriding
+        self.worldHeight = 620 #overriding        
+        self.numRobots = 1 
+    
+    def runWorld(self): #may get overridden in child class
+        clock = pygame.time.Clock()
+        simulating = True
+        while simulating:
+            for event in pygame.event.get():
+                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
+                    sys.exit(0)
+                if event.type == KEYDOWN:
+                    if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
+                    if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
+                    if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
+                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)                    
+            
+            #---Update physics
+            dt = 1.0 / float(self.fps) / float(self.iterations)
+            for x in range(self.iterations): #iterations to get a more stable simulation
+                self.space.step(dt)
+            #---Update world based on player focus
+            self.updatePosition()
+#             for robo in self.robots:
+#                 robo.run()
+            #---draw all objects
+            self.draw()            
+            clock.tick(self.fps)
+    
+    def initializeRobots(self):#overriding  
+        widthSep = 100; heightSep = 100; counter = 0
+        for i in range(350, self.worldHeight, heightSep):
+            if counter >= self.numRobots: break
+            for j in range(450, self.worldWidth, widthSep):
+                self.robots.append(LearningRobot(self.space, Vec2d(j, i), self.legsCode, None))
+                x = self.robots[0].getPosition()[0]; y = self.robots[0].getPosition()[1]; w = 100
+                for k in range(0, 100, self.robots[0].quadrantAccuracy):
+                    l1 = pymunk.Segment(self.space.static_body, (x-w, y+k), (x+w, y+k), 0.1)
+                    l2 = pymunk.Segment(self.space.static_body, (x-w, y-k), (x+w, y-k), 0.1)
+                    l3 = pymunk.Segment(self.space.static_body, (x+k, y-w), (x+k, y+w), 0.1)
+                    l4 = pymunk.Segment(self.space.static_body, (x-k, y-w), (x-k, y+w), 0.1)
+                    sf = pymunk.ShapeFilter(group=1); l1.filter = sf; l2.filter = sf; l3.filter = sf; l4.filter = sf;                   
+                    self.space.add(l1, l2, l3, l4)
+                counter += 1 
+                if counter >= self.numRobots: break
+#         for robo in self.robots:
+#             robo.setState(BrainStateRandom(robo))
+
+    def removeBoundary(self):
+        for ob in self.boundaryObjects:
+            self.space.remove(ob)
+        self.boundaryObjects[:] = []#clear the list
+                         
+    def delete(self):
+        super(TestWorld, self).delete()   
+        for ob in self.worldObjects:
+            self.space.remove(ob)
+        self.worldObjects[:] = []  
+     
+    def updatePosition(self):  
+        updateBy = super(TestWorld, self).updatePosition()    
+        if updateBy != (0, 0):
+            for ob in self.worldObjects:
+                ob.body.position += updateBy   
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------

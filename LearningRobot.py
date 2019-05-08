@@ -261,7 +261,10 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         self.motor.legRateRange = np.linspace(-maxMotorRate, maxMotorRate, motorRateRangePieces) 
         self.motor.legMovtDurationRange = np.linspace(minMovtDuration, maxMovtDuration, secondFraction)         
         
-    def updatePosition(self, offsetXY): self.leg_body.position = self.leg_body.position + offsetXY         
+    def updatePosition(self, offsetXY): self.leg_body.position = self.leg_body.position + offsetXY
+    def getNodeUID(self):
+        
+        return (self.id, self.leftRight, quadrant)         
 #     def getLegAngle(self): return round(math.degrees(self.leg_body.angle)%360)        
 
 class LearningRobot:

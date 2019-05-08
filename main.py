@@ -19,6 +19,21 @@ from Worlds import *
 from WalkingRobot import ActionNetwork
 from LearningRobot import PartActionNetwork
 
+class TestSimulator(object):
+    def __init__(self, legs):
+        self.worlds = []
+        self.worldOrdinal = -1        
+        #---registration of the worlds to runWorld
+        self.worlds.append(TestWorld(legs))
+       
+    def nextWorld(self):
+        self.worldOrdinal += 1
+        if self.worldOrdinal < len(self.worlds):
+            w = self.worlds[self.worldOrdinal]
+            w.initialize()
+            w.runWorld()    
+        return self.worldOrdinal < len(self.worlds)#any more worlds to process?
+    
 class Demo1Simulator(object):
     def __init__(self, execLen, legs):
         self.actions = ActionNetwork(execLen, legs)
@@ -62,6 +77,7 @@ if __name__ == '__main__':
     # - Single leg part, -- Two leg parts, # Chassis
     legs = '--#--'
     #sim = Demo1Simulator(execLen, legs)
-    sim = Demo2Simulator(legs)
+    #sim = Demo2Simulator(legs)
+    sim = TestSimulator(legs)
     while sim.nextWorld():
         pass
