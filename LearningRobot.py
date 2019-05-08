@@ -157,6 +157,11 @@ from BehaviourStates import *
 #     def setToMainDirection(self): self.direction = self.ori['RIGHT']
 #     def getDirection(self): return self.direction
 
+class LegAppendage:
+    A = 0
+    B = 1
+    C = 2
+
 class PartActionNetwork:#stores actions of each movable part as a node
     def __init__(self, legs):
         self.actionFile = 'actionNetwork_'+legs+'.gpickle'
@@ -191,6 +196,7 @@ class PartActionNetwork:#stores actions of each movable part as a node
         
     def saveNetwork(self):
         nx.write_gpickle(self.graph, self.actionFile)
+        self.actionNetworkProperties()
         print('Saved network to '+self.actionFile)
     
     def __loadNetwork__(self):
@@ -200,7 +206,7 @@ class PartActionNetwork:#stores actions of each movable part as a node
             print('No '+self.actionFile+' found. Creating new action network.')
             self.graph = nx.MultiDiGraph()
         if not nx.is_empty(self.graph):
-            self.displayNetwork()
+            #self.displayNetwork()
             self.actionNetworkProperties()
     
     def actionNetworkProperties(self):
@@ -255,7 +261,7 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         return Vec2d(round(v[0], self.decimalPrecision), round(v[1], self.decimalPrecision))
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
-        maxMotorRate = 5; fractionOfSec = 20; minMovtDuration = 1/fractionOfSec; maxMovtDuration = 2
+        maxMotorRate = 5; fractionOfSec = 5; minMovtDuration = 1/fractionOfSec; maxMovtDuration = 2
         motorRateRangePieces = (maxMotorRate * 2 + 1) * 10
         #---link left leg A with Chassis
         if self.leftRight == self.ori['LEFT']:
@@ -288,7 +294,7 @@ class LearningRobot:
         self.chassis_shape = None #chassis shape 
         self.legs = []     
         self.space = pymunkSpace
-        self.quadrantAccuracy = 3 #pixels
+        self.quadrantAccuracy = 5 #pixels
         self.__createBody__(chassisCenterPoint)
         self.state = None
         
@@ -313,26 +319,39 @@ class LearningRobot:
     def createLegs(self):
         s = self.legsCode.split("#")
         lt = s[0]; rt = s[1]; rt = rt[::-1]#reverse string rt
+
         for s in lt.split(","):#number of left legs
             if len(s) == 1:
-                leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['LEFT']); self.legs.append(leftLegA)
+                leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['LEFT']); 
+                leftLegA.id = LegAppendage.A; self.legs.append(leftLegA)
             if len(s) == 2:
-                leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['LEFT']); self.legs.append(leftLegA)
-                leftLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); self.legs.append(leftLegB)                
+                leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['LEFT']); 
+                leftLegA.id = LegAppendage.A; self.legs.append(leftLegA)
+                leftLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); 
+                leftLegB.id = LegAppendage.B; self.legs.append(leftLegB)                
             if len(s) == 3:
-                leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['LEFT']); self.legs.append(leftLegA)
-                leftLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); self.legs.append(leftLegB)                 
-                leftLegC = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegB.leg_body, leftLegB.legWd, self.ori['LEFT']); self.legs.append(leftLegC)                                 
+                leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['LEFT']); 
+                leftLegA.id = LegAppendage.A; self.legs.append(leftLegA)
+                leftLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); 
+                leftLegB.id = LegAppendage.B; self.legs.append(leftLegB)                 
+                leftLegC = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegB.leg_body, leftLegB.legWd, self.ori['LEFT']); 
+                leftLegC.id = LegAppendage.C; self.legs.append(leftLegC)                                 
         for s in rt.split(","):#number of right legs
             if len(s) == 1:
-                rightLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['RIGHT']); self.legs.append(rightLegA)
+                rightLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['RIGHT']); 
+                rightLegA.id = LegAppendage.A; self.legs.append(rightLegA)
             if len(s) == 2:
-                rightLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['RIGHT']); self.legs.append(rightLegA) 
-                rightLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori['RIGHT']); self.legs.append(rightLegB)                        
+                rightLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['RIGHT']); 
+                rightLegA.id = LegAppendage.A; self.legs.append(rightLegA) 
+                rightLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori['RIGHT']); 
+                rightLegB.id = LegAppendage.B; self.legs.append(rightLegB)                        
             if len(s) == 3:
-                leftLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['RIGHT']); self.legs.append(leftLegA)
-                leftLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['RIGHT']); self.legs.append(leftLegB)                 
-                leftLegC = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, leftLegB.leg_body, leftLegB.legWd, self.ori['RIGHT']); self.legs.append(leftLegC)                                 
+                rightLegA = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['RIGHT']); 
+                rightLegA.id = LegAppendage.A; self.legs.append(rightLegA)
+                rightLegB = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori['RIGHT']); 
+                rightLegB.id = LegAppendage.B; self.legs.append(rightLegB)                 
+                rightLegC = LearningRobotLegPart(self.space, self.ownBodyShapeFilter, rightLegB.leg_body, rightLegB.legWd, self.ori['RIGHT']); 
+                rightLegC.id = LegAppendage.C; self.legs.append(rightLegC)                                 
         id = 0
         for leg in self.legs:
             leg.id = id; id += 1

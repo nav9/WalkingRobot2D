@@ -50,7 +50,8 @@ class BrainStateRandom:
             leg.state.run()
             if leg.state.runState == RunState.DONE:
                 newNode = self.robo.getNodeUID(leg)#node after leg has moved for duration at rate
-                self.robo.actions.addEdge(leg.oldNode, newNode, 1, leg.currentRate, leg.currentDura)
+                if leg.oldNode != newNode:
+                    self.robo.actions.addEdge(leg.oldNode, newNode, 1, leg.currentRate, leg.currentDura)
                 self.setRandomMovementState(leg)
 
             
