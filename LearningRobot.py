@@ -227,6 +227,7 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         self.__createLegPart__()
         self.__linkLegPartWithPrevBodyPart__(prevBody)
         self.state = Freeze(self)
+        self.decimalPrecision = 2
     
     def __createLegPart__(self):
         self.leg_body = pymunk.Body(self.legMass, pymunk.moment_for_box(self.legMass, (self.legWd, self.legHt)))
@@ -244,7 +245,7 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         v = self.leg_shape.get_vertices()    
         if self.leftRight == self.ori['LEFT']: v = v[2].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future
         if self.leftRight == self.ori['RIGHT']: v = v[1].rotated(self.leg_shape.body.angle) + self.leg_shape.body.position #TODO/BUG: This will have to be changed based on polygon shape chosen in future        
-        return Vec2d(v)
+        return Vec2d(round(v[0], self.decimalPrecision), round(v[1], self.decimalPrecision))
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
         maxMotorRate = 5; secondFraction = 10; minMovtDuration = 1/secondFraction; maxMovtDuration = 2
@@ -330,8 +331,8 @@ class LearningRobot:
         for leg in self.legs:
             leg.id = id; id += 1
             
-#     def stopMotion(self):
-#         for leg in self.legs: leg.motor.rate = 0
+    def stopMotion(self):
+        for leg in self.legs: leg.motor.rate = 0
                         
     def setFocusRobotColor(self): self.chassis_shape.color = (190, 0, 0)
     def setNormalRobotColor(self): self.chassis_shape.color = (170, 170, 170)
@@ -414,18 +415,18 @@ class LearningRobot:
 #         if rem < roundOffPrecision / 2: num = int(num/roundOffPrecision) * roundOffPrecision
 #         else: num = int((num+roundOffPrecision) / roundOffPrecision) * roundOffPrecision
 #         return num
-#     
-#     def getLegQuadrants(self):
-#         quads = []
-#         for i in range(0, len(self.body.legs), 1):
-#             quads.append(self.__getQuadrant__(self.body.legs[i].getTip()))
-#         return quads
-#             
-#     def __getQuadrant__(self, pt):#pt should be Vec2d or tuple
-#         translateOffset = -Vec2d(self.chassis_body.position)
-#         tPt = pt + translateOffset #translate
-#         theta = -self.getBodyAngle() #for clockwise rotation
-#         tPt[0] = tPt[0] * math.cos(theta) - tPt[1] * math.sin(theta) #rotate
-#         tPt[1] = tPt[0] * math.sin(theta) + tPt[1] * math.cos(theta) #rotate
-#         return (math.floor(tPt[0]/self.quadrantAccuracy), math.floor(tPt[1]/self.quadrantAccuracy))
-#         
+     
+    def getLegQuadrants(self):
+        quads = []
+        for i in range(0, len(self.legs), 1):
+            quads.append(self.__getQuadrant__(self.legs[i].getTip()))
+        return quads
+             
+    def __getQuadrant__(self, pt):#pt should be Vec2d or tuple
+        translateOffset = -Vec2d(self.chassis_body.position)
+        tPt = pt + translateOffset #translate
+        theta = -self.getBodyAngle() #for clockwise rotation
+        tPt[0] = tPt[0] * math.cos(theta) - tPt[1] * math.sin(theta) #rotate
+        tPt[1] = tPt[0] * math.sin(theta) + tPt[1] * math.cos(theta) #rotate
+        return (math.floor(tPt[0]/self.quadrantAccuracy), math.floor(tPt[1]/self.quadrantAccuracy))
+         

@@ -12,7 +12,7 @@ import pymunk.pygame_util
 import pymunk
 from pygame.locals import *
 from pygame.color import *
-from pygame.locals import USEREVENT, QUIT, KEYDOWN, KEYUP, K_LEFTBRACKET, K_RIGHTBRACKET, K_n, K_q, K_ESCAPE, K_UP, K_DOWN, K_RIGHT, K_LEFT
+from pygame.locals import *
 from pygame.color import THECOLORS
 from WalkingRobot import RobotBody
 from WalkingRobot import Constants
@@ -211,10 +211,13 @@ class TestWorld(Worlds):#inherits
         self.worldWidth = 900 #overriding
         self.worldHeight = 620 #overriding        
         self.numRobots = 1 
+        self.statsPos = Vec2d(15,15)
     
     def runWorld(self): #may get overridden in child class
         clock = pygame.time.Clock()
         simulating = True
+        rot = 0.2
+        r1 = self.robots[0]
         while simulating:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
@@ -223,7 +226,13 @@ class TestWorld(Worlds):#inherits
                     if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
                     if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
                     if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
-                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)                    
+                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0) 
+                    if event.key == K_1: r1.legs[0].motor.rate = rot
+                    if event.key == K_2: r1.legs[1].motor.rate = rot
+                    if event.key == K_3: r1.legs[2].motor.rate = rot
+                    if event.key == K_4: r1.legs[3].motor.rate = rot
+                if event.type == KEYUP:
+                    self.robots[0].stopMotion()
             
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
@@ -231,8 +240,9 @@ class TestWorld(Worlds):#inherits
                 self.space.step(dt)
             #---Update world based on player focus
             self.updatePosition()
-#             for robo in self.robots:
-#                 robo.run()
+            self.infoString = "Tip1: "+str(r1.legs[0].getTip())+"Tip2: "+str(r1.legs[1].getTip())+"Tip3: "+str(r1.legs[2].getTip())+"Tip3: "+str(r1.legs[3].getTip())
+            self.infoString += "\r\n"
+            self.infoString += "Quadrants: "+str(r1.getLegQuadrants())
             #---draw all objects
             self.draw()            
             clock.tick(self.fps)
@@ -253,9 +263,11 @@ class TestWorld(Worlds):#inherits
                     l1.color = (100, 100, 100); l2.color = (100, 100, 100); l3.color = (100, 100, 100); l4.color = (100, 100, 100)
                     self.space.add(l1, l2, l3, l4)
                     for leg in robo.legs:
-                        leg.tip = leg.getTip()
-                        tip = pymunk.Segment(self.space.static_body, leg.tip, leg.tip+(1,1), 0.1)
-                        tip.color = (0, 255, 0); self.space.add(tip)                    
+                        tip = leg.getTip()
+#                         leg.tipBody = pymunk.Body(0, 0); leg.tipBody.position = leg.getTip()
+#                         leg.tipShape = pymunk.Poly.create_box(leg.tipBody, (1,1))          
+                        leg.tip = pymunk.Segment(self.space.static_body, tip, tip+(1,1), 0.1)
+                        leg.tip.color = (0, 255, 0); self.space.add(leg.tip);#self.space.add(leg.tipBody, leg.tipShape)
                 counter += 1 
                 if counter >= self.numRobots: break
 #         for robo in self.robots:
@@ -276,7 +288,10 @@ class TestWorld(Worlds):#inherits
         updateBy = super(TestWorld, self).updatePosition()    
         if updateBy != (0, 0):
             for ob in self.worldObjects:
-                ob.body.position += updateBy   
+                ob.body.position += updateBy 
+#         for leg in self.robots[0].legs:
+#             leg.tipBody.position = leg.getTip()
+
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
