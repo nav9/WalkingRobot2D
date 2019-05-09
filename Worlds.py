@@ -721,3 +721,102 @@ class Heaven(Worlds):#inherits
                 ob.body.position += updateBy     
                             
                             
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+
+class ActualImagination(Worlds):#inherits
+    def __init__(self, legCode, actionNet):        
+        super(ActualImagination, self).__init__()
+        self.legsCode = legCode      
+        self.actions = actionNet
+        self.screenWidth = 900
+        self.screenHeight = 620 #keep at at least 350        
+        self.worldWidth = 3000 #overriding
+        self.worldHeight = 300
+        self.imaginaryWorldYOffset = self.worldHeight 
+        self.numRobots = 1
+        self.numImaginaryRobots = 4 #min 4 robots required for DE
+        self.imaginaryRobots = []
+        self.elevFromBottomWall = 0
+        self.groundThickness = 10
+        self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
+        self.imaginationColor = 100,100,100
+        self.imaginationGroundColor = 100,150,100
+        self.runState = RunCode.CONTINUE
+        self.nextNode = None 
+        self.cons = Constants()       
+        
+    def initialize(self):
+        super(ActualImagination, self).initialize()       
+        self.createGround(0, self.elevFromBottomWall, self.groundColor)
+        self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)       
+        self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
+        self.cumulativeUpdateBy = Vec2d(0,0)            
+    
+    def runWorld(self): #may get overridden in child class
+        clock = pygame.time.Clock()
+        simulating = True
+        while simulating:
+            for event in pygame.event.get():
+                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
+                    simulating = False #sys.exit(0)
+                if event.type == KEYDOWN:
+                    if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
+                    if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
+                    if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
+                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)                    
+                    if event.key == K_n: 
+                        print('Getting ready to display action network...'); 
+                        self.actions.displayNetwork()
+            if not simulating: 
+                break               
+            #---Update physics
+            dt = 1.0 / float(self.fps) / float(self.iterations)
+            for x in range(self.iterations): #iterations to get a more stable simulation
+                self.space.step(dt)
+            #---Update world based on player focus
+            self.updatePosition()
+            for robo in self.robots:
+                robo.run()
+            #---draw all objects
+            self.draw()            
+            clock.tick(self.fps)
+        #---actions to do after simulation
+        self.actions.saveNetwork() 
+    
+    def initializeRobots(self):#overriding  
+        widthSep = 100; heightSep = 100; counter = 0
+        for i in range(100, self.worldHeight, heightSep):
+            if counter >= self.numRobots: break
+            for j in range(100, self.worldWidth, widthSep):
+                self.robots.append(LearningRobot(self.space, Vec2d(j, i), self.legsCode, self.actions))
+                counter += 1 
+                if counter >= self.numRobots: break
+        for robo in self.robots:
+            robo.setState(BrainStateRandom(robo))
+
+    def removeBoundary(self):
+        for ob in self.boundaryObjects:
+            self.space.remove(ob)
+        self.boundaryObjects[:] = []#clear the list
+                         
+    def delete(self):
+        super(ActualImagination, self).delete()   
+        for ob in self.worldObjects:
+            self.space.remove(ob)
+        self.worldObjects[:] = []  
+     
+    def updatePosition(self):  
+        updateBy = super(ActualImagination, self).updatePosition()    
+        if updateBy != (0, 0):
+            for ob in self.worldObjects:
+                ob.body.position += updateBy     
+                                    
+    def createGround(self, groundX, groundY, grColor):
+        self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor)
+
+    def createBox(self, x, y, wd, ht, colour):
+        body = pymunk.Body(body_type = pymunk.Body.KINEMATIC); body.position = Vec2d(x, y); body.width = wd; body.height = ht
+        shape = pymunk.Poly.create_box(body, (wd, ht)); shape.color = colour; shape.friction = 1.0; 
+        self.space.add(shape); self.worldObjects.append(shape)                                      

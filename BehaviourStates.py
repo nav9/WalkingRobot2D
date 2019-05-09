@@ -34,7 +34,7 @@ class Freeze:
             self.leg.motor.rate = 0
             self.runState = RunState.DONE
 
-class BrainStateRandom:
+class BrainStateRandom:#used by Heaven World
     def __init__(self, robo):
         self.runState = RunState.RUNNING
         self.robo = robo
