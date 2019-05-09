@@ -751,7 +751,7 @@ class ActualImagination(Worlds):#inherits
         super(ActualImagination, self).initialize()       
         self.createGround(0, self.elevFromBottomWall, self.groundColor)
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)       
-        self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
+        #self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
         self.cumulativeUpdateBy = Vec2d(0,0)            
     
     def runWorld(self): #may get overridden in child class
@@ -783,7 +783,7 @@ class ActualImagination(Worlds):#inherits
             self.draw()            
             clock.tick(self.fps)
         #---actions to do after simulation
-        self.actions.saveNetwork() 
+        #self.actions.saveNetwork() 
     
     def initializeRobots(self):#overriding  
         widthSep = 100; heightSep = 100; counter = 0
@@ -794,7 +794,8 @@ class ActualImagination(Worlds):#inherits
                 counter += 1 
                 if counter >= self.numRobots: break
         for robo in self.robots:
-            robo.setState(BrainStateRandom(robo))
+            robo.makeRobotDynamic()
+            robo.setState(BrainActiveState(robo))
 
     def removeBoundary(self):
         for ob in self.boundaryObjects:

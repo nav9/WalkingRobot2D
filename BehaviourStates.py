@@ -54,5 +54,22 @@ class BrainStateRandom:#used by Heaven World
                     self.robo.actions.addEdge(leg.oldNode, newNode, 1, leg.currentRate, leg.currentDura)
                 self.setRandomMovementState(leg)
 
-            
-            
+class BrainActiveState:
+    def __init__(self, robo):
+        self.runState = RunState.RUNNING
+        self.robo = robo
+        for leg in self.robo.legs: 
+            self.setRandomMovementState(leg)
+    def setRandomMovementState(self, leg):        
+        leg.currentRate = random.choice(leg.motor.legRateRange)
+        leg.currentDura = random.choice(leg.motor.legMovtDurationRange)
+        leg.oldNode = self.robo.getNodeUID(leg)#node before leg starts moving     
+        leg.state = RandomMovement(leg, leg.currentRate, leg.currentDura)                    
+    def run(self):
+        for leg in self.robo.legs:
+            leg.state.run()
+            if leg.state.runState == RunState.DONE:
+                newNode = self.robo.getNodeUID(leg)#node after leg has moved for duration at rate
+                #if leg.oldNode != newNode:
+                    #self.robo.actions.addEdge(leg.oldNode, newNode, 1, leg.currentRate, leg.currentDura)
+                self.setRandomMovementState(leg)
