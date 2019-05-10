@@ -41,8 +41,8 @@ class Demo1Simulator(object):
         self.worlds = []
         self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
-        #self.worlds.append(FlatGroundTraining(execLen, legs))
-        self.worlds.append(ImaginationTwin(self.actions, execLen, legs))
+        self.worlds.append(FlatGroundTraining(execLen, legs))
+        #self.worlds.append(ImaginationTwin(self.actions, execLen, legs))
        
     def nextWorld(self):
         self.worldOrdinal += 1
@@ -80,8 +80,8 @@ if __name__ == '__main__':
     execLen = 10 #how many times motor gets executed per second
     # - Single leg part, -- Two leg parts, # Chassis
     legs = '--#--'
-    #sim = Demo1Simulator(execLen, legs)
-    sim = Demo2Simulator(legs)
+    sim = Demo1Simulator(execLen, legs)
+    #sim = Demo2Simulator(legs)
     #sim = TestSimulator(legs)
     while sim.nextWorld():
         pass

@@ -56,14 +56,17 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
 #                 self.unfitThisFullGen[r] = True
 #             if self.unfitThisFullGen[r]:
 #                 self.fit[r] = self.NOTFIT  
+        self.currentBestFitness = max(self.fit)
+        if self.currentBestFitness == self.const.NOTFIT: self.currentFittestRobot = self.const.UNDETERMINED
+        else: self.currentFittestRobot = self.fit.index(self.currentBestFitness)
     
     def differentialEvolution(self, seqLen):
         self.calcFitness(); oldSel = []; sel = []; i = 0; mutant = []
         for i in range(len(self.robots)):
             oldSel.append(i)
         
-        self.currentBestFitness = max(self.fit)
-        self.currentFittestRobot = self.fit.index(self.currentBestFitness)
+#         self.currentBestFitness = max(self.fit)
+#         self.currentFittestRobot = self.fit.index(self.currentBestFitness)
         if self.currentBestFitness > self.epochBestFitness:
             self.epochBestFitness = self.currentBestFitness
             self.epochFittestRobot = self.fit.index(self.epochBestFitness)

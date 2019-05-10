@@ -18,7 +18,9 @@ from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from DE import DifferentialEvolution, ImaginationDifferentialEvolution, RunCode
 from LearningRobot import LearningRobot
-from BehaviourStates import *        
+from BehaviourStates import *      
+import matplotlib.pyplot as plt
+import numpy as np
                           
 class Worlds(object):
     def __init__(self):
@@ -299,6 +301,39 @@ class TestWorld(Worlds):#inherits
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 
+class FitnessStore:
+    def __init__(self):
+        self.fitness = []
+        self.fig = plt.figure() 
+        self.fig.patch.set_facecolor('white')    
+    def addGenerationsFitness(self, fit): #list of highest fitness achieved by any robot in each gen of epoch 
+        self.fitness.append(fit)
+    def showFitnessAcrossIncreasingSeqLengths(self):
+        genLen = len(self.fitness[0]); epochLen = len(self.fitness)
+        plt.clf(); styles = ['-r','-b','-g','-c','-m','-y','-k','--r','--b','--g','--c','--m','--y','--k','-.r','-.b','-.g','-.c','-.m','-.y','-.k',':r',':b',':g',':c',':m',':y',':k']
+        for e in range(0, epochLen, 1):
+            plt.plot(np.linspace(1, genLen, genLen), self.fitness[e], styles[e], label='seqlen: '+str(e))
+        plt.title('Fitness across'+str(epochLen)+' epochs for '+str(genLen)+' gen')
+        plt.xlabel('generations', fontsize=12);plt.ylabel('fitness', fontsize=12)
+        plt.rcParams['axes.facecolor'] = 'white';plt.rcParams['patch.facecolor'] = 'white'
+        self.fig.canvas.toolbar.pack_forget() #remove bottom bar  
+        plt.pause(0.001); plt.legend(loc='best');plt.show()           
+    def showFitnessAcrossEpochs(self):
+        genLen = len(self.fitness[0]); epochLen = len(self.fitness)
+        avg = []
+        for g in range(0, genLen, 1):
+            tot = 0
+            for e in range(0, epochLen, 1):
+                tot += self.fitness[e][g]
+            avg.append(tot) 
+        self.__plotGraph__(genLen, epochLen, tot)            
+        plt.clf()
+        plt.plot(np.linspace(1, genLen, genLen), avg)
+        plt.title('Fitness across'+str(epochLen)+' epochs for '+str(genLen)+' gen')
+        plt.xlabel('generations', fontsize=12);plt.ylabel('fitness', fontsize=12)
+        self.fig.canvas.toolbar.pack_forget() #remove bottom bar  
+        plt.pause(0.001); plt.legend(loc='best'); plt.show() 
+
 class FlatGroundTraining(Worlds):#inherits
     def __init__(self, execLen, legsCode):
         super(FlatGroundTraining, self).__init__()
@@ -311,16 +346,18 @@ class FlatGroundTraining(Worlds):#inherits
         self.elevFromBottomWall = 10
         self.groundThickness = 10
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
-        self.elevFromBottomWall = 0        
+        self.elevFromBottomWall = 0 
+        self.fitGraph = FitnessStore()
+        self.genBestFit = []       
    
     def initialize(self):
         super(FlatGroundTraining, self).initialize() 
         self.createGround(0, self.elevFromBottomWall, self.groundColor)
         self.behaviour = DifferentialEvolution(self.robots)
-        self.sequenceLength = 3 #start seq len. Should start with anything from 1 to maxSequenceLength
-        self.maxSequenceLength = 10 #The number of dT times a leg is moved
+        self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength. Epoch
+        self.maxSequenceLength = 4 #The number of dT times a leg is moved. Total epochs (not related to gen coz seqLen changes)
         self.gen = 0 #start gen
-        self.maxGens = 50 
+        self.maxGens = 20
          
     def createGround(self, groundX, groundY, grColor):
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2)
@@ -329,16 +366,19 @@ class FlatGroundTraining(Worlds):#inherits
                  
     def processRobot(self):
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
+            self.fitGraph.showFitnessAcrossIncreasingSeqLengths()
             return RunCode.STOP
          
         runCode = self.behaviour.run(self.sequenceLength)
         if runCode == RunCode.NEXTGEN:#reset for next generation
+            self.genBestFit.append(self.behaviour.currentBestFitness)
             self.gen += 1
             self.deleteRobots(); self.initializeRobots()            
             self.behaviour.startNewGen()         
             if self.gen == self.maxGens:#completion of one epoch
+                self.fitGraph.addGenerationsFitness(self.genBestFit)
                 self.sequenceLength += 1 
-                self.gen = 0
+                self.gen = 0; self.genBestFit = []
                 self.behaviour.startNewEpoch()
         #---info dashboard
         genFittestRoboString = "-"; currFittestRoboString = "-"
@@ -820,4 +860,6 @@ class ActualImagination(Worlds):#inherits
     def createBox(self, x, y, wd, ht, colour):
         body = pymunk.Body(body_type = pymunk.Body.KINEMATIC); body.position = Vec2d(x, y); body.width = wd; body.height = ht
         shape = pymunk.Poly.create_box(body, (wd, ht)); shape.color = colour; shape.friction = 1.0; 
-        self.space.add(shape); self.worldObjects.append(shape)                                      
+        self.space.add(shape); self.worldObjects.append(shape)   
+        
+                                   
