@@ -21,10 +21,10 @@ class Constants:
 
 # Note: At least 4 robots are required for Differential Evolution to work
 class DifferentialEvolution:#(AbstractRobotBehaviour):    
-    def __init__(self, robo): 
+    def __init__(self, bodyPart): 
         self.infoString = ""  
         self.decimalPrecision = 2
-        self.robots = robo     
+        self.robots = bodyPart     
         self.repeatSeq = 0; 
         self.maxSeqRepetitions = 50 #how many times to repeat the sequence of seqNum's  
         self.seqNum = 0 #ordinal of the sequence of movements of an experience
@@ -48,7 +48,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
     def calcFitness(self):     
         self.fit[:] = []   
         for r in self.robots:
-            self.fit.append(round(r.chassis_body.position[0] - r.chassis_body.startPosition[0], self.decimalPrecision))
+            self.fit.append(round(r.obj_body.position[0] - r.obj_body.startPosition[0], self.decimalPrecision))
 #         #---assign zero fitness to any robot that became ulta
 #         for r in range(len(self.robots)):
 #             ang = self.robots[r].getBodyAngle()            
@@ -220,8 +220,8 @@ class ImaginationDifferentialEvolution:
     def calcFitness(self):     
         self.fit[:] = []   
         for r in self.robots:
-            self.fit.append(self.realRobo[0].brain.getFitness(r.chassis_body.startPosition, r.chassis_body.position))
-            #self.fit.append(round(r.chassis_body.position[0] - r.chassis_body.startPosition[0], self.decimalPrecision))
+            self.fit.append(self.realRobo[0].brain.getFitness(r.obj_body.startPosition, r.obj_body.position))
+            #self.fit.append(round(r.obj_body.position[0] - r.obj_body.startPosition[0], self.decimalPrecision))
 #         #---assign zero fitness to any robot that became ulta
 #         for r in range(len(self.robots)):
 #             ang = self.robots[r].getBodyAngle()            

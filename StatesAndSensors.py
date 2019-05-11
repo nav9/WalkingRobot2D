@@ -39,41 +39,41 @@ class Freeze:
 class BrainStateRandom:#used by Heaven World
     def __init__(self, robo):
         self.runState = RunState.RUNNING
-        self.robo = robo
-        for leg in self.robo.legs: 
+        self.bodyPart = robo
+        for leg in self.bodyPart.legs: 
             self.setRandomMovementState(leg)
     def setRandomMovementState(self, leg):        
         leg.currentRate = random.choice(leg.motor.legRateRange)
         leg.currentDura = random.choice(leg.motor.legMovtDurationRange)
-        leg.oldNode = self.robo.getNodeUID(leg)#node before leg starts moving     
+        leg.oldNode = self.bodyPart.getNodeUID(leg)#node before leg starts moving     
         leg.state = RandomMovement(leg, leg.currentRate, leg.currentDura)                    
     def run(self):
-        for leg in self.robo.legs:
+        for leg in self.bodyPart.legs:
             leg.state.run()
             if leg.state.runState == RunState.DONE:
-                newNode = self.robo.getNodeUID(leg)#node after leg has moved for duration at rate
+                newNode = self.bodyPart.getNodeUID(leg)#node after leg has moved for duration at rate
                 if leg.oldNode != newNode:
-                    self.robo.actions.addEdge(leg.oldNode, newNode, 1, leg.currentRate, leg.currentDura)
+                    self.bodyPart.actions.addEdge(leg.oldNode, newNode, 1, leg.currentRate, leg.currentDura)
                 self.setRandomMovementState(leg)
 
 class BrainStateResearch:
     def __init__(self, robo):
         self.runState = RunState.RUNNING
-        self.robo = robo
-        for leg in self.robo.legs: 
+        self.bodyPart = robo
+        for leg in self.bodyPart.legs: 
             self.setRandomMovementState(leg)
     def setRandomMovementState(self, leg):        
         leg.currentRate = random.choice(leg.motor.legRateRange)
         leg.currentDura = random.choice(leg.motor.legMovtDurationRange)
-        leg.oldNode = self.robo.getNodeUID(leg)#node before leg starts moving     
+        leg.oldNode = self.bodyPart.getNodeUID(leg)#node before leg starts moving     
         leg.state = RandomMovement(leg, leg.currentRate, leg.currentDura)                    
     def run(self):
-        for leg in self.robo.legs:
+        for leg in self.bodyPart.legs:
             leg.state.run()
             if leg.state.runState == RunState.DONE:
-                newNode = self.robo.getNodeUID(leg)#node after leg has moved for duration at rate
+                newNode = self.bodyPart.getNodeUID(leg)#node after leg has moved for duration at rate
                 #if leg.oldNode != newNode:
-                    #self.robo.actions.addEdge(leg.oldNode, newNode, 1, leg.currentRate, leg.currentDura)
+                    #self.bodyPart.actions.addEdge(leg.oldNode, newNode, 1, leg.currentRate, leg.currentDura)
                 self.setRandomMovementState(leg)
 
 #------------------------------------------------------------------------------------------------
@@ -101,23 +101,23 @@ class AngleSensor:
     def get(self): return self.angleChange
     
 class TactileSensor:#TODO: delete function to remove objects added to space
-    def __init__(self, world, robo):
+    def __init__(self, world, bodyPart):
         self.world = world
-        self.robo = robo
+        self.bodyPart = bodyPart
         self.points = set()
     def get(self):
-        self.robo.chassis_body.each_arbiter(self.contactInfo)
+        self.bodyPart.obj_body.each_arbiter(self.contactInfo)#invoke callback fn
         for p in self.points:
             x = p[0]; y = p[1]; sz = 1; mass = 1; moment = 0
             if self.world.sensedObjects[x][y] == 0: #point is not in imagination
                 self.world.sensedObjects[x][y] = 1
                 ob_body = pymunk.Body(mass, moment)
                 ob_body.body_type = pymunk.Body.KINEMATIC
-                ob_body.position = Vec2d(x,y)
+                ob_body.position = Vec2d(x, self.world.imaginaryWorldYOffset+y)
                 ob_shape = pymunk.Poly.create_box(ob_body, (sz, sz))
                 self.world.space.add(ob_body, ob_shape)
-
-    def contactInfo(self, arbiter):    
+        return self.points
+    def contactInfo(self, arbiter):#callback fn  
 #         print(arbiter.shapes)#gives the type of objects that are colliding [chassis,line seg]
 #         print(arbiter.contact_point_set.normal)#direction of contact
 #         print(arbiter.contact_point_set.points[0].distance)#distance is the penetration distance of the two shapes. Overlapping means it will be negative. This value is calculated as dot(point2 - point1), normal) and is ignored when you set the Arbiter.contact_point_set.

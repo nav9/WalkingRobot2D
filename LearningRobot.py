@@ -93,7 +93,7 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         self.legHt = 2 #leg height
         self.legMass = 0.1 #kg
         self.relativeAnguVel = 0
-        self.leg_body = None
+        self.obj_body = None
         self.leg_shape = None
         self.pinJoint = None
         self.motor = None        
@@ -108,16 +108,16 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         self.decimalPrecision = 2
     
     def __createLegPart__(self):
-        self.leg_body = pymunk.Body(self.legMass, pymunk.moment_for_box(self.legMass, (self.legWd, self.legHt)))
-        if self.leftRight == self.ori['LEFT']: self.leg_body.position = self.prevBodyXY - ((self.chassisWd / 2) + (self.legWd / 2), 0)            
-        if self.leftRight == self.ori['RIGHT']: self.leg_body.position = self.prevBodyXY + ((self.chassisWd / 2) + (self.legWd / 2), 0)
-        self.leg_shape = pymunk.Poly.create_box(self.leg_body, (self.legWd, self.legHt))            
+        self.obj_body = pymunk.Body(self.legMass, pymunk.moment_for_box(self.legMass, (self.legWd, self.legHt)))
+        if self.leftRight == self.ori['LEFT']: self.obj_body.position = self.prevBodyXY - ((self.chassisWd / 2) + (self.legWd / 2), 0)            
+        if self.leftRight == self.ori['RIGHT']: self.obj_body.position = self.prevBodyXY + ((self.chassisWd / 2) + (self.legWd / 2), 0)
+        self.leg_shape = pymunk.Poly.create_box(self.obj_body, (self.legWd, self.legHt))            
         self.leg_shape.filter = self.shapeFilter
         self.leg_shape.color = 200, 200, 200  
         self.leg_shape.friction = 10.0 
-        self.space.add(self.leg_shape, self.leg_body) 
+        self.space.add(self.leg_shape, self.obj_body) 
         
-    def delete(self): self.space.remove(self.leg_shape, self.leg_body, self.pinJoint, self.motor)
+    def delete(self): self.space.remove(self.leg_shape, self.obj_body, self.pinJoint, self.motor)
     
     def getTip(self):  
         v = self.leg_shape.get_vertices()    
@@ -130,20 +130,20 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         motorRateRangePieces = (maxMotorRate * 2 + 1) * 10
         #---link left leg A with Chassis
         if self.leftRight == self.ori['LEFT']:
-            self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (self.legWd / 2, 0), (-self.chassisWd / 2, 0))
+            self.pinJoint = pymunk.PinJoint(self.obj_body, prevBody, (self.legWd / 2, 0), (-self.chassisWd / 2, 0))
         if self.leftRight == self.ori['RIGHT']:
-            self.pinJoint = pymunk.PinJoint(self.leg_body, prevBody, (-self.legWd / 2, 0), (self.chassisWd / 2, 0))            
-        self.motor = pymunk.SimpleMotor(self.leg_body, prevBody, self.relativeAnguVel) 
+            self.pinJoint = pymunk.PinJoint(self.obj_body, prevBody, (-self.legWd / 2, 0), (self.chassisWd / 2, 0))            
+        self.motor = pymunk.SimpleMotor(self.obj_body, prevBody, self.relativeAnguVel) 
         self.space.add(self.pinJoint, self.motor)
         self.motor.rate = 0
         self.motor.max_force = 10000000
         self.motor.legRateRange = np.linspace(-maxMotorRate, maxMotorRate, motorRateRangePieces) 
         self.motor.legMovtDurationRange = np.linspace(minMovtDuration, maxMovtDuration, fractionOfSec)         
         
-    def updatePosition(self, offsetXY): self.leg_body.position = self.leg_body.position + offsetXY
+    def updatePosition(self, offsetXY): self.obj_body.position = self.obj_body.position + offsetXY
     def __getNodeUID__(self, quadrant):        
         return (self.id, self.leftRight, quadrant)         
-#     def getLegAngle(self): return round(math.degrees(self.leg_body.angle)%360)        
+#     def getLegAngle(self): return round(math.degrees(self.obj_body.angle)%360)        
 
 class LearningRobot:
     def __init__(self, world, chassisCenterPoint, legCode, actionNet):
@@ -156,29 +156,35 @@ class LearningRobot:
         self.chassisWd = 30 #chassis width 
         self.chassisHt = 20 #chassis height
         self.chassisMass = 5 #kg
-        self.chassis_body = None #chassis body
+        self.obj_body = None #chassis body
         self.chassis_shape = None #chassis shape 
         self.legs = []     
         self.quadrantAccuracy = 5 #pixels
         self.__createBody__(chassisCenterPoint)
         self.state = None
-        self.tactileSense = TactileSensor(world, self)
+        #---register sensors
+        self.sensors = []
+        self.sensors.append(TactileSensor(world, self))
+        for leg in self.legs: self.sensors.append(TactileSensor(world, leg))
+        self.sensors.append(AngleSensor())
+        self.sensors.append(DisplacementSensor())
         
     def run(self):
-        self.tactileSense.get()
+        for sen in self.sensors:
+            sen.get()
         if not self.state == None:
             self.state.run()
     
     def __createBody__(self, chassisXY):
-        self.chassis_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.chassisWd, self.chassisHt)))
-        self.chassis_body.body_type = pymunk.Body.KINEMATIC
-        self.chassis_body.position = chassisXY
-        self.chassis_body.startPosition = Vec2d(self.chassis_body.position[0], self.chassis_body.position[1])
-        self.chassis_shape = pymunk.Poly.create_box(self.chassis_body, (self.chassisWd, self.chassisHt))
+        self.obj_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.chassisWd, self.chassisHt)))
+        self.obj_body.body_type = pymunk.Body.KINEMATIC
+        self.obj_body.position = chassisXY
+        self.obj_body.startPosition = Vec2d(self.obj_body.position[0], self.obj_body.position[1])
+        self.chassis_shape = pymunk.Poly.create_box(self.obj_body, (self.chassisWd, self.chassisHt))
         self.chassis_shape.filter = self.ownBodyShapeFilter
         self.setNormalRobotColor() 
         self.chassis_shape.friction = 10.0
-        self.world.space.add(self.chassis_shape, self.chassis_body) 
+        self.world.space.add(self.chassis_shape, self.obj_body) 
         self.createLegs()
         #self.makeRobotDynamic()
     
@@ -189,35 +195,35 @@ class LearningRobot:
 
         for s in lt.split(","):#number of left legs
             if len(s) == 1:
-                leftLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['LEFT']); 
+                leftLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['LEFT']); 
                 leftLegA.id = LegAppendage.A; self.legs.append(leftLegA)
             if len(s) == 2:
-                leftLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['LEFT']); 
+                leftLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['LEFT']); 
                 leftLegA.id = LegAppendage.A; self.legs.append(leftLegA)
-                leftLegB = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); 
+                leftLegB = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, leftLegA.obj_body, leftLegA.legWd, self.ori['LEFT']); 
                 leftLegB.id = LegAppendage.B; self.legs.append(leftLegB)                
             if len(s) == 3:
-                leftLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['LEFT']); 
+                leftLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['LEFT']); 
                 leftLegA.id = LegAppendage.A; self.legs.append(leftLegA)
-                leftLegB = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, leftLegA.leg_body, leftLegA.legWd, self.ori['LEFT']); 
+                leftLegB = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, leftLegA.obj_body, leftLegA.legWd, self.ori['LEFT']); 
                 leftLegB.id = LegAppendage.B; self.legs.append(leftLegB)                 
-                leftLegC = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, leftLegB.leg_body, leftLegB.legWd, self.ori['LEFT']); 
+                leftLegC = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, leftLegB.obj_body, leftLegB.legWd, self.ori['LEFT']); 
                 leftLegC.id = LegAppendage.C; self.legs.append(leftLegC)                                 
         for s in rt.split(","):#number of right legs
             if len(s) == 1:
-                rightLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['RIGHT']); 
+                rightLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['RIGHT']); 
                 rightLegA.id = LegAppendage.A; self.legs.append(rightLegA)
             if len(s) == 2:
-                rightLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['RIGHT']); 
+                rightLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['RIGHT']); 
                 rightLegA.id = LegAppendage.A; self.legs.append(rightLegA) 
-                rightLegB = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori['RIGHT']); 
+                rightLegB = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, rightLegA.obj_body, rightLegA.legWd, self.ori['RIGHT']); 
                 rightLegB.id = LegAppendage.B; self.legs.append(rightLegB)                        
             if len(s) == 3:
-                rightLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.chassis_body, self.chassisWd, self.ori['RIGHT']); 
+                rightLegA = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['RIGHT']); 
                 rightLegA.id = LegAppendage.A; self.legs.append(rightLegA)
-                rightLegB = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, rightLegA.leg_body, rightLegA.legWd, self.ori['RIGHT']); 
+                rightLegB = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, rightLegA.obj_body, rightLegA.legWd, self.ori['RIGHT']); 
                 rightLegB.id = LegAppendage.B; self.legs.append(rightLegB)                 
-                rightLegC = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, rightLegB.leg_body, rightLegB.legWd, self.ori['RIGHT']); 
+                rightLegC = LearningRobotLegPart(self.world.space, self.ownBodyShapeFilter, rightLegB.obj_body, rightLegB.legWd, self.ori['RIGHT']); 
                 rightLegC.id = LegAppendage.C; self.legs.append(rightLegC)                                 
         id = 0
         for leg in self.legs:
@@ -234,23 +240,23 @@ class LearningRobot:
         for leg in self.legs: leg.leg_shape.color = (110, 110, 110)
         
     def makeRobotDynamic(self):
-        self.chassis_body.body_type = pymunk.Body.DYNAMIC
-        self.chassis_body.mass = self.chassisMass
-        self.chassis_body.moment = pymunk.moment_for_box(self.chassisMass, (self.chassisWd, self.chassisHt))            
+        self.obj_body.body_type = pymunk.Body.DYNAMIC
+        self.obj_body.mass = self.chassisMass
+        self.obj_body.moment = pymunk.moment_for_box(self.chassisMass, (self.chassisWd, self.chassisHt))            
         
     def delete(self):
-        self.world.space.remove(self.chassis_shape); self.world.space.remove(self.chassis_body)
+        self.world.space.remove(self.chassis_shape); self.world.space.remove(self.obj_body)
         for legPart in self.legs: legPart.delete()
         self.legs[:] = [] #clear the list
         
-    def getPosition(self): return self.chassis_body.position
-    def getBodyAngle(self): return round(math.degrees(self.chassis_body.angle)%360)
+    def getPosition(self): return self.obj_body.position
+    def getBodyAngle(self): return round(math.degrees(self.obj_body.angle)%360)
     def getNodeUID(self, legRef):        
         return legRef.__getNodeUID__(self.getQuadrantForLeg(legRef))    
     
     def updatePosition(self, offsetXY):
-        self.chassis_body.position += offsetXY 
-        self.chassis_body.startPosition += offsetXY
+        self.obj_body.position += offsetXY 
+        self.obj_body.startPosition += offsetXY
         for leg in self.legs: leg.updatePosition(offsetXY)
 
     def getLegQuadrants(self):
@@ -264,15 +270,15 @@ class LearningRobot:
         else: return self.__getQuadrant__(l.getTip())
     
     def __getQuadrant__(self, pt):#pt should be Vec2d or tuple
-        translateOffset = -Vec2d(self.chassis_body.position)
+        translateOffset = -Vec2d(self.obj_body.position)
         tPt = pt + translateOffset #translate
         theta = -self.getBodyAngle() #for clockwise rotation
         tPt[0] = tPt[0] * math.cos(theta) - tPt[1] * math.sin(theta) #rotate
         tPt[1] = tPt[0] * math.sin(theta) + tPt[1] * math.cos(theta) #rotate
         return (math.floor(tPt[0]/self.quadrantAccuracy), math.floor(tPt[1]/self.quadrantAccuracy))
 #                 #---find which angle quadrant and distance radius the leg tip falls wrt the rotated body position
-#                 bodyAng = round(math.degrees(self.body.chassis_body.angle)%360)
-#                 legTip = self.body.legs[i].getTip();  chCen = self.body.chassis_body.position
+#                 bodyAng = round(math.degrees(self.body.obj_body.angle)%360)
+#                 legTip = self.body.legs[i].getTip();  chCen = self.body.obj_body.position
 #                 dist = abs(math.sqrt((legTip[0]-chCen[0])**2 + (legTip[1]-chCen[1])**2)) / self.distanceAccuracy
 #                 ang = round((math.degrees(math.atan2((legTip[1]-chCen[1]), (legTip[0]-chCen[0])))-bodyAng)/self.angleAccuracy)
 #                 self.body.actionNetwork.addAction([i, dist, ang, self.body.legs[i].motor.rate]) #HASH: [legID, distance, angle, motorRate]
@@ -316,18 +322,18 @@ class LearningRobot:
 #     
 #     def setBodyPositionAndAngles(self, pos, angles, offset):
 #         p = pos.pop(0)
-#         self.chassis_body.position = Vec2d(p[0], p[1]) + offset
-#         self.chassis_body.startPosition = Vec2d(p[0], p[1]) + offset
-#         self.chassis_body.angle = math.radians(angles.pop(0))
+#         self.obj_body.position = Vec2d(p[0], p[1]) + offset
+#         self.obj_body.startPosition = Vec2d(p[0], p[1]) + offset
+#         self.obj_body.angle = math.radians(angles.pop(0))
 #         for leg in self.legs:
 #             p = pos.pop(0)
-#             leg.leg_body.position = Vec2d(p[0], p[1]) + offset
-#             leg.leg_body.angle = math.radians(angles.pop(0))
+#             leg.obj_body.position = Vec2d(p[0], p[1]) + offset
+#             leg.obj_body.angle = math.radians(angles.pop(0))
 #         return pos    
 #     
 #     def getPositions(self):
-#         pos = [Vec2d(self.chassis_body.position)]
-#         for leg in self.legs: pos.append(Vec2d(leg.leg_body.position))
+#         pos = [Vec2d(self.obj_body.position)]
+#         for leg in self.legs: pos.append(Vec2d(leg.obj_body.position))
 #         return pos
 #         
 #     def roundToNearest(self, num):
