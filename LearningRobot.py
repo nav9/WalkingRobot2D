@@ -166,8 +166,8 @@ class LearningRobot:
         self.sensors = []
         self.sensors.append(TactileSensor(world, self))
         for leg in self.legs: self.sensors.append(TactileSensor(world, leg))
-        self.sensors.append(AngleSensor())
-        self.sensors.append(DisplacementSensor())
+        self.sensors.append(AngleSensor(world, self))
+        self.sensors.append(DisplacementSensor((self.world.worldWidth, self.world.worldHeight), self.getPosition()))
         
     def run(self):
         for sen in self.sensors:
@@ -248,6 +248,7 @@ class LearningRobot:
         self.world.space.remove(self.chassis_shape); self.world.space.remove(self.obj_body)
         for legPart in self.legs: legPart.delete()
         self.legs[:] = [] #clear the list
+        for s in self.sensors: s.delete()
         
     def getPosition(self): return self.obj_body.position
     def getBodyAngle(self): return round(math.degrees(self.obj_body.angle)%360)

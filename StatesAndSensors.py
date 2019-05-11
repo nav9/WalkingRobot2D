@@ -2,6 +2,7 @@
 # Created: April 2019
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
+import math
 import time
 import pymunk
 import random
@@ -83,28 +84,46 @@ class BrainStateResearch:
 class DisplacementSensor:
     def __init__(self, worldExtent, currPos):
         self.worldExtent = worldExtent #world extent helps in normalization
-        self.prevAngle = currPos; 
+        self.prevPos = currPos; 
         self.displacement = None; self.decimalAccuracy = 4
     def set(self, currPos): #value to normalize
-        self.displacement[0] = (self.prevAngle[0] - currPos[0]) / self.worldExtent[0]
-        self.displacement[1] = (self.prevAngle[1] - currPos[1]) / self.worldExtent[1]
-        self.prevAngle = currPos
+        self.displacement[0] = (self.prevPos[0] - currPos[0]) / self.worldExtent[0]
+        self.displacement[1] = (self.prevPos[1] - currPos[1]) / self.worldExtent[1]
+        self.prevPos = currPos
     def get(self): return Vec2d(self.displacement)
+    def delete(self):
+        pass
 
 class AngleSensor:
-    def __init__(self, currAng):
-        self.prevAngle = currAng; 
+    def __init__(self, world, robo):
+        self.world = world
+        self.robo = robo
+        self.prevAngle = robo.getBodyAngle(); 
         self.angleChange = None; self.decimalAccuracy = 2
-    def set(self, currAngle): #value to normalize
-        self.angleChange = (self.prevAngle - currAngle) / 360.0
-        self.prevAngle = currAngle
-    def get(self): return self.angleChange
+        self.addedObjects = []
+        sz = 1; mass = 1; moment = 0; pos = self.robo.getPosition()
+        self.ob_body = pymunk.Body(mass, moment)
+        self.ob_body.body_type = pymunk.Body.KINEMATIC
+        self.ob_body.position = Vec2d(pos[0], pos[1]+self.world.imaginaryWorldYOffset)
+        ob_shape = pymunk.Poly.create_box(self.ob_body, (self.robo.chassisWd, sz))
+        self.world.space.add(self.ob_body, ob_shape); self.addedObjects.append(self.ob_body); self.addedObjects.append(ob_shape)        
+    def get(self): 
+        ang = self.robo.getBodyAngle()
+        self.angleChange = (self.prevAngle - ang) / 360.0 #normalizing
+        self.prevAngle = ang; self.ob_body.angle = math.radians(ang); pos = self.robo.getPosition()
+        self.ob_body.position = Vec2d(pos[0], pos[1]+self.world.imaginaryWorldYOffset)
+        return self.angleChange
+    def delete(self):
+        for ob in self.addedObjects: 
+            self.world.space.remove(ob)
+        self.addedObjects[:] = []
     
 class TactileSensor:#TODO: delete function to remove objects added to space
     def __init__(self, world, bodyPart):
         self.world = world
         self.bodyPart = bodyPart
         self.points = set()
+        self.addedObjects = []
     def get(self):
         self.bodyPart.obj_body.each_arbiter(self.contactInfo)#invoke callback fn
         for p in self.points:
@@ -115,7 +134,7 @@ class TactileSensor:#TODO: delete function to remove objects added to space
                 ob_body.body_type = pymunk.Body.KINEMATIC
                 ob_body.position = Vec2d(x, self.world.imaginaryWorldYOffset+y)
                 ob_shape = pymunk.Poly.create_box(ob_body, (sz, sz))
-                self.world.space.add(ob_body, ob_shape)
+                self.world.space.add(ob_body, ob_shape); self.addedObjects.append(ob_body); self.addedObjects.append(ob_shape)
         return self.points
     def contactInfo(self, arbiter):#callback fn  
 #         print(arbiter.shapes)#gives the type of objects that are colliding [chassis,line seg]
@@ -127,5 +146,9 @@ class TactileSensor:#TODO: delete function to remove objects added to space
         self.points = set()
         for p in arbiter.contact_point_set.points:
             self.points.add((round(p.point_b[0]), round(p.point_b[1])))
-    
+    def delete(self):
+        for ob in self.addedObjects:
+            self.world.space.remove(ob)
+        self.addedObjects[:] = []
+        
     
