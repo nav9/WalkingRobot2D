@@ -17,7 +17,7 @@
 import time
 from Worlds import *
 from WalkingRobot import ActionNetwork
-from LearningRobot import PartActionNetwork
+from LearningRobot import LegPartActionNetwork
 
 class TestSimulator(object):
     def __init__(self, legs):
@@ -56,7 +56,7 @@ class Demo1Simulator(object):
 
 class Demo2Simulator(object):
     def __init__(self, legs):
-        self.actions = PartActionNetwork(legs)
+        self.actions = LegPartActionNetwork(legs)
         self.worlds = []
         self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
@@ -80,8 +80,8 @@ if __name__ == '__main__':
     execLen = 10 #how many times motor gets executed per second
     # - Single leg part, -- Two leg parts, # Chassis
     legs = '--#--'
-    sim = Demo1Simulator(execLen, legs)
-    #sim = Demo2Simulator(legs)
+    #sim = Demo1Simulator(execLen, legs)
+    sim = Demo2Simulator(legs)
     #sim = TestSimulator(legs)
     while sim.nextWorld():
         pass

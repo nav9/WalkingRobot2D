@@ -7,20 +7,20 @@ import time
 import math
 import pygame
 import random
+import pymunk
+import numpy as np
 from pymunk import Vec2d
 import pymunk.pygame_util
-import pymunk
-from pygame.locals import *
 from pygame.color import *
 from pygame.locals import *
+from pygame.locals import *
+from StatesAndSensors import *
+import matplotlib.pyplot as plt
 from pygame.color import THECOLORS
 from WalkingRobot import RobotBody
 from WalkingRobot import Constants
-from DE import DifferentialEvolution, ImaginationDifferentialEvolution, RunCode
 from LearningRobot import LearningRobot
-from BehaviourStates import *      
-import matplotlib.pyplot as plt
-import numpy as np
+from DE import DifferentialEvolution, ImaginationDifferentialEvolution, RunCode
                           
 class Worlds(object):
     def __init__(self):
@@ -774,6 +774,13 @@ class ActualImagination(Worlds):#inherits
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 3000 #overriding
         self.worldHeight = 300
+        self.sensedObjects = []
+        #---create array representation of world for imagination
+        for r in range(0, self.worldWidth, 1):
+            col = []
+            for c in range(0, self.worldHeight, 1):
+                col.append(0)
+            self.sensedObjects.append(col)
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1
         self.numImaginaryRobots = 4 #min 4 robots required for DE
@@ -830,12 +837,12 @@ class ActualImagination(Worlds):#inherits
         for i in range(100, self.worldHeight, heightSep):
             if counter >= self.numRobots: break
             for j in range(100, self.worldWidth, widthSep):
-                self.robots.append(LearningRobot(self.space, Vec2d(j, i), self.legsCode, self.actions))
+                self.robots.append(LearningRobot(self, Vec2d(j, i), self.legsCode, self.actions))
                 counter += 1 
                 if counter >= self.numRobots: break
         for robo in self.robots:
             robo.makeRobotDynamic()
-            robo.setState(BrainActiveState(robo))
+            robo.setState(BrainStateResearch(robo))
 
     def removeBoundary(self):
         for ob in self.boundaryObjects:

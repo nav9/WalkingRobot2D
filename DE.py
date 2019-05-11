@@ -4,8 +4,8 @@
 
 import math
 import random
-from random import uniform
 from WalkingRobot import *
+from random import uniform
 
 class RunCode:
     STOP = 0
