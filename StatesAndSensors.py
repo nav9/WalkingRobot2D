@@ -37,7 +37,7 @@ class Freeze:
             self.leg.motor.rate = 0
             self.runState = RunState.DONE
 
-class BrainStateRandom:#used by Heaven World
+class BrainState_RandomMovement:#used by Heaven World
     def __init__(self, robo):
         self.runState = RunState.RUNNING
         self.bodyPart = robo
@@ -57,7 +57,7 @@ class BrainStateRandom:#used by Heaven World
                     self.bodyPart.actions.addEdge(leg.oldNode, newNode, 1, leg.currentRate, leg.currentDura)
                 self.setRandomMovementState(leg)
 
-class BrainStateResearch:
+class BrainState_WhatHappensIfITryThis:
     def __init__(self, robo):
         self.runState = RunState.RUNNING
         self.bodyPart = robo
@@ -94,7 +94,7 @@ class DisplacementSensor:
     def delete(self):
         pass
 
-class AngleSensor:
+class BodyAngleSensor:
     def __init__(self, world, robo):
         self.world = world
         self.robo = robo
@@ -105,7 +105,7 @@ class AngleSensor:
         self.ob_body = pymunk.Body(mass, moment)
         self.ob_body.body_type = pymunk.Body.KINEMATIC
         self.ob_body.position = Vec2d(pos[0], pos[1]+self.world.imaginaryWorldYOffset)
-        ob_shape = pymunk.Poly.create_box(self.ob_body, (self.robo.chassisWd, sz))
+        ob_shape = pymunk.Poly.create_box(self.ob_body, (self.robo.chassisWd, sz)); ob_shape.color = (110, 110, 110)
         self.world.space.add(self.ob_body, ob_shape); self.addedObjects.append(self.ob_body); self.addedObjects.append(ob_shape)        
     def get(self): 
         ang = self.robo.getBodyAngle()
@@ -118,6 +118,24 @@ class AngleSensor:
             self.world.space.remove(ob)
         self.addedObjects[:] = []
     
+class LegTipQuadrantSensor:
+    def __init__(self, world, robo, leg):
+        self.world = world; self.robo = robo; self.leg = leg
+        self.addedObjects = []
+        sz = 1; mass = 1; moment = 0; pos = leg.getTip()
+        self.tip_body = pymunk.Body(mass, moment); self.tip_body.body_type = pymunk.Body.KINEMATIC
+        self.tip_body.position = Vec2d(pos[0], pos[1]+self.world.imaginaryWorldYOffset)
+        tip_shape = pymunk.Poly.create_box(self.tip_body, (sz, sz)); tip_shape.color = (255, 0, 0)  
+        self.world.space.add(self.tip_body, tip_shape); self.addedObjects.append(self.tip_body); self.addedObjects.append(tip_shape)        
+    def get(self):         
+        pos = self.leg.getTip()
+        self.tip_body.position = Vec2d(pos[0], pos[1]+self.world.imaginaryWorldYOffset)
+        return self.robo.getQuadrantForLeg(self.leg)
+    def delete(self):
+        for ob in self.addedObjects: 
+            self.world.space.remove(ob)
+        self.addedObjects[:] = []
+        
 class TactileSensor:#TODO: delete function to remove objects added to space
     def __init__(self, world, bodyPart):
         self.world = world

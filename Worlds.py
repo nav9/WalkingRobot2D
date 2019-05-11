@@ -276,7 +276,7 @@ class TestWorld(Worlds):#inherits
                 counter += 1 
                 if counter >= self.numRobots: break
 #         for robo in self.robots:
-#             robo.setState(BrainStateRandom(robo))
+#             robo.setState(BrainState_RandomMovement(robo))
 
     def removeBoundary(self):
         for ob in self.boundaryObjects:
@@ -741,7 +741,7 @@ class Heaven(Worlds):#inherits
                 counter += 1 
                 if counter >= self.numRobots: break
         for robo in self.robots:
-            robo.setState(BrainStateRandom(robo))
+            robo.setState(BrainState_RandomMovement(robo))
 
     def removeBoundary(self):
         for ob in self.boundaryObjects:
@@ -842,7 +842,7 @@ class ActualImagination(Worlds):#inherits
                 if counter >= self.numRobots: break
         for robo in self.robots:
             robo.makeRobotDynamic()
-            robo.setState(BrainStateResearch(robo))
+            robo.setState(BrainState_WhatHappensIfITryThis(robo))
 
     def removeBoundary(self):
         for ob in self.boundaryObjects:

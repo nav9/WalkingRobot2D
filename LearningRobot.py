@@ -166,7 +166,8 @@ class LearningRobot:
         self.sensors = []
         self.sensors.append(TactileSensor(world, self))
         for leg in self.legs: self.sensors.append(TactileSensor(world, leg))
-        self.sensors.append(AngleSensor(world, self))
+        self.sensors.append(BodyAngleSensor(world, self))
+        for leg in self.legs: self.sensors.append(LegTipQuadrantSensor(world, self, leg))
         self.sensors.append(DisplacementSensor((self.world.worldWidth, self.world.worldHeight), self.getPosition()))
         
     def run(self):
