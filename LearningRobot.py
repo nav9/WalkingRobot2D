@@ -89,20 +89,19 @@ class LiveGraph:#to display sensory info of robot
             self.val.append(deque())
         self.fig = plt.figure()
         self.fig.patch.set_facecolor('white')
-    def showPlot(self, vals):
-        plt.clf(); styles = ['-r','-b','-g','-c','-m','-y','-k','--r','--b','--g','--c','--m','--y','--k','-.r','-.b','-.g','-.c','-.m','-.y','-.k',':r',':b',':g',':c',':m',':y',':k']
-        for i in range(0, len(self.val), 1):
-            self.val[i].add(vals[i]) #add new value
+    def showPlot(self, sensed, names):
+        i = 0
+        plt.clf(); styles = ['-r','-b','-g','-c','-m','-y','-k','--r','--b','--g','--c','--m','--y','--k','-.r','-.b','-.g','-.c','-.m','-.y','-.k',':r',':b',':g',':c',':m',':y',':k']        
+        for v in sensed:
+            self.val[i].append(v) #add new value
             if len(self.val[i]) > self.maxLen: self.val[i].popleft() #remove oldest
-        
-        xVals = np.linspace(1, self.maxLen, self.maxLen)
+            i += 1
         for i in range(0, len(self.val), 1):
-            plt.plot(xVals, self.val[i], styles[i], label='seqlen: ')
-        plt.title('Senses')
-        plt.xlabel('Time', fontsize=12);plt.ylabel('impulses detected', fontsize=12)
+            plt.plot(np.linspace(1, len(self.val[i]), len(self.val[i])), self.val[i], styles[i], label=names[i])
+            print(str(self.val[i][-1])+'  '+names[i])
+        plt.title('Senses'); plt.xlabel('Time', fontsize=12);plt.ylabel('impulses detected', fontsize=12)
         self.fig.canvas.toolbar.pack_forget() #remove bottom bar  
-        plt.pause(0.001); plt.legend(loc='best'); plt.show(block=False) 
-        #ins.__class__.__name__
+        plt.pause(0.0001); plt.legend(loc='best'); plt.show(block=False) 
         
 class LearningRobotLegPart:#This is one leg part. Could be part A that's connected to the chassis or part B that's connected to part A
     def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight):
@@ -192,12 +191,33 @@ class LearningRobot:
         for leg in self.legs: self.sensors.append(TactileSensor(world, leg, showImagination)) #leg parts touching objects
         self.sensors.append(BodyAngleSensor(world, self, showImagination))
         for leg in self.legs: self.sensors.append(LegTipQuadrantSensor(world, self, leg, showImagination))
-        self.sensors.append(DisplacementSensor((self.world.worldWidth, self.world.worldHeight), self.getPosition()))        
+        self.sensors.append(DisplacementSensor((self.world.worldWidth, self.world.worldHeight), self.getPosition()))  
+        #---plot to show sensor data
+        if self.showImagination: self.dataDisplay = LiveGraph(len(self.sensors))            
         
-    def run(self):
-        if not self.state == None:
+    def run(self):       
+        #---sense
+        sensed = []; names = []
+        for i in range(0, len(self.sensors), 1): 
+            vals = self.sensors[i].get() #get sensor info for this time instant
+            name = self.sensors[i].__class__.__name__
+            vals = self.getGraphReadyValues(vals, name)
+            names.append(str(i+1) + name); sensed.append(vals) 
+        #self.dataDisplay.showPlot(sensed, names)
+        #---run behaviour
+        if self.state != None:
             self.state.run()
-    
+    def getGraphReadyValues(self, vals, name):    
+        if name == 'TactileSensor':
+            if len(vals) > 1: vals = 1
+            else: vals = 0
+        if name == 'DisplacementSensor':
+            if len(vals) > 0:
+                vals = math.fabs((vals[0] + vals[1])/2)
+        if name == 'LegTipQuadrantSensor':
+            if len(vals) > 1: vals = 1
+            else: vals = 0
+        return vals
     def __createBody__(self, chassisXY):
         self.obj_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.chassisWd, self.chassisHt)))
         self.obj_body.body_type = pymunk.Body.KINEMATIC

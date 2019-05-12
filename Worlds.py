@@ -21,7 +21,7 @@ from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from LearningRobot import LearningRobot
 from DE import DifferentialEvolution, ImaginationDifferentialEvolution, RunCode
-                          
+
 class Worlds(object):
     def __init__(self):
         #self.focusRobotXY = Vec2d(0, 0)#will be overridden below        
@@ -783,7 +783,7 @@ class ActualImagination(Worlds):#inherits
             self.sensedObjects.append(col)
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1
-        self.numImaginaryRobots = 4 #min 4 robots required for DE
+        #self.numImaginaryRobots = 4 #min 4 robots required for DE
         self.imaginaryRobots = []
         self.elevFromBottomWall = 0
         self.groundThickness = 10

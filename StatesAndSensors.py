@@ -69,8 +69,6 @@ class BrainState_WhatHappensIfITryThis:
         leg.oldNode = self.robo.getNodeUID(leg)#node before leg starts moving     
         leg.state = RandomMovement(leg, leg.currentRate, leg.currentDura)                    
     def run(self):
-        for sen in self.robo.sensors:
-            sen.get()        
         for leg in self.robo.legs:
             leg.state.run()
             if leg.state.runState == RunState.DONE:
@@ -112,11 +110,11 @@ class BodyAngleSensor:
     def get(self): 
         ang = self.robo.getBodyAngle()
         self.angleChange = (self.prevAngle - ang) / 360.0 #normalizing
-        self.prevAngle = ang; self.ob_body.angle = math.radians(ang)
+        self.prevAngle = ang
         if self.showImagination:
-            pos = self.robo.getPosition()
+            self.ob_body.angle = math.radians(ang); pos = self.robo.getPosition()
             self.ob_body.position = Vec2d(pos[0], pos[1]+self.world.imaginaryWorldYOffset)
-        return self.angleChange
+        return round(self.angleChange)
     def delete(self):
         for ob in self.addedObjects: 
             self.world.space.remove(ob)
