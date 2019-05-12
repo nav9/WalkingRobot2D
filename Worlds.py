@@ -326,7 +326,7 @@ class FitnessStore:
             for e in range(0, epochLen, 1):
                 tot += self.fitness[e][g]
             avg.append(tot) 
-        self.__plotGraph__(genLen, epochLen, tot)            
+        #self.__plotGraph__(genLen, epochLen, tot)            
         plt.clf()
         plt.plot(np.linspace(1, genLen, genLen), avg)
         plt.title('Fitness across'+str(epochLen)+' epochs for '+str(genLen)+' gen')
@@ -737,7 +737,7 @@ class Heaven(Worlds):#inherits
         for i in range(100, self.worldHeight, heightSep):
             if counter >= self.numRobots: break
             for j in range(100, self.worldWidth, widthSep):
-                self.robots.append(LearningRobot(self.space, Vec2d(j, i), self.legsCode, self.actions))
+                self.robots.append(LearningRobot(self, Vec2d(j, i), self.legsCode, self.actions, False))
                 counter += 1 
                 if counter >= self.numRobots: break
         for robo in self.robots:

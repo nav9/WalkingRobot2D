@@ -9,6 +9,7 @@ import hashlib
 import numpy as np
 import networkx as nx
 from DE import Constants
+from collections import deque
 from StatesAndSensors import *
 import matplotlib.pyplot as plt
 from pymunk import Vec2d, shapes
@@ -81,6 +82,28 @@ class LegPartActionNetwork:#stores actions of each movable part as a node
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 
+class LiveGraph:#to display sensory info of robot
+    def __init__(self, numSenses):
+        self.val = []; self.maxLen = 100
+        for i in range(0, numSenses, 1):
+            self.val.append(deque())
+        self.fig = plt.figure()
+        self.fig.patch.set_facecolor('white')
+    def showPlot(self, vals):
+        plt.clf(); styles = ['-r','-b','-g','-c','-m','-y','-k','--r','--b','--g','--c','--m','--y','--k','-.r','-.b','-.g','-.c','-.m','-.y','-.k',':r',':b',':g',':c',':m',':y',':k']
+        for i in range(0, len(self.val), 1):
+            self.val[i].add(vals[i]) #add new value
+            if len(self.val[i]) > self.maxLen: self.val[i].popleft() #remove oldest
+        
+        xVals = np.linspace(1, self.maxLen, self.maxLen)
+        for i in range(0, len(self.val), 1):
+            plt.plot(xVals, self.val[i], styles[i], label='seqlen: ')
+        plt.title('Senses')
+        plt.xlabel('Time', fontsize=12);plt.ylabel('impulses detected', fontsize=12)
+        self.fig.canvas.toolbar.pack_forget() #remove bottom bar  
+        plt.pause(0.001); plt.legend(loc='best'); plt.show(block=False) 
+        #ins.__class__.__name__
+        
 class LearningRobotLegPart:#This is one leg part. Could be part A that's connected to the chassis or part B that's connected to part A
     def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight):
         self.space = pymunk.Space()
@@ -146,10 +169,11 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
 #     def getLegAngle(self): return round(math.degrees(self.obj_body.angle)%360)        
 
 class LearningRobot:
-    def __init__(self, world, chassisCenterPoint, legCode, actionNet):
+    def __init__(self, world, chassisCenterPoint, legCode, actionNet, showImagination=True):
         self.world = world
         self.legsCode = legCode
         self.actions = actionNet
+        self.showImagination = showImagination
         self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1) #to prevent collisions between robot body parts
         d = Directions()  #leg at left or right of chassis
         self.ori = d.getDirn()
@@ -164,15 +188,13 @@ class LearningRobot:
         self.state = None
         #---register sensors
         self.sensors = []
-        self.sensors.append(TactileSensor(world, self))
-        for leg in self.legs: self.sensors.append(TactileSensor(world, leg))
-        self.sensors.append(BodyAngleSensor(world, self))
-        for leg in self.legs: self.sensors.append(LegTipQuadrantSensor(world, self, leg))
-        self.sensors.append(DisplacementSensor((self.world.worldWidth, self.world.worldHeight), self.getPosition()))
+        self.sensors.append(TactileSensor(world, self, showImagination)) #body touching objects
+        for leg in self.legs: self.sensors.append(TactileSensor(world, leg, showImagination)) #leg parts touching objects
+        self.sensors.append(BodyAngleSensor(world, self, showImagination))
+        for leg in self.legs: self.sensors.append(LegTipQuadrantSensor(world, self, leg, showImagination))
+        self.sensors.append(DisplacementSensor((self.world.worldWidth, self.world.worldHeight), self.getPosition()))        
         
     def run(self):
-        for sen in self.sensors:
-            sen.get()
         if not self.state == None:
             self.state.run()
     

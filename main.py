@@ -60,8 +60,8 @@ class Demo2Simulator(object):
         self.worlds = []
         self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
-        #self.worlds.append(Heaven(legs, self.actions))
-        self.worlds.append(ActualImagination(legs, self.actions))
+        self.worlds.append(Heaven(legs, self.actions))
+        #self.worlds.append(ActualImagination(legs, self.actions))
        
     def nextWorld(self):
         self.worldOrdinal += 1
