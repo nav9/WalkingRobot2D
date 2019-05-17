@@ -303,13 +303,13 @@ class TestWorld(Worlds):#inherits
 
 class FitnessStore:
     def __init__(self):
-        self.fitness = []
-        self.fig = plt.figure() 
-        self.fig.patch.set_facecolor('white')    
-    def addGenerationsFitness(self, fit): #list of highest fitness achieved by any robot in each gen of epoch 
+        self.fitness = [] 
+    def addGenerationsBestFitness(self, fit): #list of highest fitness achieved by any robot in each gen of epoch 
         self.fitness.append(fit)
     def showFitnessAcrossIncreasingSeqLengths(self):
         genLen = len(self.fitness[0]); epochLen = len(self.fitness)
+        self.fig = plt.figure() 
+        self.fig.patch.set_facecolor('white')           
         plt.clf(); styles = ['-r','-b','-g','-c','-m','-y','-k','--r','--b','--g','--c','--m','--y','--k','-.r','-.b','-.g','-.c','-.m','-.y','-.k',':r',':b',':g',':c',':m',':y',':k']
         for e in range(0, epochLen, 1):
             plt.plot(np.linspace(1, genLen, genLen), self.fitness[e], styles[e], label='seqlen: '+str(e))
@@ -319,29 +319,31 @@ class FitnessStore:
         self.fig.canvas.toolbar.pack_forget() #remove bottom bar  
         plt.pause(0.001); plt.legend(loc='best');plt.show()           
     def showFitnessAcrossEpochs(self):
+        self.fig = plt.figure() 
+        self.fig.patch.set_facecolor('white')           
         genLen = len(self.fitness[0]); epochLen = len(self.fitness)
         avg = []
         for g in range(0, genLen, 1):
             tot = 0
             for e in range(0, epochLen, 1):
                 tot += self.fitness[e][g]
-            avg.append(tot) 
-        #self.__plotGraph__(genLen, epochLen, tot)            
+            avg.append(tot / epochLen)
         plt.clf()
         plt.plot(np.linspace(1, genLen, genLen), avg)
-        plt.title('Fitness across'+str(epochLen)+' epochs for '+str(genLen)+' gen')
+        plt.title('Average best fitness across'+str(epochLen)+' epochs for '+str(genLen)+' gen')
         plt.xlabel('generations', fontsize=12);plt.ylabel('fitness', fontsize=12)
         self.fig.canvas.toolbar.pack_forget() #remove bottom bar  
-        plt.pause(0.001); plt.legend(loc='best'); plt.show() 
+        plt.pause(0.001); plt.show() 
 
 class FlatGroundTraining(Worlds):#inherits
     def __init__(self, execLen, legsCode):
         super(FlatGroundTraining, self).__init__()
         self.legsCode = legsCode
         self.maxMovtTime = execLen
-        self.screenHeight = 320 #overriding
-        self.worldHeight = 280 #overriding
-        self.worldWidth = 3000 #overriding
+        self.screenWidth = 900 #overriding
+        self.screenHeight = 620#320 #overriding
+        self.worldHeight = 600#280 #overriding
+        self.worldWidth = 20000 #overriding
         self.numRobots = 15 #min 4 robots required for DE
         self.elevFromBottomWall = 10
         self.groundThickness = 10
@@ -354,10 +356,10 @@ class FlatGroundTraining(Worlds):#inherits
         super(FlatGroundTraining, self).initialize() 
         self.createGround(0, self.elevFromBottomWall, self.groundColor)
         self.behaviour = DifferentialEvolution(self.robots)
-        self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength. Epoch
-        self.maxSequenceLength = 4 #The number of dT times a leg is moved. Total epochs (not related to gen coz seqLen changes)
-        self.gen = 0 #start gen
-        self.maxGens = 20
+        self.sequenceLength = 1 #Epoch. start seq len. Should start with anything from 1 to maxSequenceLength        
+        self.gen = 0 #start gen. Starts with 0
+        self.maxGens = 50
+        self.maxSequenceLength = 10 #The number of dT times a leg is moved. Total epochs (not related to gen coz seqLen changes)
          
     def createGround(self, groundX, groundY, grColor):
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2)
@@ -367,6 +369,7 @@ class FlatGroundTraining(Worlds):#inherits
     def processRobot(self):
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
             self.fitGraph.showFitnessAcrossIncreasingSeqLengths()
+            self.fitGraph.showFitnessAcrossEpochs()
             return RunCode.STOP
          
         runCode = self.behaviour.run(self.sequenceLength)
@@ -376,7 +379,7 @@ class FlatGroundTraining(Worlds):#inherits
             self.deleteRobots(); self.initializeRobots()            
             self.behaviour.startNewGen()         
             if self.gen == self.maxGens:#completion of one epoch
-                self.fitGraph.addGenerationsFitness(self.genBestFit)
+                self.fitGraph.addGenerationsBestFitness(self.genBestFit)
                 self.sequenceLength += 1 
                 self.gen = 0; self.genBestFit = []
                 self.behaviour.startNewEpoch()
@@ -797,7 +800,8 @@ class ActualImagination(Worlds):#inherits
     def initialize(self):
         super(ActualImagination, self).initialize()       
         self.createGround(0, self.elevFromBottomWall, self.groundColor)
-        self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)       
+        self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
+        self.createFewObjects()       
         #self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
         self.cumulativeUpdateBy = Vec2d(0,0)            
     
@@ -864,6 +868,11 @@ class ActualImagination(Worlds):#inherits
     def createGround(self, groundX, groundY, grColor):
         self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor)
 
+    def createFewObjects(self):
+        w = 10; h = 40
+        self.createBox(50, 50, w, w, self.groundColor)
+        self.createBox(120, 60, w, h, self.groundColor)
+        
     def createBox(self, x, y, wd, ht, colour):
         body = pymunk.Body(body_type = pymunk.Body.KINEMATIC); body.position = Vec2d(x, y); body.width = wd; body.height = ht
         shape = pymunk.Poly.create_box(body, (wd, ht)); shape.color = colour; shape.friction = 1.0; 

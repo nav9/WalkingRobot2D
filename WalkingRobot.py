@@ -115,7 +115,7 @@ class ActionNetwork:
             print('No '+self.actionFile+' found. Creating new action network.')
             self.graph = nx.MultiDiGraph()
         if not nx.is_empty(self.graph):
-            self.displayNetwork()
+            #self.displayNetwork()
             self.actionNetworkProperties()
     
     def actionNetworkProperties(self):
@@ -169,7 +169,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         return Vec2d(v)
     
     def __linkLegPartWithPrevBodyPart__(self, prevBody):
-        maxMotorRate = 5
+        maxMotorRate = 20
         motorRateRangePieces = (maxMotorRate * 2 + 1) * 10
         #---link left leg A with Chassis
         if self.leftRight == self.ori['LEFT']:
