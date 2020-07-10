@@ -249,7 +249,7 @@ class RobotBody:
     def reinitializeWithRandomValues(self, seqLen):       
         for leg in self.legs:
             leg.experience[:] = []
-            for i in range(0, seqLen, 1):
+            for _ in range(0, seqLen, 1):
                 thisRate = random.choice(leg.motor.legRateRange)
                 leg.experience.append(thisRate)                                    
     
@@ -262,7 +262,7 @@ class RobotBody:
         j = 0
         for leg in self.legs:
             leg.experience[:] = []
-            for i in range(0, seqLen, 1): 
+            for _ in range(0, seqLen, 1): 
                 v = ex[j]
                 if v < leg.motor.legRateRange[0] or v > leg.motor.legRateRange[-1]: v = random.choice(leg.motor.legRateRange)
                 leg.experience.append(v)

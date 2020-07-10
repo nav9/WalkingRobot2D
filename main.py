@@ -36,7 +36,7 @@ class TestSimulator(object):
             w.delete() 
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
     
-class Demo1Simulator(object):
+class MainSimulator(object):
     def __init__(self, execLen, legs):
         self.actions = ActionNetwork(execLen, legs)
         self.worlds = []
@@ -55,7 +55,7 @@ class Demo1Simulator(object):
             w.delete()    
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
 
-class Demo2Simulator(object):
+class ImaginationVisualizationSimulator(object):
     def __init__(self, legs):
         self.actions = LegPartActionNetwork(legs)
         self.worlds = []
@@ -81,8 +81,8 @@ if __name__ == '__main__':
     execLen = 10 #how many times motor gets executed per second. For simulator1
     # - Single leg part, -- Two leg parts, # Chassis
     legs = '--#--'
-    #sim = Demo1Simulator(execLen, legs)
-    sim = Demo2Simulator(legs)
+    sim = MainSimulator(execLen, legs)
+    #sim = ImaginationVisualizationSimulator(legs)
     #sim = TestSimulator(legs)
     while sim.nextWorld():
         pass

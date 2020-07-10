@@ -412,7 +412,8 @@ class FlatGroundTraining(Worlds):#inherits
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
-
+#The world that has twins above which represent the imagination and run DE for a while before the 
+#original robot takes the best motor rates and runs them
 class ImaginationTwin(Worlds):#inherits
     def __init__(self, actions, execLen, legCode):        
         super(ImaginationTwin, self).__init__()
@@ -423,6 +424,7 @@ class ImaginationTwin(Worlds):#inherits
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 3000 #overriding
         self.worldHeight = 300
+        self.worldEndPos = self.worldWidth - 200
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1
         self.numImaginaryRobots = 4 #min 4 robots required for DE
@@ -430,8 +432,10 @@ class ImaginationTwin(Worlds):#inherits
         self.elevFromBottomWall = 0
         self.groundThickness = 10
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
+        self.prevRobotPos = self.robotInitPos
+        self.moveCameraAtThisDistDiff = 75
         self.imaginationColor = 100,100,100
-        self.imaginationGroundColor = 100,150,100
+        self.imaginationGroundColor = 100,150,100        
         self.runState = RunCode.CONTINUE
         self.nextNode = None 
         self.cons = Constants()       
@@ -455,7 +459,7 @@ class ImaginationTwin(Worlds):#inherits
         self.maxGens = 5        
         
     def processRobot(self):
-        if self.robots[0].getPosition()[0] - self.cumulativeUpdateBy[0] > self.worldWidth - 200:#reached end of world
+        if self.robots[0].getPosition()[0] - self.cumulativeUpdateBy[0] > self.worldEndPos:#reached end of world
             self.runState = RunCode.STOP
             return False
         resetMovtTime = True    
@@ -569,14 +573,18 @@ class ImaginationTwin(Worlds):#inherits
                     #sys.exit(0)
                     simulating = False
                 if event.type == KEYDOWN:
-                    if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
-                    if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
-                    if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
-                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)
+                    #if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
+                    #if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
+                    #if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
+                    #if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)
                     if event.key == K_n: 
                         print('Getting ready to display action network...'); 
                         self.actionNetwork.displayNetwork()                     
             if not simulating: break #coz break within event for loop won't exit while
+            robotMovedByX = self.prevRobotPos[0] - self.robots[0].getPosition()[0]            
+            if abs(robotMovedByX) > self.moveCameraAtThisDistDiff:
+                self.cameraXY += Vec2d(robotMovedByX, 0)
+                self.prevRobotPos = self.robots[0].getPosition()
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
             for x in range(self.iterations): #iterations to get a more stable simulation
@@ -677,7 +685,7 @@ class ImaginationTwin(Worlds):#inherits
             else: obj.setImaginaryRobotColor()                 
     
     def initializeImaginaryRobots(self):      
-        for i in range(0, self.numImaginaryRobots, 1):
+        for _ in range(0, self.numImaginaryRobots, 1):
             self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset), self.legsCode))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
             
     def deleteImaginaryRobots(self):
@@ -688,7 +696,7 @@ class ImaginationTwin(Worlds):#inherits
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
-
+#A world where multiple robots learn actions to generate a basic action network
 class Heaven(Worlds):#inherits
     def __init__(self, legsCode, actionNet):
         self.legsCode = legsCode
@@ -767,7 +775,8 @@ class Heaven(Worlds):#inherits
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
-
+#The world where the tips of the limbs and contact with terrain is visualized to show what a blind
+#robot actually "sees"
 class ActualImagination(Worlds):#inherits
     def __init__(self, legCode, actionNet):        
         super(ActualImagination, self).__init__()
