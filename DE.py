@@ -18,6 +18,9 @@ class RunCode:
 class Constants:
     UNDETERMINED = -1
     NOTFIT = 0
+    xID = 0
+    yID = 1
+    mainRobotID = 0
 
 # Note: At least 4 robots are required for Differential Evolution to work
 class DifferentialEvolution:#(AbstractRobotBehaviour):    
@@ -212,7 +215,7 @@ class ImaginationDifferentialEvolution:
         self.startNewGen()
         
     def resetDE(self):
-        self.epochFittestRobot = self.const.UNDETERMINED #TODO: shift to a constants class
+        self.epochFittestRobot = self.const.UNDETERMINED 
         self.epochBestFitness = self.const.NOTFIT
         self.currentBestFitness = self.const.NOTFIT
         self.currentFittestRobot = self.const.UNDETERMINED
@@ -220,9 +223,10 @@ class ImaginationDifferentialEvolution:
     def calcFitness(self):     
         self.fit[:] = []   
         for r in self.robots:
-            self.fit.append(self.realRobo[0].brain.getFitness(r.obj_body.startPosition, r.obj_body.position))
+            self.fit.append(self.realRobo[self.const.mainRobotID].getFitness(r.obj_body.startPosition, r.obj_body.position))
+            #self.fit.append(self.realRobo[self.const.mainRobotID].brain.getFitness(r.obj_body.startPosition, r.obj_body.position))
             #self.fit.append(round(r.obj_body.position[0] - r.obj_body.startPosition[0], self.decimalPrecision))
-#         #---assign zero fitness to any robot that became ulta
+#         #---assign zero fitness to any robot that turned upside down
 #         for r in range(len(self.robots)):
 #             ang = self.robots[r].getBodyAngle()            
 #             if ang > 90 and ang < 270:
@@ -271,8 +275,7 @@ class ImaginationDifferentialEvolution:
                 mutant.append(x1[ii] + round(self.vBeta * (x2[ii] - x3[ii])))
             if mutant == curr:
                 self.robots[i].reinitializeWithRandomValues(seqLen)
-            else:
-                #---crossover
+            else:#---crossover                
                 for ii in range(len(curr)):
                     if uniform(0,1) <= self.crProba:
                         mutant[ii] = curr[ii]                        
@@ -317,7 +320,7 @@ class ImaginationDifferentialEvolution:
                     v = self.temp[i]; j = 0; 
                     for leg in r.legs:#assign DE values calculated from prev gen
                         leg.experience[:] = []
-                        for k in range(0, seqLen, 1):
+                        for _ in range(0, seqLen, 1):
                             leg.experience.append(v[j])
                             j += 1
                 i += 1

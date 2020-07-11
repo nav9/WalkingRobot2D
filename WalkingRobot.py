@@ -20,54 +20,56 @@ class Directions:
                      }
     def getDirn(self): 
         return self.dirn        
-    
-class Brain:
-    def __init__(self, pos):
-        d = Directions()
-        self.ori = d.getDirn()
-        self.direction = self.ori['RIGHT']
-        self.stuckThresh = 2 #TODO: Currently pixels. Make this a proportion of the body length
-        self.maxStuck = 2 #max iterations before deciding to get unstuck by going in different direction
-        self.stuck = 0 #counter 
-        self.maxRoaming = 5 #max iterations to roam in non-main direction
-        self.roaming = 0 #counter
-        self.prevPos = pos
-        self.const = Constants()
-        self.decimalPrecision = 2
-        
-    def movementThinking(self, currPos):
-        if self.roaming > 0:
-            self.roaming -= 1
-            if self.roaming == 0: self.setToMainDirection()#stop roaming
-        dist = abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2))
-        if dist <= self.stuckThresh:   
-            self.stuck += 1
-            if self.stuck == self.maxStuck: self.moveInDifferentDirection()
-        else: 
-            self.prevPos = currPos
-            self.stuck = 0
-            
-    def getFitness(self, prevPos, currPos):
-        if self.robotDirection(prevPos, currPos) == self.direction: return round(abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2)), self.decimalPrecision)
-        else: return self.const.NOTFIT 
-        
-    def robotDirection(self, prevPos, currPos): 
-        ang = round(math.degrees(math.atan2((currPos[1]-prevPos[1]), (currPos[0]-prevPos[0])))) % 360
-        if ang > 270 or ang <= 91: direc = self.ori['RIGHT']
-        if ang > 91 and ang <= 135: direc = self.ori['UP']
-        if ang > 135 and ang <= 225: direc = self.ori['LEFT']
-        if ang > 225 and ang <= 270: direc = self.ori['DOWN']  
-        return direc
-    
-    def moveInDifferentDirection(self):
-        d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
-        while d == self.direction:
-            d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
-        self.direction = d
-        self.roaming = self.maxRoaming
-        
-    def setToMainDirection(self): self.direction = self.ori['RIGHT']
-    def getDirection(self): return self.direction
+
+# class Brain:
+#     def __init__(self, pos):
+#         d = Directions()
+#         self.ori = d.getDirn()
+#         self.direction = self.ori['RIGHT']
+#         #self.stuckThresh = 2 #TODO: Currently pixels. Make this a proportion of the body length
+#         #self.maxStuck = 2 #max iterations before deciding to get unstuck by going in different direction
+#         #self.stuck = 0 #counter 
+#         #self.maxRoaming = 5 #max iterations to roam in non-main direction
+#         #self.roaming = 0 #counter
+#         self.prevPos = pos
+#         self.const = Constants()
+#         self.decimalPrecision = 2
+#         
+#     def movementThinking(self, currPos):
+#         if self.roaming > 0:
+#             self.roaming -= 1
+#             if self.roaming == 0: self.setToMainDirection()#stop roaming
+#         dist = abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2))
+#         if dist <= self.stuckThresh:   
+#             self.stuck += 1
+#             if self.stuck == self.maxStuck: self.moveInDifferentDirection()
+#         else: 
+#             self.prevPos = currPos
+#             self.stuck = 0
+#             
+#     def getFitness(self, prevPos, currPos):
+#         if self.robotDirection(prevPos, currPos) == self.direction: 
+#             return round(abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2)), self.decimalPrecision)
+#         else: 
+#             return self.const.NOTFIT 
+#         
+#     def robotDirection(self, prevPos, currPos): 
+#         ang = round(math.degrees(math.atan2((currPos[1]-prevPos[1]), (currPos[0]-prevPos[0])))) % 360
+#         if ang > 270 or ang <= 91: direc = self.ori['RIGHT']
+#         if ang > 91 and ang <= 135: direc = self.ori['UP']
+#         if ang > 135 and ang <= 225: direc = self.ori['LEFT']
+#         if ang > 225 and ang <= 270: direc = self.ori['DOWN']  
+#         return direc
+#     
+#     def moveInDifferentDirection(self):
+#         d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
+#         while d == self.direction:
+#             d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
+#         self.direction = d
+#         self.roaming = self.maxRoaming
+#         
+#     def setToMainDirection(self): self.direction = self.ori['RIGHT']
+#     def getDirection(self): return self.direction
 
 # class ActionNetwork:
 #     def __init__(self, execLen, legs):
@@ -183,7 +185,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.motor.legRateRange = np.linspace(-maxMotorRate, maxMotorRate, motorRateRangePieces)         
         
     def updatePosition(self, offsetXY): self.obj_body.position = self.obj_body.position + offsetXY         
-    def getLegAngle(self): return round(math.degrees(self.obj_body.angle)%360)        
+    def getLegAngle(self): return round(math.degrees(self.obj_body.angle) % 360)        
 
 class RobotBody:
     def __init__(self, pymunkSpace, chassisCenterPoint, legCode):
@@ -197,18 +199,21 @@ class RobotBody:
         self.obj_body = None #chassis body
         self.chassis_shape = None #chassis shape 
         self.legs = []
-        self.currentActionNode = []#node on the action network        
-        self.brain = None       
+        self.direction = self.ori['RIGHT'] #direction the robot needs to go in
+        #self.currentActionNode = []#node on the action network        
+        #self.brain = None       
         self.space = pymunkSpace
         self.quadrantAccuracy = 3 #pixels
         self.__createBody__(chassisCenterPoint)
+        self.decimalPrecision = 2
+        self.const = Constants()
         
     def __createBody__(self, chassisXY):
         self.obj_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.chassisWd, self.chassisHt)))
         self.obj_body.body_type = pymunk.Body.KINEMATIC
         self.obj_body.position = chassisXY
         self.obj_body.startPosition = Vec2d(self.obj_body.position[0], self.obj_body.position[1])
-        self.brain = Brain(self.obj_body.startPosition)    
+        #self.brain = Brain(self.obj_body.startPosition)    
         self.chassis_shape = pymunk.Poly.create_box(self.obj_body, (self.chassisWd, self.chassisHt))
         self.chassis_shape.filter = self.ownBodyShapeFilter
         self.setNormalRobotColor() 
@@ -241,6 +246,20 @@ class RobotBody:
                 leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.obj_body, leftLegA.legWd, self.ori['RIGHT']); self.legs.append(leftLegB)                 
                 leftLegC = LegPart(self.space, self.ownBodyShapeFilter, leftLegB.obj_body, leftLegB.legWd, self.ori['RIGHT']); self.legs.append(leftLegC)                                 
                         
+    def getFitness(self, prevPos, currPos):
+        if self.robotDirection(prevPos, currPos) == self.direction: 
+            return round(abs(math.sqrt((currPos[0]-prevPos[0])**2 + (currPos[1]-prevPos[1])**2)), self.decimalPrecision)
+        else: 
+            return self.const.NOTFIT 
+        
+    def robotDirection(self, prevPos, currPos): 
+        ang = round(math.degrees(math.atan2((currPos[1]-prevPos[1]), (currPos[0]-prevPos[0])))) % 360
+        if ang > 270 or ang <= 91: direc = self.ori['RIGHT']
+        if ang > 91 and ang <= 135: direc = self.ori['UP']
+        if ang > 135 and ang <= 225: direc = self.ori['LEFT']
+        if ang > 225 and ang <= 270: direc = self.ori['DOWN']  
+        return direc        
+    
     def setExperience(self, expe):       
         for leg in self.legs: leg.experience[:] = []
         while len(expe) > 0: 

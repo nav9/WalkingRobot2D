@@ -151,7 +151,7 @@ class Worlds(object):
         self.robots[:] = []
         
     def initializeRobots(self):      
-        for i in range(0, self.numRobots, 1):
+        for _ in range(0, self.numRobots, 1):
             self.robots.append(RobotBody(self.space, self.robotInitPos, self.legsCode))             
     
     def displayStats(self, displayStr):
@@ -202,7 +202,311 @@ class Worlds(object):
             #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
             clock.tick(self.fps)
             if runState == RunCode.STOP:
-                break                   
+                break  
+            
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+#The world that has twins above which represent the imagination and run DE for a while before the 
+#original robot takes the best motor rates and runs them
+class ImaginationTwin(Worlds):#inherits
+    def __init__(self, execLen, legCode): #def __init__(self, actions, execLen, legCode):        
+        super(ImaginationTwin, self).__init__()
+        self.legsCode = legCode
+        self.maxMovtTime = execLen        
+        #self.actionNetwork = actions
+        self.screenWidth = 900
+        self.screenHeight = 620 #keep at at least 350        
+        self.worldWidth = 1000 #overriding
+        self.worldHeight = 300
+        self.worldEndPos = self.worldWidth - 200
+        self.imaginaryWorldYOffset = self.worldHeight 
+        self.numRobots = 1        
+        self.numImaginaryRobots = 4 #min 4 robots required for DE
+        self.imaginaryRobots = []
+        self.elevFromBottomWall = 0
+        self.groundThickness = 10
+        self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
+        self.prevRobotPos = self.robotInitPos
+        self.moveCameraAtThisDistDiff = 75
+        self.imaginationColor = 100,100,100
+        self.imaginationGroundColor = 100,150,100        
+        self.runState = RunCode.CONTINUE
+        self.nextNode = None 
+        self.cons = Constants()       
+        
+    def initialize(self):
+        super(ImaginationTwin, self).initialize()
+        self.createDebris(self.elevFromBottomWall, self.imaginationColor)
+        self.copyDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)       
+        self.createGround(0, self.elevFromBottomWall, self.groundColor)
+        self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)       
+        self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
+        #ubp = self.robots[self.cons.mainRobotID].getUniqueBodyAngles()
+        #self.actionNetwork.addNode(ubp)
+        #self.robots[self.cons.mainRobotID].currentActionNode = ubp  
+        self.cumulativePosUpdateBy = Vec2d(0,0)      
+        self.initializeImaginaryRobots(); self.setImaginaryRobotAnglesToRealRobotAngle()
+        self.behaviour = ImaginationDifferentialEvolution(self.imaginaryRobots, self.robots)
+        self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength
+        self.maxSequenceLength = 1 #The number of dT times a leg is moved
+        self.gen = 0 #start gen
+        self.maxGens = 5        
+        
+    def processRobot(self):
+        if self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.worldEndPos:#reached end of world
+            self.runState = RunCode.STOP
+            return False
+        resetMovtTime = True    
+#         if self.runState == RunCode.EXPERIENCE:#appropriate action edge found so just execute what is in it
+#             if self.sequenceLength > self.maxSequenceLength:
+#                 self.robots[self.cons.mainRobotID].stopMotion()
+#                 self.robots[self.cons.mainRobotID].currentActionNode = tuple(self.nextNode)
+#                 self.nextNode = None
+#                 self.runState = RunCode.CONTINUE
+#                 self.robots[self.cons.mainRobotID].brain.movementThinking(self.robots[self.cons.mainRobotID].getPosition())
+#             else: #---run experience for each leg
+#                 self.robots[self.cons.mainRobotID].setMotorRateForSequence(self.sequenceLength-1)
+#                 self.sequenceLength += 1
+        
+        if self.runState == RunCode.CONTINUE:#bottom robot's movement
+            resetMovtTime = False
+            self.experienceInfoString()
+            self.setForImagination()
+#             successors = self.actionNetwork.getSuccessorNodes(self.robots[self.cons.mainRobotID].currentActionNode)
+#             if successors == None:#no successor node found, so start imagining
+#                 self.setForImagination()                
+#             else:#successor found so get the experience action to perform
+#                 greatestFitness = self.cons.NOTFIT; imaginedExperience = []
+#                 for successor in successors:
+#                     self.nextNode = successor
+#                     edge = self.actionNetwork.getEdge(self.robots[self.cons.mainRobotID].currentActionNode, self.nextNode)
+#                     for e in edge:#choose next node as per best fitness
+#                         if self.robots[self.cons.mainRobotID].brain.getDirection() != edge[e]['direction']: continue
+#                         f = edge[e]['fitness']
+#                         if f > greatestFitness:#edge where robot moved max dist
+#                             greatestFitness = f
+#                             imaginedExperience = list(edge[e]['experience'])
+#                         else: continue
+#                 #---make preparations to run the node's experience
+#                 if len(imaginedExperience) > 0:
+#                     self.robots[self.cons.mainRobotID].setExperience(imaginedExperience)
+#                     self.sequenceLength = 1 #should be at least 1                
+#                     self.runState = RunCode.EXPERIENCE
+#                 else:
+#                     self.setForImagination()
+        
+        if self.runState == RunCode.IMAGINE:#imaginary robot's movement
+            resetMovtTime = self.runImagination()
+        return resetMovtTime
+    
+    def experienceInfoString(self):
+        self.infoString = ""
+        #self.infoStringStuckAndRoamingDir()
+        self.infoString += ",  x: "+str(round(self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0], self.decimalPrecision))
+    
+    def setForImagination(self):
+        #self.robots[0].brain.movementThinking(self.robots[0].getPosition())
+        self.runState = RunCode.IMAGINE
+        self.behaviour.startNewEpoch()
+        self.setImaginaryRobotAnglesToRealRobotAngle()
+        self.sequenceLength = 1 #should be at least 1
+        self.gen = 0        
+        
+    def runImagination(self):
+        resetMovtTime = True
+        if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
+            self.runState = RunCode.CONTINUE
+            self.infoString = ""
+            resetMovtTime = False                
+            return resetMovtTime
+
+        rs = self.behaviour.run(self.sequenceLength)
+        if rs == RunCode.NEXTGEN:#reset for next generation
+            self.gen += 1            
+            if self.gen == self.maxGens:#completion of one epoch
+                #self.createNewActionNodes()                                      
+                self.storeBestFitness()
+            self.deleteImaginaryRobots(); self.initializeImaginaryRobots()  
+            self.setImaginaryRobotAnglesToRealRobotAngle()          
+            self.behaviour.startNewGen()         
+            if self.gen == self.maxGens:#completion of one epoch
+                self.sequenceLength += 1 
+                self.gen = 0                      
+                self.behaviour.startNewEpoch()
+        self.generateInfoString()  
+        return resetMovtTime
+        
+    def storeBestFitness(self):
+        print('Imaginary robots fitness')
+        for i in range(0, len(self.imaginaryRobots), 1):        
+            print(self.behaviour.fit[i])
+        
+#     def createNewActionNodes(self):
+#         for i in range(0, len(self.imaginaryRobots), 1):
+#             expe = self.imaginaryRobots[i].getValues()
+#             node = self.imaginaryRobots[i].getUniqueBodyAngles()
+#             weight = 1 #kept 1 for now since weight assignment should happen at a higher level
+#             self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, weight, expe, self.behaviour.fit[i], self.robots[0].brain.getDirection())
+#             #print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(self.behaviour.fit[i])+' exp:'+str(expe))
+#         #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying               
+# #         if False in self.behaviour.unfitThisFullGen:
+# #             maxi = 0; fittestImaginaryRobot = -1
+# #             for i in range(0, len(self.behaviour.unfitThisFullGen), 1):
+# #                 if not self.behaviour.unfitThisFullGen[i] and self.behaviour.fit[i] > maxi:
+# #                     maxi = self.behaviour.fit[i]
+# #                     fittestImaginaryRobot = i
+# #             if fittestImaginaryRobot >= 0:
+# #                 expe = self.imaginaryRobots[fittestImaginaryRobot].getValues()
+# #                 node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyAngles()
+# #                 self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
+# #                 print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(maxi)+' exp:'+str(expe))
+# #                 #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying       
+        
+    def runWorld(self):
+        self.runState = RunCode.CONTINUE
+        clock = pygame.time.Clock()
+        simulating = True        
+        #prevTime = time.time()
+        
+        while simulating:
+            for event in pygame.event.get():
+                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
+                    #sys.exit(0)
+                    simulating = False
+                if event.type == KEYDOWN:
+                    #if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
+                    #if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
+                    if event.key == K_LEFT: 
+                        self.moveCameraBy(self.cameraMoveDist[0])
+                        #self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
+                        #self.prevRobotPos = self.robots[0].getPosition()
+                    if event.key == K_RIGHT: 
+                        self.moveCameraBy(-self.cameraMoveDist[0])
+                        #self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)
+                        #self.prevRobotPos = self.robots[0].getPosition()
+#                     if event.key == K_n: 
+#                         print('Getting ready to display action network...'); 
+#                         self.actionNetwork.displayNetwork()                     
+            if not simulating: break #coz break within event for loop won't exit while
+            robotMovedByX = self.prevRobotPos[self.cons.xID] - self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID]            
+            if abs(robotMovedByX) > self.moveCameraAtThisDistDiff:
+                self.moveCameraBy(robotMovedByX)
+                #self.cameraXY += Vec2d(robotMovedByX, 0)
+                #self.prevRobotPos = self.robots[0].getPosition()
+            #---Update physics
+            dt = 1.0 / float(self.fps) / float(self.iterations)
+            for _ in range(self.iterations): #iterations to get a more stable simulation
+                self.space.step(dt)
+            #---Update world based on camera focus
+            self.updatePosition()
+            if self.prevFocusRobotID != self.focusRobotID: 
+                self.updateColor()
+                self.prevFocusRobotID = self.focusRobotID
+            if self.movtTime == 0:
+                resetMovT = self.processRobot()
+                if resetMovT: self.movtTime = self.maxMovtTime
+            else: self.movtTime -= 1
+            
+            #---draw all objects            
+            self.draw()                
+            
+            #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
+            clock.tick(self.fps)
+            if self.runState == RunCode.STOP: 
+                break  
+              
+        #---actions to do after simulation
+        #self.actionNetwork.saveNetwork() 
+        
+    def moveCameraBy(self, dist):
+        self.cameraXY += Vec2d(dist, 0)
+        self.prevRobotPos = self.robots[0].getPosition()        
+        
+    def createGround(self, groundX, groundY, grColor):
+        self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor)
+
+    def createDebris(self, groundY, debColor):
+        debrisStartCol = 600; debrisMaxHt = 100; boxMinSz = 5; boxMaxSz = 30
+        for _ in range(0, 100, 1):
+            self.createBox(random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness), random.randint(groundY+2*self.wallThickness, groundY+debrisMaxHt), random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), debColor)        
+        
+    def copyDebrisToImaginary(self, groundY, debColor):
+        for i in range(0, len(self.worldObjects), 1):
+            self.createBox(self.worldObjects[i].body.position[0], groundY+self.worldObjects[i].body.position[1], self.worldObjects[i].body.width, self.worldObjects[i].body.height, debColor)        
+    
+    def createBox(self, x, y, wd, ht, colour):
+        body = pymunk.Body(body_type = pymunk.Body.KINEMATIC); body.position = Vec2d(x, y); body.width = wd; body.height = ht
+        shape = pymunk.Poly.create_box(body, (wd, ht)); shape.color = colour; shape.friction = 1.0; 
+        self.space.add(shape); self.worldObjects.append(shape)  
+        
+    def setImaginaryRobotAnglesToRealRobotAngle(self):
+        pos = self.robots[self.cons.mainRobotID].getPositions()
+        angles = self.robots[self.cons.mainRobotID].getUniqueBodyAngles()
+        for r in self.imaginaryRobots:
+            p = pos[:]; a = angles[:] #copying values instead of references
+            r.setBodyPositionAndAngles(p, a, Vec2d(0, self.imaginaryWorldYOffset))
+        
+    def generateInfoString(self):
+        genFittestRoboString = "-"; currFittestRoboString = "-"
+        if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
+        if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)        
+        self.infoString = ""
+        #self.infoStringStuckAndRoamingDir()
+        self.infoString += ",  SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
+        self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
+        self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
+        self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
+        
+#     def infoStringStuckAndRoamingDir(self):
+#         disp = "-"
+#         if self.robots[self.cons.mainRobotID].brain.stuck > 0: disp = "Y"
+#         self.infoString += "Stuck: "+disp; disp = "-"
+#         if self.robots[self.cons.mainRobotID].brain.roaming > 0: disp = "Y"
+#         self.infoString += "  Roam: "+disp
+#         #---get direction
+#         dirn = self.robots[self.cons.mainRobotID].brain.direction
+#         for d, v in self.robots[self.cons.mainRobotID].brain.ori.items():
+#             if dirn == v: self.infoString += " Dir: "+d 
+                
+    def delete(self):
+        super(ImaginationTwin, self).delete()   
+        for ob in self.worldObjects:
+            self.space.remove(ob)
+        self.worldObjects[:] = []  
+    
+    def updatePosition(self):  
+        updateBy = super(ImaginationTwin, self).updatePosition()    
+        self.cumulativePosUpdateBy += updateBy
+        if self.behaviour.currentFittestRobot != self.focusRobotID:
+            self.focusRobotID = self.behaviour.currentFittestRobot
+        if self.behaviour.unfitThisFullGen[self.focusRobotID]:
+            self.focusRobotID = self.UNDETERMINED
+        if updateBy != (0, 0):
+            for ob in self.worldObjects:
+                ob.body.position += updateBy   
+            for obj in self.imaginaryRobots:
+                obj.updatePosition(updateBy)                
+                
+    def updateColor(self):
+        for obj in self.robots:
+            obj.setNormalRobotColor()
+        for obj in self.imaginaryRobots:
+            if self.focusRobotID >= 0:
+                if obj == self.imaginaryRobots[self.focusRobotID]: obj.setFocusRobotColor() 
+                else: obj.setImaginaryRobotColor()
+            else: obj.setImaginaryRobotColor()                 
+    
+    def initializeImaginaryRobots(self):      
+        for _ in range(0, self.numImaginaryRobots, 1):
+            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset), self.legsCode))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
+            
+    def deleteImaginaryRobots(self):
+        for r in self.imaginaryRobots:
+            r.delete()
+        self.imaginaryRobots[:] = []    
+
+                             
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
@@ -408,303 +712,7 @@ class FlatGroundTraining(Worlds):#inherits
             for ob in self.worldObjects:
                 ob.body.position += updateBy     
                             
-                    
-#------------------------------------------------------------------------------------------------
-#------------------------------------------------------------------------------------------------
-#------------------------------------------------------------------------------------------------
-#The world that has twins above which represent the imagination and run DE for a while before the 
-#original robot takes the best motor rates and runs them
-class ImaginationTwin(Worlds):#inherits
-    def __init__(self, execLen, legCode): #def __init__(self, actions, execLen, legCode):        
-        super(ImaginationTwin, self).__init__()
-        self.legsCode = legCode
-        self.maxMovtTime = execLen        
-        #self.actionNetwork = actions
-        self.screenWidth = 900
-        self.screenHeight = 620 #keep at at least 350        
-        self.worldWidth = 3000 #overriding
-        self.worldHeight = 300
-        self.worldEndPos = self.worldWidth - 200
-        self.imaginaryWorldYOffset = self.worldHeight 
-        self.numRobots = 1
-        self.numImaginaryRobots = 4 #min 4 robots required for DE
-        self.imaginaryRobots = []
-        self.elevFromBottomWall = 0
-        self.groundThickness = 10
-        self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
-        self.prevRobotPos = self.robotInitPos
-        self.moveCameraAtThisDistDiff = 75
-        self.imaginationColor = 100,100,100
-        self.imaginationGroundColor = 100,150,100        
-        self.runState = RunCode.CONTINUE
-        self.nextNode = None 
-        self.cons = Constants()       
-        
-    def initialize(self):
-        super(ImaginationTwin, self).initialize()
-        self.createDebris(self.elevFromBottomWall, self.imaginationColor)
-        self.copyDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)       
-        self.createGround(0, self.elevFromBottomWall, self.groundColor)
-        self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)       
-        self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
-        ubp = self.robots[0].getUniqueBodyAngles()
-        #self.actionNetwork.addNode(ubp)
-        self.robots[0].currentActionNode = ubp  
-        self.cumulativeUpdateBy = Vec2d(0,0)      
-        self.initializeImaginaryRobots(); self.setImaginaryRobotAnglesToRealRobotAngle()
-        self.behaviour = ImaginationDifferentialEvolution(self.imaginaryRobots, self.robots)
-        self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength
-        self.maxSequenceLength = 1 #The number of dT times a leg is moved
-        self.gen = 0 #start gen
-        self.maxGens = 5        
-        
-    def processRobot(self):
-        if self.robots[0].getPosition()[0] - self.cumulativeUpdateBy[0] > self.worldEndPos:#reached end of world
-            self.runState = RunCode.STOP
-            return False
-        resetMovtTime = True    
-        if self.runState == RunCode.EXPERIENCE:#appropriate action edge found so just execute what is in it
-            if self.sequenceLength > self.maxSequenceLength:
-                self.robots[0].stopMotion()
-                self.robots[0].currentActionNode = tuple(self.nextNode)
-                self.nextNode = None
-                self.runState = RunCode.CONTINUE
-                self.robots[0].brain.movementThinking(self.robots[0].getPosition())
-            else: #---run experience for each leg
-                self.robots[0].setMotorRateForSequence(self.sequenceLength-1)
-                self.sequenceLength += 1
-        
-        if self.runState == RunCode.CONTINUE:#bottom robot's movement
-            resetMovtTime = False
-            self.experienceInfoString()
-            self.setForImagination()   
-#             successors = self.actionNetwork.getSuccessorNodes(self.robots[0].currentActionNode)
-#             if successors == None:#no successor node found, so start imagining
-#                 self.setForImagination()                
-#             else:#successor found so get the experience action to perform
-#                 greatestFitness = self.cons.NOTFIT; imaginedExperience = []
-#                 for successor in successors:
-#                     self.nextNode = successor
-#                     edge = self.actionNetwork.getEdge(self.robots[0].currentActionNode, self.nextNode)
-#                     for e in edge:#choose next node as per best fitness
-#                         if self.robots[0].brain.getDirection() != edge[e]['direction']: continue
-#                         f = edge[e]['fitness']
-#                         if f > greatestFitness:#edge where robot moved max dist
-#                             greatestFitness = f
-#                             imaginedExperience = list(edge[e]['experience'])
-#                         else: continue
-#                 #---make preparations to run the node's experience
-#                 if len(imaginedExperience) > 0:
-#                     self.robots[0].setExperience(imaginedExperience)
-#                     self.sequenceLength = 1 #should be at least 1                
-#                     self.runState = RunCode.EXPERIENCE
-#                 else:
-#                     self.setForImagination()
-        
-        if self.runState == RunCode.IMAGINE:#imaginary robot's movement
-            resetMovtTime = self.runImagination()
-        return resetMovtTime
-    
-    def experienceInfoString(self):
-        self.infoString = ""
-        self.infoStringStuckAndRoamingDir()
-        self.infoString += ",  x: "+str(round(self.robots[0].getPosition()[0] - self.cumulativeUpdateBy[0], self.decimalPrecision))
-                
-    def setForImagination(self):
-        #self.robots[0].brain.movementThinking(self.robots[0].getPosition())
-        self.runState = RunCode.IMAGINE
-        self.behaviour.startNewEpoch()
-        self.setImaginaryRobotAnglesToRealRobotAngle()
-        self.sequenceLength = 1 #should be at least 1
-        self.gen = 0        
-        
-    def runImagination(self):
-        resetMovtTime = True
-        if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
-            self.runState = RunCode.CONTINUE
-            self.infoString = ""
-            resetMovtTime = False                
-            return resetMovtTime
-
-        rs = self.behaviour.run(self.sequenceLength)
-        if rs == RunCode.NEXTGEN:#reset for next generation
-            self.gen += 1            
-#             if self.gen == self.maxGens:#completion of one epoch
-#                 self.createNewActionNodes()                                      
-            self.deleteImaginaryRobots(); self.initializeImaginaryRobots()  
-            self.setImaginaryRobotAnglesToRealRobotAngle()          
-            self.behaviour.startNewGen()         
-            if self.gen == self.maxGens:#completion of one epoch
-                self.sequenceLength += 1 
-                self.gen = 0                      
-                self.behaviour.startNewEpoch()
-        self.generateInfoString()  
-        return resetMovtTime
-        
-#     def createNewActionNodes(self):
-#         for i in range(0, len(self.imaginaryRobots), 1):
-#             expe = self.imaginaryRobots[i].getValues()
-#             node = self.imaginaryRobots[i].getUniqueBodyAngles()
-#             weight = 1 #kept 1 for now since weight assignment should happen at a higher level
-#             self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, weight, expe, self.behaviour.fit[i], self.robots[0].brain.getDirection())
-#             #print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(self.behaviour.fit[i])+' exp:'+str(expe))
-#         #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying               
-# #         if False in self.behaviour.unfitThisFullGen:
-# #             maxi = 0; fittestImaginaryRobot = -1
-# #             for i in range(0, len(self.behaviour.unfitThisFullGen), 1):
-# #                 if not self.behaviour.unfitThisFullGen[i] and self.behaviour.fit[i] > maxi:
-# #                     maxi = self.behaviour.fit[i]
-# #                     fittestImaginaryRobot = i
-# #             if fittestImaginaryRobot >= 0:
-# #                 expe = self.imaginaryRobots[fittestImaginaryRobot].getValues()
-# #                 node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyAngles()
-# #                 self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
-# #                 print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(maxi)+' exp:'+str(expe))
-# #                 #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying       
-        
-    def runWorld(self):
-        self.runState = RunCode.CONTINUE
-        clock = pygame.time.Clock()
-        simulating = True        
-        #prevTime = time.time()
-        
-        while simulating:
-            for event in pygame.event.get():
-                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
-                    #sys.exit(0)
-                    simulating = False
-                if event.type == KEYDOWN:
-                    #if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
-                    #if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
-                    if event.key == K_LEFT: 
-                        self.moveCameraBy(self.cameraMoveDist[0])
-                        #self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
-                        #self.prevRobotPos = self.robots[0].getPosition()
-                    if event.key == K_RIGHT: 
-                        self.moveCameraBy(-self.cameraMoveDist[0])
-                        #self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)
-                        #self.prevRobotPos = self.robots[0].getPosition()
-#                     if event.key == K_n: 
-#                         print('Getting ready to display action network...'); 
-#                         self.actionNetwork.displayNetwork()                     
-            if not simulating: break #coz break within event for loop won't exit while
-            robotMovedByX = self.prevRobotPos[0] - self.robots[0].getPosition()[0]            
-            if abs(robotMovedByX) > self.moveCameraAtThisDistDiff:
-                self.moveCameraBy(robotMovedByX)
-                #self.cameraXY += Vec2d(robotMovedByX, 0)
-                #self.prevRobotPos = self.robots[0].getPosition()
-            #---Update physics
-            dt = 1.0 / float(self.fps) / float(self.iterations)
-            for _ in range(self.iterations): #iterations to get a more stable simulation
-                self.space.step(dt)
-            #---Update world based on camera focus
-            self.updatePosition()
-            if self.prevFocusRobotID != self.focusRobotID: 
-                self.updateColor()
-                self.prevFocusRobotID = self.focusRobotID
-            if self.movtTime == 0:
-                resetMovT = self.processRobot()
-                if resetMovT: self.movtTime = self.maxMovtTime
-            else: self.movtTime -= 1
-            
-            #---draw all objects            
-            self.draw()                
-            
-            #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
-            clock.tick(self.fps)
-            if self.runState == RunCode.STOP: 
-                break  
-              
-        #---actions to do after simulation
-        #self.actionNetwork.saveNetwork() 
-        
-    def moveCameraBy(self, dist):
-        self.cameraXY += Vec2d(dist, 0)
-        self.prevRobotPos = self.robots[0].getPosition()        
-        
-    def createGround(self, groundX, groundY, grColor):
-        self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor)
-
-    def createDebris(self, groundY, debColor):
-        debrisStartCol = 600; debrisMaxHt = 100; boxMinSz = 5; boxMaxSz = 30
-        for i in range(0, 100, 1):
-            self.createBox(random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness), random.randint(groundY+2*self.wallThickness, groundY+debrisMaxHt), random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), debColor)        
-        
-    def copyDebrisToImaginary(self, groundY, debColor):
-        for i in range(0, len(self.worldObjects), 1):
-            self.createBox(self.worldObjects[i].body.position[0], groundY+self.worldObjects[i].body.position[1], self.worldObjects[i].body.width, self.worldObjects[i].body.height, debColor)        
-    
-    def createBox(self, x, y, wd, ht, colour):
-        body = pymunk.Body(body_type = pymunk.Body.KINEMATIC); body.position = Vec2d(x, y); body.width = wd; body.height = ht
-        shape = pymunk.Poly.create_box(body, (wd, ht)); shape.color = colour; shape.friction = 1.0; 
-        self.space.add(shape); self.worldObjects.append(shape)  
-        
-    def setImaginaryRobotAnglesToRealRobotAngle(self):
-        pos = self.robots[0].getPositions()
-        angles = self.robots[0].getUniqueBodyAngles()
-        for r in self.imaginaryRobots:
-            p = pos[:]; a = angles[:] #copying values instead of references
-            r.setBodyPositionAndAngles(p, a, Vec2d(0, self.imaginaryWorldYOffset))
-        
-    def generateInfoString(self):
-        genFittestRoboString = "-"; currFittestRoboString = "-"
-        if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
-        if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)        
-        self.infoString = ""
-        self.infoStringStuckAndRoamingDir()
-        self.infoString += ",  SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
-        self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
-        self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
-        self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
-        
-    def infoStringStuckAndRoamingDir(self):
-        disp = "-"
-        if self.robots[0].brain.stuck > 0: disp = "Y"
-        self.infoString += "Stuck: "+disp; disp = "-"
-        if self.robots[0].brain.roaming > 0: disp = "Y"
-        self.infoString += "  Roam: "+disp
-        #---get direction
-        dirn = self.robots[0].brain.direction
-        for d, v in self.robots[0].brain.ori.items():
-            if dirn == v: self.infoString += " Dir: "+d 
-                
-    def delete(self):
-        super(ImaginationTwin, self).delete()   
-        for ob in self.worldObjects:
-            self.space.remove(ob)
-        self.worldObjects[:] = []  
-    
-    def updatePosition(self):  
-        updateBy = super(ImaginationTwin, self).updatePosition()    
-        self.cumulativeUpdateBy += updateBy
-        if self.behaviour.currentFittestRobot != self.focusRobotID:
-            self.focusRobotID = self.behaviour.currentFittestRobot
-        if self.behaviour.unfitThisFullGen[self.focusRobotID]:
-            self.focusRobotID = self.UNDETERMINED
-        if updateBy != (0, 0):
-            for ob in self.worldObjects:
-                ob.body.position += updateBy   
-            for obj in self.imaginaryRobots:
-                obj.updatePosition(updateBy)                
-                
-    def updateColor(self):
-        for obj in self.robots:
-            obj.setNormalRobotColor()
-        for obj in self.imaginaryRobots:
-            if self.focusRobotID >= 0:
-                if obj == self.imaginaryRobots[self.focusRobotID]: obj.setFocusRobotColor() 
-                else: obj.setImaginaryRobotColor()
-            else: obj.setImaginaryRobotColor()                 
-    
-    def initializeImaginaryRobots(self):      
-        for _ in range(0, self.numImaginaryRobots, 1):
-            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset), self.legsCode))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
-            
-    def deleteImaginaryRobots(self):
-        for r in self.imaginaryRobots:
-            r.delete()
-        self.imaginaryRobots[:] = []    
-        
+                            
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
@@ -824,7 +832,7 @@ class ActualImagination(Worlds):#inherits
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
         self.createFewObjects()       
         #self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
-        self.cumulativeUpdateBy = Vec2d(0,0)            
+        self.cumulativePosUpdateBy = Vec2d(0,0)            
     
     def runWorld(self): #may get overridden in child class
         clock = pygame.time.Clock()
