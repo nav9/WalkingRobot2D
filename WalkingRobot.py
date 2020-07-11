@@ -6,7 +6,7 @@ import math
 import pymunk
 import random
 import numpy as np
-import networkx as nx
+#import networkx as nx
 from DE import Constants
 import matplotlib.pyplot as plt
 from pymunk import Vec2d, shapes
@@ -69,61 +69,61 @@ class Brain:
     def setToMainDirection(self): self.direction = self.ori['RIGHT']
     def getDirection(self): return self.direction
 
-class ActionNetwork:
-    def __init__(self, execLen, legs):
-        self.actionFile = 'actionNetwork_'+str(execLen)+'_'+legs+'.gpickle'
-        self.graph = None
-        self.fig = plt.figure()
-        self.fig.patch.set_facecolor('black')        
-        plt.rcParams['axes.facecolor'] = 'black'
-        plt.rcParams['patch.facecolor'] = 'black'
-        self.fig.canvas.toolbar.pack_forget()#remove bottom bar        
-        self.__loadNetwork__()
+# class ActionNetwork:
+#     def __init__(self, execLen, legs):
+#         self.actionFile = 'actionNetwork_'+str(execLen)+'_'+legs+'.gpickle'
+#         self.graph = None
+#         self.fig = plt.figure()
+#         self.fig.patch.set_facecolor('black')        
+#         plt.rcParams['axes.facecolor'] = 'black'
+#         plt.rcParams['patch.facecolor'] = 'black'
+#         self.fig.canvas.toolbar.pack_forget()#remove bottom bar        
+#         self.__loadNetwork__()
+#     
+#     def addNode(self, node): self.graph.add_node(tuple(node))        
+#     def addEdge(self, node1, node2, wt, expe, fit, dirn): self.graph.add_edge(tuple(node1), tuple(node2), weight=wt, experience=tuple(expe), fitness=fit, direction=dirn)    
+#     def getEdge(self, node1, node2): return self.graph.get_edge_data(tuple(node1), tuple(node2))
+#     
+#     def getSuccessorNodes(self, currNode):#edges going out of currNode
+#         if self.graph.out_degree[tuple(currNode)] == 0: return None 
+#         else: return self.graph.successors(tuple(currNode))
     
-    def addNode(self, node): self.graph.add_node(tuple(node))        
-    def addEdge(self, node1, node2, wt, expe, fit, dirn): self.graph.add_edge(tuple(node1), tuple(node2), weight=wt, experience=tuple(expe), fitness=fit, direction=dirn)    
-    def getEdge(self, node1, node2): return self.graph.get_edge_data(tuple(node1), tuple(node2))
-    
-    def getSuccessorNodes(self, currNode):#edges going out of currNode
-        if self.graph.out_degree[tuple(currNode)] == 0: return None 
-        else: return self.graph.successors(tuple(currNode))
-    
-    def displayNetwork(self):    
-        plt.clf(); 
-        #posType = nx.planar_layout(self.graph)        
-        #posType = nx.circular_layout(self.graph)
-        #posType = nx.kamada_kawai_layout(self.graph)
-        #posType = nx.random_layout(self.graph)
-        posType = nx.spring_layout(self.graph)
-        #posType = nx.fruchterman_reingold_layout(self.graph)
-        #nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', arrowsize=1, arrowstyle='fancy')
-        nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', node_color='green', alpha=0.5, arrowsize=5)
-        #nx.draw_circular(self.graph)
-        #nx.draw(self.graph, with_labels=False, font_weight='bold')
-        plt.pause(0.001)
-        plt.show(block=False)  
-        print('Num nodes in action network: '+str(nx.number_of_nodes(self.graph)))     
+#     def displayNetwork(self):    
+#         plt.clf(); 
+#         #posType = nx.planar_layout(self.graph)        
+#         #posType = nx.circular_layout(self.graph)
+#         #posType = nx.kamada_kawai_layout(self.graph)
+#         #posType = nx.random_layout(self.graph)
+#         posType = nx.spring_layout(self.graph)
+#         #posType = nx.fruchterman_reingold_layout(self.graph)
+#         #nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', arrowsize=1, arrowstyle='fancy')
+#         nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', node_color='green', alpha=0.5, arrowsize=5)
+#         #nx.draw_circular(self.graph)
+#         #nx.draw(self.graph, with_labels=False, font_weight='bold')
+#         plt.pause(0.001)
+#         plt.show(block=False)  
+#         print('Num nodes in action network: '+str(nx.number_of_nodes(self.graph)))     
         
-    def saveNetwork(self):
-        nx.write_gpickle(self.graph, self.actionFile)
-        print('Saved network to '+self.actionFile)
-    
-    def __loadNetwork__(self):
-        try:
-            self.graph = nx.read_gpickle(self.actionFile)
-        except:
-            print('No '+self.actionFile+' found. Creating new action network.')
-            self.graph = nx.MultiDiGraph()
-        if not nx.is_empty(self.graph):
-            #self.displayNetwork()
-            self.actionNetworkProperties()
-    
-    def actionNetworkProperties(self):
-        print('Action network properties:')
-        print('Num nodes: '+str(nx.number_of_nodes(self.graph)))
-        print('Num edges: '+str(nx.number_of_edges(self.graph)))
-        print('Density: '+str(nx.density(self.graph)))
-        print('Num self loops: '+str(nx.number_of_selfloops(self.graph)))
+#     def saveNetwork(self):
+#         nx.write_gpickle(self.graph, self.actionFile)
+#         print('Saved network to '+self.actionFile)
+#     
+#     def __loadNetwork__(self):
+#         try:
+#             self.graph = nx.read_gpickle(self.actionFile)
+#         except:
+#             print('No '+self.actionFile+' found. Creating new action network.')
+#             self.graph = nx.MultiDiGraph()
+#         if not nx.is_empty(self.graph):
+#             #self.displayNetwork()
+#             self.actionNetworkProperties()
+#     
+#     def actionNetworkProperties(self):
+#         print('Action network properties:')
+#         print('Num nodes: '+str(nx.number_of_nodes(self.graph)))
+#         print('Num edges: '+str(nx.number_of_edges(self.graph)))
+#         print('Density: '+str(nx.density(self.graph)))
+#         print('Num self loops: '+str(nx.number_of_selfloops(self.graph)))
 
 class LegPart:#This is one leg part. Could be part A that's connected to the chassis or part B that's connected to part A
     def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight):

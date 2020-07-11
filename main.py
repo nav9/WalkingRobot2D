@@ -17,8 +17,8 @@
 
 import time
 from Worlds import *
-from WalkingRobot import ActionNetwork
-from LearningRobot import LegPartActionNetwork
+#from WalkingRobot import ActionNetwork
+#from LearningRobot import LegPartActionNetwork
 
 class TestSimulator(object):
     def __init__(self, legs):
@@ -38,12 +38,12 @@ class TestSimulator(object):
     
 class MainSimulator(object):
     def __init__(self, execLen, legs):
-        self.actions = ActionNetwork(execLen, legs)
+        #self.actions = ActionNetwork(execLen, legs)
         self.worlds = []
         self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
         #self.worlds.append(FlatGroundTraining(execLen, legs))
-        self.worlds.append(ImaginationTwin(self.actions, execLen, legs))
+        self.worlds.append(ImaginationTwin(execLen, legs)) #self.worlds.append(ImaginationTwin(self.actions, execLen, legs))
        
     def nextWorld(self):
         self.worldOrdinal += 1
@@ -57,12 +57,12 @@ class MainSimulator(object):
 
 class ImaginationVisualizationSimulator(object):
     def __init__(self, legs):
-        self.actions = LegPartActionNetwork(legs)
+        #self.actions = LegPartActionNetwork(legs)
         self.worlds = []
         self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
         #self.worlds.append(Heaven(legs, self.actions))
-        self.worlds.append(ActualImagination(legs, self.actions))
+        self.worlds.append(ActualImagination(legs)) #self.worlds.append(ActualImagination(legs, self.actions))
        
     def nextWorld(self):
         self.worldOrdinal += 1
@@ -72,6 +72,7 @@ class ImaginationVisualizationSimulator(object):
             w.runWorld()    
             w.delete()
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
+    
 #-----------------------------------------------
 #-----------------------------------------------
 #             PROGRAM STARTS HERE

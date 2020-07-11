@@ -168,10 +168,10 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
 #     def getLegAngle(self): return round(math.degrees(self.obj_body.angle)%360)        
 
 class LearningRobot:
-    def __init__(self, world, chassisCenterPoint, legCode, actionNet, showImagination=True):
+    def __init__(self, world, chassisCenterPoint, legCode, showImagination=True): #def __init__(self, world, chassisCenterPoint, legCode, actionNet, showImagination=True):
         self.world = world
         self.legsCode = legCode
-        self.actions = actionNet
+        #self.actions = actionNet
         self.showImagination = showImagination
         self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1) #to prevent collisions between robot body parts
         d = Directions()  #leg at left or right of chassis

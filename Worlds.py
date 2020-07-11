@@ -415,11 +415,11 @@ class FlatGroundTraining(Worlds):#inherits
 #The world that has twins above which represent the imagination and run DE for a while before the 
 #original robot takes the best motor rates and runs them
 class ImaginationTwin(Worlds):#inherits
-    def __init__(self, actions, execLen, legCode):        
+    def __init__(self, execLen, legCode): #def __init__(self, actions, execLen, legCode):        
         super(ImaginationTwin, self).__init__()
         self.legsCode = legCode
         self.maxMovtTime = execLen        
-        self.actionNetwork = actions
+        #self.actionNetwork = actions
         self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 3000 #overriding
@@ -448,7 +448,7 @@ class ImaginationTwin(Worlds):#inherits
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)       
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
         ubp = self.robots[0].getUniqueBodyAngles()
-        self.actionNetwork.addNode(ubp)
+        #self.actionNetwork.addNode(ubp)
         self.robots[0].currentActionNode = ubp  
         self.cumulativeUpdateBy = Vec2d(0,0)      
         self.initializeImaginaryRobots(); self.setImaginaryRobotAnglesToRealRobotAngle()
@@ -477,28 +477,29 @@ class ImaginationTwin(Worlds):#inherits
         if self.runState == RunCode.CONTINUE:#bottom robot's movement
             resetMovtTime = False
             self.experienceInfoString()
-            successors = self.actionNetwork.getSuccessorNodes(self.robots[0].currentActionNode)
-            if successors == None:#no successor node found, so start imagining
-                self.setForImagination()                
-            else:#successor found so get the experience action to perform
-                greatestFitness = self.cons.NOTFIT; imaginedExperience = []
-                for successor in successors:
-                    self.nextNode = successor
-                    edge = self.actionNetwork.getEdge(self.robots[0].currentActionNode, self.nextNode)
-                    for e in edge:#choose next node as per best fitness
-                        if self.robots[0].brain.getDirection() != edge[e]['direction']: continue
-                        f = edge[e]['fitness']
-                        if f > greatestFitness:#edge where robot moved max dist
-                            greatestFitness = f
-                            imaginedExperience = list(edge[e]['experience'])
-                        else: continue
-                #---make preparations to run the node's experience
-                if len(imaginedExperience) > 0:
-                    self.robots[0].setExperience(imaginedExperience)
-                    self.sequenceLength = 1 #should be at least 1                
-                    self.runState = RunCode.EXPERIENCE
-                else:
-                    self.setForImagination()
+            self.setForImagination()   
+#             successors = self.actionNetwork.getSuccessorNodes(self.robots[0].currentActionNode)
+#             if successors == None:#no successor node found, so start imagining
+#                 self.setForImagination()                
+#             else:#successor found so get the experience action to perform
+#                 greatestFitness = self.cons.NOTFIT; imaginedExperience = []
+#                 for successor in successors:
+#                     self.nextNode = successor
+#                     edge = self.actionNetwork.getEdge(self.robots[0].currentActionNode, self.nextNode)
+#                     for e in edge:#choose next node as per best fitness
+#                         if self.robots[0].brain.getDirection() != edge[e]['direction']: continue
+#                         f = edge[e]['fitness']
+#                         if f > greatestFitness:#edge where robot moved max dist
+#                             greatestFitness = f
+#                             imaginedExperience = list(edge[e]['experience'])
+#                         else: continue
+#                 #---make preparations to run the node's experience
+#                 if len(imaginedExperience) > 0:
+#                     self.robots[0].setExperience(imaginedExperience)
+#                     self.sequenceLength = 1 #should be at least 1                
+#                     self.runState = RunCode.EXPERIENCE
+#                 else:
+#                     self.setForImagination()
         
         if self.runState == RunCode.IMAGINE:#imaginary robot's movement
             resetMovtTime = self.runImagination()
@@ -528,8 +529,8 @@ class ImaginationTwin(Worlds):#inherits
         rs = self.behaviour.run(self.sequenceLength)
         if rs == RunCode.NEXTGEN:#reset for next generation
             self.gen += 1            
-            if self.gen == self.maxGens:#completion of one epoch
-                self.createNewActionNodes()                                      
+#             if self.gen == self.maxGens:#completion of one epoch
+#                 self.createNewActionNodes()                                      
             self.deleteImaginaryRobots(); self.initializeImaginaryRobots()  
             self.setImaginaryRobotAnglesToRealRobotAngle()          
             self.behaviour.startNewGen()         
@@ -540,26 +541,26 @@ class ImaginationTwin(Worlds):#inherits
         self.generateInfoString()  
         return resetMovtTime
         
-    def createNewActionNodes(self):
-        for i in range(0, len(self.imaginaryRobots), 1):
-            expe = self.imaginaryRobots[i].getValues()
-            node = self.imaginaryRobots[i].getUniqueBodyAngles()
-            weight = 1 #kept 1 for now since weight assignment should happen at a higher level
-            self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, weight, expe, self.behaviour.fit[i], self.robots[0].brain.getDirection())
-            #print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(self.behaviour.fit[i])+' exp:'+str(expe))
-        #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying               
-#         if False in self.behaviour.unfitThisFullGen:
-#             maxi = 0; fittestImaginaryRobot = -1
-#             for i in range(0, len(self.behaviour.unfitThisFullGen), 1):
-#                 if not self.behaviour.unfitThisFullGen[i] and self.behaviour.fit[i] > maxi:
-#                     maxi = self.behaviour.fit[i]
-#                     fittestImaginaryRobot = i
-#             if fittestImaginaryRobot >= 0:
-#                 expe = self.imaginaryRobots[fittestImaginaryRobot].getValues()
-#                 node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyAngles()
-#                 self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
-#                 print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(maxi)+' exp:'+str(expe))
-#                 #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying       
+#     def createNewActionNodes(self):
+#         for i in range(0, len(self.imaginaryRobots), 1):
+#             expe = self.imaginaryRobots[i].getValues()
+#             node = self.imaginaryRobots[i].getUniqueBodyAngles()
+#             weight = 1 #kept 1 for now since weight assignment should happen at a higher level
+#             self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, weight, expe, self.behaviour.fit[i], self.robots[0].brain.getDirection())
+#             #print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(self.behaviour.fit[i])+' exp:'+str(expe))
+#         #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying               
+# #         if False in self.behaviour.unfitThisFullGen:
+# #             maxi = 0; fittestImaginaryRobot = -1
+# #             for i in range(0, len(self.behaviour.unfitThisFullGen), 1):
+# #                 if not self.behaviour.unfitThisFullGen[i] and self.behaviour.fit[i] > maxi:
+# #                     maxi = self.behaviour.fit[i]
+# #                     fittestImaginaryRobot = i
+# #             if fittestImaginaryRobot >= 0:
+# #                 expe = self.imaginaryRobots[fittestImaginaryRobot].getValues()
+# #                 node = self.imaginaryRobots[fittestImaginaryRobot].getUniqueBodyAngles()
+# #                 self.actionNetwork.addEdge(self.robots[0].currentActionNode, node, maxi, expe)
+# #                 print('AddEdge: '+str(self.robots[0].currentActionNode)+' to '+str(node)+' maxFit:'+str(maxi)+' exp:'+str(expe))
+# #                 #self.actionNetwork.displayNetwork()#NOTE: For some layout types this can consume a lot of time when displaying       
         
     def runWorld(self):
         self.runState = RunCode.CONTINUE
@@ -575,16 +576,23 @@ class ImaginationTwin(Worlds):#inherits
                 if event.type == KEYDOWN:
                     #if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
                     #if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
-                    if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
-                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)
-                    if event.key == K_n: 
-                        print('Getting ready to display action network...'); 
-                        self.actionNetwork.displayNetwork()                     
+                    if event.key == K_LEFT: 
+                        self.moveCameraBy(self.cameraMoveDist[0])
+                        #self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
+                        #self.prevRobotPos = self.robots[0].getPosition()
+                    if event.key == K_RIGHT: 
+                        self.moveCameraBy(-self.cameraMoveDist[0])
+                        #self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)
+                        #self.prevRobotPos = self.robots[0].getPosition()
+#                     if event.key == K_n: 
+#                         print('Getting ready to display action network...'); 
+#                         self.actionNetwork.displayNetwork()                     
             if not simulating: break #coz break within event for loop won't exit while
             robotMovedByX = self.prevRobotPos[0] - self.robots[0].getPosition()[0]            
             if abs(robotMovedByX) > self.moveCameraAtThisDistDiff:
-                self.cameraXY += Vec2d(robotMovedByX, 0)
-                self.prevRobotPos = self.robots[0].getPosition()
+                self.moveCameraBy(robotMovedByX)
+                #self.cameraXY += Vec2d(robotMovedByX, 0)
+                #self.prevRobotPos = self.robots[0].getPosition()
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
             for _ in range(self.iterations): #iterations to get a more stable simulation
@@ -608,7 +616,11 @@ class ImaginationTwin(Worlds):#inherits
                 break  
               
         #---actions to do after simulation
-        self.actionNetwork.saveNetwork() 
+        #self.actionNetwork.saveNetwork() 
+        
+    def moveCameraBy(self, dist):
+        self.cameraXY += Vec2d(dist, 0)
+        self.prevRobotPos = self.robots[0].getPosition()        
         
     def createGround(self, groundX, groundY, grColor):
         self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor)
@@ -698,9 +710,9 @@ class ImaginationTwin(Worlds):#inherits
 #------------------------------------------------------------------------------------------------
 #A world where multiple robots learn actions to generate a basic action network
 class Heaven(Worlds):#inherits
-    def __init__(self, legsCode, actionNet):
+    def __init__(self, legsCode): #def __init__(self, legsCode, actionNet):
         self.legsCode = legsCode
-        self.actions = actionNet        
+        #self.actions = actionNet        
         super(Heaven, self).__init__()
         self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        
@@ -720,9 +732,9 @@ class Heaven(Worlds):#inherits
                     if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
                     if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
                     if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)                    
-                    if event.key == K_n: 
-                        print('Getting ready to display action network...'); 
-                        self.actions.displayNetwork()
+#                     if event.key == K_n: 
+#                         print('Getting ready to display action network...'); 
+#                         self.actions.displayNetwork()
             if not simulating: 
                 break               
             #---Update physics
@@ -737,7 +749,7 @@ class Heaven(Worlds):#inherits
             self.draw()            
             clock.tick(self.fps)
         #---actions to do after simulation
-        self.actions.saveNetwork() 
+        #self.actions.saveNetwork() 
 
     def initialize(self):
         super(Heaven, self).initialize() 
@@ -748,7 +760,7 @@ class Heaven(Worlds):#inherits
         for i in range(100, self.worldHeight, heightSep):
             if counter >= self.numRobots: break
             for j in range(100, self.worldWidth, widthSep):
-                self.robots.append(LearningRobot(self, Vec2d(j, i), self.legsCode, self.actions, False))
+                self.robots.append(LearningRobot(self, Vec2d(j, i), self.legsCode, False))
                 counter += 1 
                 if counter >= self.numRobots: break
         for robo in self.robots:
@@ -778,10 +790,10 @@ class Heaven(Worlds):#inherits
 #The world where the tips of the limbs and contact with terrain is visualized to show what a blind
 #robot actually "sees"
 class ActualImagination(Worlds):#inherits
-    def __init__(self, legCode, actionNet):        
+    def __init__(self, legCode):    #def __init__(self, legCode, actionNet):        
         super(ActualImagination, self).__init__()
         self.legsCode = legCode      
-        self.actions = actionNet
+        #self.actions = actionNet
         self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 3000 #overriding
@@ -826,9 +838,9 @@ class ActualImagination(Worlds):#inherits
                     if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
                     if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
                     if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)                    
-                    if event.key == K_n: 
-                        print('Getting ready to display action network...'); 
-                        self.actions.displayNetwork()
+#                     if event.key == K_n: 
+#                         print('Getting ready to display action network...'); 
+#                         self.actions.displayNetwork()
             if not simulating: 
                 break               
             #---Update physics
@@ -850,7 +862,7 @@ class ActualImagination(Worlds):#inherits
         for i in range(100, self.worldHeight, heightSep):
             if counter >= self.numRobots: break
             for j in range(100, self.worldWidth, widthSep):
-                self.robots.append(LearningRobot(self, Vec2d(j, i), self.legsCode, self.actions))
+                self.robots.append(LearningRobot(self, Vec2d(j, i), self.legsCode)) #self.robots.append(LearningRobot(self, Vec2d(j, i), self.legsCode, self.actions))
                 counter += 1 
                 if counter >= self.numRobots: break
         for robo in self.robots:
