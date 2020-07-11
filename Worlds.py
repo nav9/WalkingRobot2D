@@ -575,8 +575,8 @@ class ImaginationTwin(Worlds):#inherits
                 if event.type == KEYDOWN:
                     #if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
                     #if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
-                    #if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
-                    #if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)
+                    if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
+                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)
                     if event.key == K_n: 
                         print('Getting ready to display action network...'); 
                         self.actionNetwork.displayNetwork()                     
@@ -587,7 +587,7 @@ class ImaginationTwin(Worlds):#inherits
                 self.prevRobotPos = self.robots[0].getPosition()
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
-            for x in range(self.iterations): #iterations to get a more stable simulation
+            for _ in range(self.iterations): #iterations to get a more stable simulation
                 self.space.step(dt)
             #---Update world based on camera focus
             self.updatePosition()
