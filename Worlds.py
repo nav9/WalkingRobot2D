@@ -225,7 +225,7 @@ class ImaginationTwin(Worlds):#inherits
         self.worldEndPos = self.worldWidth - 200
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
-        self.numImaginaryRobots = 4 #min 4 robots required for DE
+        self.numImaginaryRobots = 5 #min 4 robots required for DE
         self.imaginaryRobots = []
         self.elevFromBottomWall = 0
         self.groundThickness = 10
@@ -263,14 +263,16 @@ class ImaginationTwin(Worlds):#inherits
             return False
         resetMovtTime = True    
         
+        if self.runState == RunCode.PAUSE_AND_SWITCH_TO_IMAGINATION:
+            self.setForImagination()            
+        
         if self.runState == RunCode.EXPERIENCE:#appropriate action edge found so just execute what is in it
             if self.sequenceLength > self.maxSequenceLength:
                 self.robots[self.cons.mainRobotID].stopMotion()
                 #self.robots[self.cons.mainRobotID].currentActionNode = tuple(self.nextNode)
                 #self.nextNode = None
-                self.runState = RunCode.CONTINUE
-                #self.robots[self.cons.mainRobotID].brain.movementThinking(self.robots[self.cons.mainRobotID].getPosition())
-                self.setForImagination()
+                self.runState = RunCode.PAUSE_AND_SWITCH_TO_IMAGINATION
+                #self.robots[self.cons.mainRobotID].brain.movementThinking(self.robots[self.cons.mainRobotID].getPosition())                
             else: #---run experience for each leg
                 self.robots[self.cons.mainRobotID].setMotorRateForSequence(self.sequenceLength-1)
                 self.sequenceLength += 1
