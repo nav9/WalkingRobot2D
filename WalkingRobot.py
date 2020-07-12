@@ -264,8 +264,19 @@ class RobotBody:
         for leg in self.legs: leg.experience[:] = []
         while len(expe) > 0: 
             for leg in self.legs: leg.experience.append(expe.pop(0))
-             
-    def reinitializeWithRandomValues(self, seqLen):       
+
+    def setExperienceWithClamping(self, ex, seqLen):
+        j = 0
+        for leg in self.legs:
+            leg.experience[:] = []
+            for _ in range(0, seqLen, 1): 
+                v = ex[j]
+                if v < leg.motor.legRateRange[0] or v > leg.motor.legRateRange[-1]: 
+                    v = random.choice(leg.motor.legRateRange)
+                leg.experience.append(v)
+                j += 1
+    
+    def reinitializeExperienceWithRandomValues(self, seqLen):       
         for leg in self.legs:
             leg.experience[:] = []
             for _ in range(0, seqLen, 1):
@@ -274,31 +285,25 @@ class RobotBody:
     
     def getValues(self):
         ex = []
-        for leg in self.legs: ex.extend(leg.experience)
+        for leg in self.legs: 
+            ex.extend(leg.experience)
         return ex
     
-    def setValuesWithClamping(self, ex, seqLen):
-        j = 0
-        for leg in self.legs:
-            leg.experience[:] = []
-            for _ in range(0, seqLen, 1): 
-                v = ex[j]
-                if v < leg.motor.legRateRange[0] or v > leg.motor.legRateRange[-1]: v = random.choice(leg.motor.legRateRange)
-                leg.experience.append(v)
-                j += 1
-    
     def setMotorRateForSequence(self, seqId):
-        for leg in self.legs: leg.motor.rate = leg.experience[seqId]
+        for leg in self.legs: 
+            leg.motor.rate = leg.experience[seqId]
     
     def stopMotion(self):
-        for leg in self.legs: leg.motor.rate = 0
+        for leg in self.legs: 
+            leg.motor.rate = 0
                         
     def setFocusRobotColor(self): self.chassis_shape.color = (190, 0, 0)
     def setNormalRobotColor(self): self.chassis_shape.color = (170, 170, 170)
                 
     def setImaginaryRobotColor(self):
         self.chassis_shape.color = (110, 110, 110)  
-        for leg in self.legs: leg.leg_shape.color = (110, 110, 110)
+        for leg in self.legs: 
+            leg.leg_shape.color = (110, 110, 110)
         
     def makeRobotDynamic(self):
         self.obj_body.body_type = pymunk.Body.DYNAMIC
@@ -316,7 +321,8 @@ class RobotBody:
     def updatePosition(self, offsetXY):
         self.obj_body.position += offsetXY 
         self.obj_body.startPosition += offsetXY
-        for leg in self.legs: leg.updatePosition(offsetXY)
+        for leg in self.legs: 
+            leg.updatePosition(offsetXY)
     
 #     def getFullBodyStatesAndMotorRates(self):
 #         bodyStates = []; motorRates = []
@@ -328,7 +334,7 @@ class RobotBody:
 #             motorRates.append(val[1])
 #         return (bodyStates, motorRates)
     
-    def getBodyAngle(self): return round(math.degrees(self.obj_body.angle)%360)
+    def getBodyAngle(self): return round(math.degrees(self.obj_body.angle) % 360)
     
     def getUniqueBodyAngles(self):
         ang = [self.roundToNearest(self.getBodyAngle())]

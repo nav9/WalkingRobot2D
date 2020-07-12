@@ -207,6 +207,9 @@ class Worlds(object):
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
+
+#TODO: CREATE CLASSES FOR STATES. USE STATE DESIGN PATTERN
+
 #The world that has twins above which represent the imagination and run DE for a while before the 
 #original robot takes the best motor rates and runs them
 class ImaginationTwin(Worlds):#inherits
@@ -254,6 +257,7 @@ class ImaginationTwin(Worlds):#inherits
         self.maxGens = 5        
         
     def processRobot(self):
+        #---check if reached end or world
         if self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.worldEndPos:#reached end of world
             self.runState = RunCode.STOP
             return False
@@ -272,7 +276,7 @@ class ImaginationTwin(Worlds):#inherits
         if self.runState == RunCode.CONTINUE:#bottom robot's movement
             resetMovtTime = False
             self.experienceInfoString()
-            self.setForImagination()
+
 #             successors = self.actionNetwork.getSuccessorNodes(self.robots[self.cons.mainRobotID].currentActionNode)
 #             if successors == None:#no successor node found, so start imagining
 #                 self.setForImagination()                

@@ -77,7 +77,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         #---if none are fit, re-initialize all randomly coz there's no point doing DE
         if not False in self.unfitThisFullGen:
             for r in self.robots:
-                r.reinitializeWithRandomValues(seqLen)
+                r.reinitializeExperienceWithRandomValues(seqLen)
                 self.temp[:] = []                   
             return
         #---proceed with DE 
@@ -101,18 +101,19 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
             for ii in range(len(x1)):
                 mutant.append(x1[ii] + round(self.vBeta * (x2[ii] - x3[ii])))
             if mutant == curr:
-                self.robots[i].reinitializeWithRandomValues(seqLen)
+                self.robots[i].reinitializeExperienceWithRandomValues(seqLen)
             else:
                 #---crossover
                 for ii in range(len(curr)):
                     if uniform(0,1) <= self.crProba:
                         mutant[ii] = curr[ii]                        
-                self.robots[i].setValuesWithClamping(mutant, seqLen) 
+                self.robots[i].setExperienceWithClamping(mutant, seqLen) 
         #---reinitialize 25% of least fit robots
         tempFit = self.fit[:] #copy
         minVal = min(self.fit)#self.fit[leastFitRobot]
         leastFitIndices = set([])
-        reinitNum = math.floor(0.25*len(self.robots))
+        percentageOfRobotsToReinitialize = 0.25
+        reinitNum = math.floor(percentageOfRobotsToReinitialize * len(self.robots))
         while len(leastFitIndices) < reinitNum:
             for i in range(len(self.robots)):
                 if self.fit[i] <= minVal: 
@@ -121,7 +122,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
             tempFit = [i for i in tempFit if i != minVal]
             if len(tempFit) > 0: minVal = min(tempFit)
         for i in leastFitIndices:
-            self.robots[i].reinitializeWithRandomValues(seqLen)
+            self.robots[i].reinitializeExperienceWithRandomValues(seqLen)
         
         #---beta is reduced to encourage exploitation and reduce exploration
         if self.vBeta > 1/40: 
@@ -136,6 +137,9 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
         self.calcFitness()
         self.currentBestFitness = max(self.fit)
         self.currentFittestRobot = self.fit.index(self.currentBestFitness)
+        
+    def storeExperienceOfFittestRobot(self):
+        self.fittestRobotsMotorRates = self.robots[].getValues()
     
     def run(self, seqLen):#will return false when it's time to stop   
         self.findCurrentBestFitness()  
@@ -145,12 +149,12 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
             i = 0
             for r in self.robots:
                 if len(self.temp) == 0:
-                    r.reinitializeWithRandomValues(seqLen)
+                    r.reinitializeExperienceWithRandomValues(seqLen)
                 else:                                        
                     v = self.temp[i]; j = 0; 
                     for leg in r.legs:#assign DE values calculated from prev gen
                         leg.experience[:] = []
-                        for k in range(0, seqLen, 1):
+                        for _ in range(0, seqLen, 1):
                             leg.experience.append(v[j])
                             j += 1
                 i += 1
@@ -223,7 +227,8 @@ class ImaginationDifferentialEvolution:
     def calcFitness(self):     
         self.fit[:] = []   
         for r in self.robots:
-            self.fit.append(self.realRobo[self.const.mainRobotID].getFitness(r.obj_body.startPosition, r.obj_body.position))
+            self.fit.append(self.realRobo[self.const.mainRobotID].getFitness(r.obj_body.startPosition, r.obj_body.position)) #all imaginary robots start from a certain position, so fitness measures how far they travelled from that position to current body position. If they have not moved yet, fitness is zero
+
             #self.fit.append(self.realRobo[self.const.mainRobotID].brain.getFitness(r.obj_body.startPosition, r.obj_body.position))
             #self.fit.append(round(r.obj_body.position[0] - r.obj_body.startPosition[0], self.decimalPrecision))
 #         #---assign zero fitness to any robot that turned upside down
@@ -233,8 +238,10 @@ class ImaginationDifferentialEvolution:
 #                 self.unfitThisFullGen[r] = True
 #                 self.fit[r] = self.NOTFIT  
         self.currentBestFitness = max(self.fit)
-        if self.currentBestFitness == self.const.NOTFIT: self.currentFittestRobot = self.const.UNDETERMINED
-        else: self.currentFittestRobot = self.fit.index(self.currentBestFitness)
+        if self.currentBestFitness == self.const.NOTFIT: 
+            self.currentFittestRobot = self.const.UNDETERMINED
+        else: 
+            self.currentFittestRobot = self.fit.index(self.currentBestFitness)
     
     def differentialEvolution(self, seqLen):
         self.calcFitness(); oldSel = []; sel = []; i = 0; mutant = []
@@ -248,9 +255,9 @@ class ImaginationDifferentialEvolution:
             self.epochFittestRobot = self.fit.index(self.epochBestFitness)
             
         #---if none are fit, re-initialize all randomly coz there's no point doing DE
-        if not False in self.unfitThisFullGen:
+        if not False in self.unfitThisFullGen:#all values have to be true for this if to evaluate to true
             for r in self.robots:
-                r.reinitializeWithRandomValues(seqLen)
+                r.reinitializeExperienceWithRandomValues(seqLen)
                 self.temp[:] = []                   
             return
         #---proceed with DE 
@@ -274,12 +281,12 @@ class ImaginationDifferentialEvolution:
             for ii in range(len(x1)):
                 mutant.append(x1[ii] + round(self.vBeta * (x2[ii] - x3[ii])))
             if mutant == curr:
-                self.robots[i].reinitializeWithRandomValues(seqLen)
+                self.robots[i].reinitializeExperienceWithRandomValues(seqLen)
             else:#---crossover                
                 for ii in range(len(curr)):
                     if uniform(0,1) <= self.crProba:
                         mutant[ii] = curr[ii]                        
-                self.robots[i].setValuesWithClamping(mutant, seqLen) 
+                self.robots[i].setExperienceWithClamping(mutant, seqLen) 
         #---reinitialize 25% of least fit robots
         tempFit = self.fit[:] #copy
         minVal = min(self.fit)#self.fit[leastFitRobot]
@@ -293,7 +300,7 @@ class ImaginationDifferentialEvolution:
             tempFit = [i for i in tempFit if i != minVal]#remove minVal from list
             if len(tempFit) > 0: minVal = min(tempFit)
         for i in leastFitIndices:
-            self.robots[i].reinitializeWithRandomValues(seqLen)       
+            self.robots[i].reinitializeExperienceWithRandomValues(seqLen)       
         
         #---beta is reduced to encourage exploitation and reduce exploration
         if self.vBeta > 1/40: 
@@ -309,13 +316,13 @@ class ImaginationDifferentialEvolution:
     
     def run(self, seqLen):#will return false when it's time to stop   
         self.findCurrentBestFitness()  
-                
+        
         runState = RunCode.CONTINUE
         if self.generatingSeqForThisGen:#sequence is being generated
             i = 0
             for r in self.robots:
                 if len(self.temp) == 0:
-                    r.reinitializeWithRandomValues(seqLen)
+                    r.reinitializeExperienceWithRandomValues(seqLen)
                 else:                                        
                     v = self.temp[i]; j = 0; 
                     for leg in r.legs:#assign DE values calculated from prev gen
