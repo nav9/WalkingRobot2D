@@ -7,7 +7,7 @@ import pymunk
 import random
 import hashlib
 import numpy as np
-import networkx as nx
+#import networkx as nx
 from DE import Constants
 from collections import deque
 from StatesAndSensors import *
@@ -24,59 +24,59 @@ class LegAppendage:
     B = 1
     C = 2
 
-class LegPartActionNetwork:#stores actions of each movable part as a node
-    def __init__(self, legs):
-        self.actionFile = 'actionNetwork_'+legs+'.gpickle'
-        self.graph = None
-        self.fig = plt.figure()
-        self.fig.patch.set_facecolor('black')        
-        plt.rcParams['axes.facecolor'] = 'black'
-        plt.rcParams['patch.facecolor'] = 'black'
-        self.fig.canvas.toolbar.pack_forget()#remove bottom bar        
-        self.__loadNetwork__()
-    
-    def addNode(self, node): self.graph.add_node(tuple(node))        
-    def addEdge(self, node1, node2, wt, rate, duration):
-        edge = self.graph.get_edge_data(tuple(node1), tuple(node2))
-        if not edge == None:
-            for e in edge:
-                if edge[e]['rate']==rate and edge[e]['duration']==duration:
-                    return #because edge is already present 
-        self.graph.add_edge(tuple(node1), tuple(node2), weight=wt, rate=rate, duration=duration)    
-        
-    def getEdge(self, node1, node2): return self.graph.get_edge_data(tuple(node1), tuple(node2))
-    
-    def getSuccessorNodes(self, currNode):#edges going out of currNode
-        if self.graph.out_degree[tuple(currNode)] == 0: return None 
-        else: return self.graph.successors(tuple(currNode))
-    
-    def displayNetwork(self):    
-        plt.clf(); posType = nx.spring_layout(self.graph)
-        nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', node_color='green', alpha=0.5, arrowsize=5)
-        plt.pause(0.001); plt.show(block=False)  
-        print('Num nodes in action network: '+str(nx.number_of_nodes(self.graph)))     
-        
-    def saveNetwork(self):
-        nx.write_gpickle(self.graph, self.actionFile)
-        self.actionNetworkProperties()
-        print('Saved network to '+self.actionFile)
-    
-    def __loadNetwork__(self):
-        try:
-            self.graph = nx.read_gpickle(self.actionFile)
-        except:
-            print('No '+self.actionFile+' found. Creating new action network.')
-            self.graph = nx.MultiDiGraph()
-        if not nx.is_empty(self.graph):
-            #self.displayNetwork()
-            self.actionNetworkProperties()
-    
-    def actionNetworkProperties(self):
-        print('Action network properties:')
-        print('Num nodes: '+str(nx.number_of_nodes(self.graph)))
-        print('Num edges: '+str(nx.number_of_edges(self.graph)))
-        print('Density: '+str(nx.density(self.graph)))
-        print('Num self loops: '+str(nx.number_of_selfloops(self.graph)))
+# class LegPartActionNetwork:#stores actions of each movable part as a node
+#     def __init__(self, legs):
+#         self.actionFile = 'actionNetwork_'+legs+'.gpickle'
+#         self.graph = None
+#         self.fig = plt.figure()
+#         self.fig.patch.set_facecolor('black')        
+#         plt.rcParams['axes.facecolor'] = 'black'
+#         plt.rcParams['patch.facecolor'] = 'black'
+#         self.fig.canvas.toolbar.pack_forget()#remove bottom bar        
+#         self.__loadNetwork__()
+#     
+#     def addNode(self, node): self.graph.add_node(tuple(node))        
+#     def addEdge(self, node1, node2, wt, rate, duration):
+#         edge = self.graph.get_edge_data(tuple(node1), tuple(node2))
+#         if not edge == None:
+#             for e in edge:
+#                 if edge[e]['rate']==rate and edge[e]['duration']==duration:
+#                     return #because edge is already present 
+#         self.graph.add_edge(tuple(node1), tuple(node2), weight=wt, rate=rate, duration=duration)    
+#         
+#     def getEdge(self, node1, node2): return self.graph.get_edge_data(tuple(node1), tuple(node2))
+#     
+#     def getSuccessorNodes(self, currNode):#edges going out of currNode
+#         if self.graph.out_degree[tuple(currNode)] == 0: return None 
+#         else: return self.graph.successors(tuple(currNode))
+#     
+#     def displayNetwork(self):    
+#         plt.clf(); posType = nx.spring_layout(self.graph)
+#         nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', node_color='green', alpha=0.5, arrowsize=5)
+#         plt.pause(0.001); plt.show(block=False)  
+#         print('Num nodes in action network: '+str(nx.number_of_nodes(self.graph)))     
+#         
+#     def saveNetwork(self):
+#         nx.write_gpickle(self.graph, self.actionFile)
+#         self.actionNetworkProperties()
+#         print('Saved network to '+self.actionFile)
+#     
+#     def __loadNetwork__(self):
+#         try:
+#             self.graph = nx.read_gpickle(self.actionFile)
+#         except:
+#             print('No '+self.actionFile+' found. Creating new action network.')
+#             self.graph = nx.MultiDiGraph()
+#         if not nx.is_empty(self.graph):
+#             #self.displayNetwork()
+#             self.actionNetworkProperties()
+#    
+#     def actionNetworkProperties(self):
+#         print('Action network properties:')
+#         print('Num nodes: '+str(nx.number_of_nodes(self.graph)))
+#         print('Num edges: '+str(nx.number_of_edges(self.graph)))
+#         print('Density: '+str(nx.density(self.graph)))
+#         print('Num self loops: '+str(nx.number_of_selfloops(self.graph)))
     
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
@@ -310,7 +310,7 @@ class LearningRobot:
         return quads
     
     def getQuadrantForLeg(self, l): 
-        if isinstance(l, int): return self.__getQuadrant__(self.legs[i].getTip())
+        if isinstance(l, int): return self.__getQuadrant__(self.legs[l].getTip())
         else: return self.__getQuadrant__(l.getTip())
     
     def __getQuadrant__(self, pt):#pt should be Vec2d or tuple

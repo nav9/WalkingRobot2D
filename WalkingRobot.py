@@ -283,11 +283,17 @@ class RobotBody:
                 thisRate = random.choice(leg.motor.legRateRange)
                 leg.experience.append(thisRate)                                    
     
-    def getValues(self):
+    def getMotorRatesExperience(self):
         ex = []
         for leg in self.legs: 
             ex.extend(leg.experience)
         return ex
+    
+    def getEmptyMotorRatesExperience(self):
+        ex = []
+        for leg in self.legs: 
+            ex.extend([0] * len(leg.experience))
+        return ex    
     
     def setMotorRateForSequence(self, seqId):
         for leg in self.legs: 

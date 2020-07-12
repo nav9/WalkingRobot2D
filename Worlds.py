@@ -272,10 +272,15 @@ class ImaginationTwin(Worlds):#inherits
 #             else: #---run experience for each leg
 #                 self.robots[self.cons.mainRobotID].setMotorRateForSequence(self.sequenceLength-1)
 #                 self.sequenceLength += 1
-        
+
         if self.runState == RunCode.CONTINUE:#bottom robot's movement
             resetMovtTime = False
             self.experienceInfoString()
+            if sum(self.behaviour.fittestRobotsMotorRates) == 0:#no movement because either no fit robot was found or imagination was not run yet
+                self.setForImagination()
+            else:
+                self.robots[self.cons.mainRobotID].setExperience(self.behaviour.fittestRobotsMotorRates)
+                self.sequenceLength = 1 #should be at least 1                
 
 #             successors = self.actionNetwork.getSuccessorNodes(self.robots[self.cons.mainRobotID].currentActionNode)
 #             if successors == None:#no successor node found, so start imagining
@@ -329,8 +334,9 @@ class ImaginationTwin(Worlds):#inherits
         if rs == RunCode.NEXTGEN:#reset for next generation
             self.gen += 1            
             if self.gen == self.maxGens:#completion of one epoch
-                #self.createNewActionNodes()                                      
-                self.storeBestFitness()
+                #self.createNewActionNodes() 
+                self.behaviour.storeExperienceOfFittestRobot()                                     
+                self.storeBestFitness() #TODO: DELETE THIS
             self.deleteImaginaryRobots(); self.initializeImaginaryRobots()  
             self.setImaginaryRobotAnglesToRealRobotAngle()          
             self.behaviour.startNewGen()         
