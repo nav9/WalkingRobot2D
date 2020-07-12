@@ -262,25 +262,30 @@ class ImaginationTwin(Worlds):#inherits
             self.runState = RunCode.STOP
             return False
         resetMovtTime = True    
-#         if self.runState == RunCode.EXPERIENCE:#appropriate action edge found so just execute what is in it
-#             if self.sequenceLength > self.maxSequenceLength:
-#                 self.robots[self.cons.mainRobotID].stopMotion()
-#                 self.robots[self.cons.mainRobotID].currentActionNode = tuple(self.nextNode)
-#                 self.nextNode = None
-#                 self.runState = RunCode.CONTINUE
-#                 self.robots[self.cons.mainRobotID].brain.movementThinking(self.robots[self.cons.mainRobotID].getPosition())
-#             else: #---run experience for each leg
-#                 self.robots[self.cons.mainRobotID].setMotorRateForSequence(self.sequenceLength-1)
-#                 self.sequenceLength += 1
+        
+        if self.runState == RunCode.EXPERIENCE:#appropriate action edge found so just execute what is in it
+            if self.sequenceLength > self.maxSequenceLength:
+                self.robots[self.cons.mainRobotID].stopMotion()
+                #self.robots[self.cons.mainRobotID].currentActionNode = tuple(self.nextNode)
+                #self.nextNode = None
+                self.runState = RunCode.CONTINUE
+                #self.robots[self.cons.mainRobotID].brain.movementThinking(self.robots[self.cons.mainRobotID].getPosition())
+                self.setForImagination()
+            else: #---run experience for each leg
+                self.robots[self.cons.mainRobotID].setMotorRateForSequence(self.sequenceLength-1)
+                self.sequenceLength += 1
 
         if self.runState == RunCode.CONTINUE:#bottom robot's movement
             resetMovtTime = False
             self.experienceInfoString()
-            if sum(self.behaviour.fittestRobotsMotorRates) == 0:#no movement because either no fit robot was found or imagination was not run yet
+            mRates = sum([abs(x) for x in self.behaviour.fittestRobotsMotorRates])
+            print('fittest robot rates:', mRates)
+            if mRates == 0:#no movement because either no fit robot was found or imagination was not run yet
                 self.setForImagination()
             else:
                 self.robots[self.cons.mainRobotID].setExperience(self.behaviour.fittestRobotsMotorRates)
-                self.sequenceLength = 1 #should be at least 1                
+                self.sequenceLength = 1 #should be at least 1   
+                self.runState = RunCode.EXPERIENCE             
 
 #             successors = self.actionNetwork.getSuccessorNodes(self.robots[self.cons.mainRobotID].currentActionNode)
 #             if successors == None:#no successor node found, so start imagining
@@ -326,6 +331,7 @@ class ImaginationTwin(Worlds):#inherits
         resetMovtTime = True
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
             self.runState = RunCode.CONTINUE
+            print('CONTINUE')
             self.infoString = ""
             resetMovtTime = False                
             return resetMovtTime
