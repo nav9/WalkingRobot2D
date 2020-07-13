@@ -150,7 +150,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.leftRight = leftOrRight
         self.__createLegPart__()
         self.__linkLegPartWithPrevBodyPart__(prevBody)
-        self.experience = []
+        #self.experience = []
     
     def __createLegPart__(self):
         self.obj_body = pymunk.Body(self.legMass, pymunk.moment_for_box(self.legMass, (self.legWd, self.legHt)))
@@ -199,6 +199,7 @@ class RobotBody:
         self.obj_body = None #chassis body
         self.chassis_shape = None #chassis shape 
         self.legs = []
+        self.limbMotorRates = []
         self.direction = self.ori['RIGHT'] #direction the robot needs to go in
         #self.currentActionNode = []#node on the action network        
         #self.brain = None       
@@ -260,49 +261,58 @@ class RobotBody:
         if ang > 225 and ang <= 270: direc = self.ori['DOWN']  
         return direc        
     
-    def setExperience(self, expe):       
-        for leg in self.legs: leg.experience[:] = []
-        while len(expe) > 0: 
-            for leg in self.legs: leg.experience.append(expe.pop(0))
-
-    def setExperienceWithClamping(self, ex, seqLen):
-        j = 0
-        for leg in self.legs:
-            leg.experience[:] = []
-            for _ in range(0, seqLen, 1): 
-                v = ex[j]
-                if v < leg.motor.legRateRange[0] or v > leg.motor.legRateRange[-1]: 
-                    v = random.choice(leg.motor.legRateRange)
-                leg.experience.append(v)
-                j += 1
+#     def setExperience(self, expe):       
+#         for leg in self.legs: leg.experience[:] = []
+#         while len(expe) > 0: 
+#             for leg in self.legs: leg.experience.append(expe.pop(0))
+# 
+#     def setExperienceWithClamping(self, ex, seqLen):
+#         j = 0
+#         for leg in self.legs:
+#             leg.experience[:] = []
+#             for _ in range(0, seqLen, 1): 
+#                 v = ex[j]
+#                 if v < leg.motor.legRateRange[0] or v > leg.motor.legRateRange[-1]: 
+#                     v = random.choice(leg.motor.legRateRange)
+#                 leg.experience.append(v)
+#                 j += 1
     
-    def reinitializeExperienceWithRandomValues(self, seqLen):       
-        for leg in self.legs:
-            leg.experience[:] = []
-            for _ in range(0, seqLen, 1):
-                thisRate = random.choice(leg.motor.legRateRange)
-                leg.experience.append(thisRate)                                    
-    
-    def getMotorRatesExperience(self):
-        ex = []
-        for leg in self.legs: 
-            ex.extend(leg.experience)
-        return ex
-    
-    def getEmptyMotorRatesExperience(self):
-        ex = []
-        for leg in self.legs: 
-            ex.extend([0] * len(leg.experience))
-        return ex    
-    
-    def setMotorRateForSequence(self, seqId):
-        for leg in self.legs: 
-            leg.motor.rate = leg.experience[seqId]
+#     def reinitializeExperienceWithRandomValues(self, seqLen):       
+#         for leg in self.legs:
+#             leg.experience[:] = []
+#             for _ in range(0, seqLen, 1):
+#                 thisRate = random.choice(leg.motor.legRateRange)
+#                 leg.experience.append(thisRate)                                    
+#     
+#     def getMotorRatesExperience(self):
+#         ex = []
+#         for leg in self.legs: 
+#             ex.extend(leg.experience)
+#         return ex
+#     
+#     def getEmptyMotorRatesExperience(self):
+#         ex = []
+#         for leg in self.legs: 
+#             ex.extend([0] * len(leg.experience))
+#         return ex    
+#     
+#     def setMotorRateForSequence(self, seqId):
+#         for leg in self.legs: 
+#             leg.motor.rate = leg.experience[seqId]
     
     def stopMotion(self):
         for leg in self.legs: 
             leg.motor.rate = 0
-                        
+            
+    def startMotion(self):
+        for i in range(0, len(self.legs)):
+            self.legs[i].motor.rate = self.limbMotorRates[i]
+            
+    def setLegMotorRates(self):
+        self.limbMotorRates = []
+        for i in range(0, len(self.legs)):
+            self.limbMotorRates[i] = random.choice(self.legs[i].motor.legRateRange)                         
+    
     def setFocusRobotColor(self): self.chassis_shape.color = (190, 0, 0)
     def setNormalRobotColor(self): self.chassis_shape.color = (170, 170, 170)
                 

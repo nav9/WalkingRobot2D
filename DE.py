@@ -28,6 +28,15 @@ class Constants:
 #------------------------------------------------------------------------------------------------
 
 # Note: At least 4 robots are required for Differential Evolution to work
+class SimpleDE:#Differential Evolution  
+    def __init__(self, iRobo, realRob): 
+        self.infoString = "" 
+        
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+
+# Note: At least 4 robots are required for Differential Evolution to work
 class ImaginationDifferentialEvolution:  
     def __init__(self, iRobo, realRob): 
         self.infoString = ""  
