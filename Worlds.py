@@ -37,7 +37,7 @@ class Worlds(object):
         self.worldHeight = 500 #may get overridden in child class
         self.wallThickness = 15
         self.boundaryColor = 170,170,170
-        self.groundColor = 0,170,0                
+        self.groundColor = 0,130,0                
         self.robots = []
         self.behaviour = None
         self.numRobots = 3 #can be overridden in child class
@@ -220,20 +220,20 @@ class ImaginationTwin(Worlds):#inherits
         #self.actionNetwork = actions
         self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        
-        self.worldWidth = 1000 #overriding
+        self.worldWidth = 1500 #overriding
         self.worldHeight = 300
-        self.worldEndPos = self.worldWidth - 200
+        self.worldEndPos = self.worldWidth - 150
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
-        self.numImaginaryRobots = 5 #min 4 robots required for DE
+        self.numImaginaryRobots = 30 #min 4 robots required for DE
         self.imaginaryRobots = []
         self.elevFromBottomWall = 0
         self.groundThickness = 10
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
         self.prevRobotPos = self.robotInitPos
         self.moveCameraAtThisDistDiff = 75
-        self.imaginationColor = 100,100,100
-        self.imaginationGroundColor = 100,150,100        
+        self.imaginationColor = 80,80,80
+        self.imaginationGroundColor = 80,130,80        
         self.runState = RunCode.CONTINUE
         self.nextNode = None 
         self.cons = Constants()       
@@ -257,9 +257,10 @@ class ImaginationTwin(Worlds):#inherits
         self.maxGens = 5        
         
     def processRobot(self):
-        #---check if reached end or world
+        #---check if reached end of world
         if self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.worldEndPos:#reached end of world
             self.runState = RunCode.STOP
+            print('SUCCESSFULLY REACHED END OF WORLD')
             return False
         resetMovtTime = True    
         
@@ -281,7 +282,6 @@ class ImaginationTwin(Worlds):#inherits
             resetMovtTime = False
             self.experienceInfoString()
             mRates = sum([abs(x) for x in self.behaviour.fittestRobotsMotorRates])
-            print('fittest robot rates:', mRates)
             if mRates == 0:#no movement because either no fit robot was found or imagination was not run yet
                 self.setForImagination()
             else:
@@ -333,7 +333,6 @@ class ImaginationTwin(Worlds):#inherits
         resetMovtTime = True
         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
             self.runState = RunCode.CONTINUE
-            print('CONTINUE')
             self.infoString = ""
             resetMovtTime = False                
             return resetMovtTime
@@ -342,9 +341,10 @@ class ImaginationTwin(Worlds):#inherits
         if rs == RunCode.NEXTGEN:#reset for next generation
             self.gen += 1            
             if self.gen == self.maxGens:#completion of one epoch
+                print('gen complete --------------------------------------------')
                 #self.createNewActionNodes() 
                 self.behaviour.storeExperienceOfFittestRobot()                                     
-                self.storeBestFitness() #TODO: DELETE THIS
+                #self.storeBestFitness() #TODO: DELETE THIS
             self.deleteImaginaryRobots(); self.initializeImaginaryRobots()  
             self.setImaginaryRobotAnglesToRealRobotAngle()          
             self.behaviour.startNewGen()         
@@ -355,10 +355,10 @@ class ImaginationTwin(Worlds):#inherits
         self.generateInfoString()  
         return resetMovtTime
         
-    def storeBestFitness(self):
-        print('Imaginary robots fitness')
-        for i in range(0, len(self.imaginaryRobots), 1):        
-            print(self.behaviour.fit[i])
+#     def storeBestFitness(self):
+#         print('Imaginary robots fitness')
+#         for i in range(0, len(self.imaginaryRobots), 1):        
+#             print(self.behaviour.fit[i])
         
 #     def createNewActionNodes(self):
 #         for i in range(0, len(self.imaginaryRobots), 1):
@@ -445,7 +445,7 @@ class ImaginationTwin(Worlds):#inherits
         self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor)
 
     def createDebris(self, groundY, debColor):
-        debrisStartCol = 600; debrisMaxHt = 100; boxMinSz = 5; boxMaxSz = 30
+        debrisStartCol = 200; debrisMaxHt = 50; boxMinSz = 5; boxMaxSz = 30
         for _ in range(0, 100, 1):
             self.createBox(random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness), random.randint(groundY+2*self.wallThickness, groundY+debrisMaxHt), random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), debColor)        
         

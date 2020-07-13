@@ -189,7 +189,7 @@ class ImaginationDifferentialEvolution:
             self.fittestRobotsMotorRates = self.robots[anyRobot].getEmptyMotorRatesExperience()#there's no fittest robot, so just returning zeroes as motor rates
         else:
             self.fittestRobotsMotorRates = self.robots[self.currentFittestRobot].getMotorRatesExperience()
-        print('experience of fittest robot: ', self.fittestRobotsMotorRates, ' robot:', self.currentFittestRobot)    
+        #print('experience of fittest robot: ', self.fittestRobotsMotorRates, ' robot:', self.currentFittestRobot)    
     
     def startNewGen(self):#NOTE: gets called when starting new epoch too
         self.generatingSeqForThisGen = True   
@@ -337,7 +337,7 @@ class DifferentialEvolution:#(AbstractRobotBehaviour):
             self.fittestRobotsMotorRates = self.robots[anyRobot].getEmptyMotorRatesExperience()#there's no fittest robot, so just returning zeroes as motor rates
         else:
             self.fittestRobotsMotorRates = self.robots[self.currentFittestRobot].getMotorRatesExperience()
-        print('experience of fittest robot: ', self.fittestRobotsMotorRates, ' robot:', self.currentFittestRobot)
+        #print('experience of fittest robot: ', self.fittestRobotsMotorRates, ' robot:', self.currentFittestRobot)
     
     def run(self, seqLen):#will return false when it's time to stop   
         self.findCurrentBestFitness()  
