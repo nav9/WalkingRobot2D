@@ -7,7 +7,7 @@ import pymunk
 import random
 import numpy as np
 #import networkx as nx
-from DE import Constants
+from ComputationalIntelligence import Constants
 import matplotlib.pyplot as plt
 from pymunk import Vec2d, shapes
 from pygame import _numpysurfarray

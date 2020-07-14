@@ -8,7 +8,7 @@ import random
 import hashlib
 import numpy as np
 #import networkx as nx
-from DE import Constants
+from ComputationalIntelligence import Constants
 from collections import deque
 from StatesAndSensors import *
 import matplotlib.pyplot as plt

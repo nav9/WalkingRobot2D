@@ -20,7 +20,7 @@ from pygame.color import THECOLORS
 from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from LearningRobot import LearningRobot
-from DE import DifferentialEvolution, SimpleDE, RunCode
+from ComputationalIntelligence import DifferentialEvolution, SimpleDE, RunCode
 
 class Worlds(object):
     def __init__(self):
@@ -212,17 +212,17 @@ class MoveMotors:#to move the motors for time n*dT, where n is the number of fra
     def __init__(self, listOfRobots, parent):
         self.robots = listOfRobots    
         self.world = parent
-        self.genState = None
         self.maxDuration = 5 #the duration (number of frames) the motor has to move
         self.currDuration = 0        
     def run(self):
+        toBeContinued = True
         if self.currDuration == 0:
-            self.start()              
-        else:    
-            if self.currDuration >= self.maxDuration:
-                self.stop()
-                self.parent.executionState = self.genState #state switch
-            self.currDuration += 1
+            self.start()                      
+        if self.currDuration >= self.maxDuration:
+            self.stop()
+            toBeContinued = False
+        if toBeContinued: self.currDuration += 1
+        return toBeContinued
     def start(self):
         for robo in self.robots:
             robo.startMotion()
@@ -230,47 +230,59 @@ class MoveMotors:#to move the motors for time n*dT, where n is the number of fra
         self.currDuration = 0 #ready for next movement when state switches back to this object
         for robo in self.robots:
             robo.stopMotion()
-    def registerGen(self, genObj):
-        self.genState = genObj
 
 class Generation:#to run MoveMotors for g generations where each g = n*dT
-    def __init__(self, listOfRobots, parent, slave):
+    def __init__(self, listOfRobots, parent):
         self.robots = listOfRobots
         self.isMainRobot = (len(self.robots) == 1)
         self.world = parent  
-        self.moveMotorsObject = slave
-        self.maxGens = 5
+        if self.isMainRobot:
+            self.maxGens = 1
+        else:
+            self.maxGens = 5
         self.currGen = 0  
     def run(self):
-        state = self.moveMotorsObject.run()
-        if state == False:
-            self.stop()
-            return
+        toBeContinued = True
+        if self.currGen == 0:
+            self.start()              
+        else:    
+            if self.currGen >= self.maxGens:
+                self.stop()
+                toBeContinued = False
+        if toBeContinued: self.currGen += 1
+        return toBeContinued
     def start(self):
         if not self.isMainRobot:
-            self.world.setImaginaryRobotPositionAndAnglesToRealRobot()
-        self.currGen = 0
+            self.world.setImaginaryRobotPositionAndAnglesToRealRobot()        
     def stop(self):
-        pass
+        self.currGen = 0  
 
 class Epoch:#to run g generations e number of times
-    def __init__(self, listOfRobots, parent, slave):
+    def __init__(self, listOfRobots, parent):
         self.robots = listOfRobots
         self.isMainRobot = (len(self.robots) == 1)            
         self.world = parent
-        self.genObject = slave
+        if self.isMainRobot:
+            self.maxEpochs = 1
+        else:
+            self.maxEpochs = 1 #increase if needed
+        self.currEpoch = 0
     def run(self):
-        state = self.genObject.run()
-        if state == False:
-            self.stop()
-            return
+        toBeContinued = True
+        if self.currEpoch == 0:
+            self.start()              
+        else:    
+            if self.currEpoch >= self.maxEpochs:
+                self.stop()
+                toBeContinued = False
+        if toBeContinued: self.currEpoch += 1
+        return toBeContinued
     def start(self):
-        pass
+        pass        
     def stop(self):
-        pass
+        self.currEpoch= 0  
 
-
-#The world that has twins above which represent the imagination and run DE for a while before the 
+#The world that has twins above which represent the imagination and run ComputationalIntelligence for a while before the 
 #original robot takes the best motor rates and runs them
 class ImaginationTwin(Worlds):#inherits
     def __init__(self, execLen, legCode): #def __init__(self, actions, execLen, legCode):        
@@ -285,7 +297,7 @@ class ImaginationTwin(Worlds):#inherits
         self.worldEndPos = self.worldWidth - 150
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
-        self.numImaginaryRobots = 30 #min 4 robots required for DE
+        self.numImaginaryRobots = 30 #min 4 robots required for ComputationalIntelligence
         self.imaginaryRobots = []
         self.elevFromBottomWall = 0
         self.groundThickness = 10
@@ -295,7 +307,6 @@ class ImaginationTwin(Worlds):#inherits
         self.imaginationColor = 80,80,80
         self.imaginationGroundColor = 80,130,80        
         self.runState = RunCode.CONTINUE
-        self.executionState = None
         self.nextNode = None 
         self.cons = Constants()       
         
@@ -307,23 +318,19 @@ class ImaginationTwin(Worlds):#inherits
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)       
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
         #ubp = self.robots[self.cons.mainRobotID].getUniqueBodyAngles()
-        #self.actionNetwork.addNode(ubp)
-        #self.robots[self.cons.mainRobotID].currentActionNode = ubp  
         self.cumulativePosUpdateBy = Vec2d(0,0)      
         self.createImaginaryRobots()
         self.behaviour = SimpleDE(self.imaginaryRobots, self.robots)
         #---to run imaginary robots
         self.moveMotorsStateImagined = MoveMotors(self.imaginaryRobots, self)
-        self.genStateImagined = Generation(self.imaginaryRobots, self, self.moveMotorsStateImagined)
-        self.epochStateImagined = Epoch(self.imaginaryRobots, self, self.genStateImagined)
-        self.moveMotorsStateImagined.registerGen(self.genStateImagined)
+        self.genStateImagined = Generation(self.imaginaryRobots, self)
+        self.epochStateImagined = Epoch(self.imaginaryRobots, self)
         #---to run main robot(s)
         self.moveMotorsStateReal = MoveMotors(self.robots, self)
-        self.genStateReal = Generation(self.robots, self, self.moveMotorsStateReal)        
-        self.epochStateReal = Epoch(self.robots, self, self.genStateReal)        
-        
+        self.genStateReal = Generation(self.robots, self)        
+        self.epochStateReal = Epoch(self.robots, self)
         #---set execution state to start with         
-        self.executionState = self.epochStateImagined
+        
         
         #self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength
         #self.maxSequenceLength = 1 #The number of dT times a leg is moved
@@ -488,9 +495,10 @@ class ImaginationTwin(Worlds):#inherits
     def setImaginaryRobotPositionAndAnglesToRealRobot(self):
         pos = self.robots[self.cons.mainRobotID].getPositions()
         angles = self.robots[self.cons.mainRobotID].getUniqueBodyAngles()
-        for r in self.imaginaryRobots:
+        for robo in self.imaginaryRobots:
             p = pos[:]; a = angles[:] #copying values instead of references
-            r.setBodyPositionAndAngles(p, a, Vec2d(0, self.imaginaryWorldYOffset))
+            robo.setBodyPositionAndAngles(p, a, Vec2d(0, self.imaginaryWorldYOffset))
+            robo.stopMotion()
         
     def generateInfoString(self):
         genFittestRoboString = "-"; currFittestRoboString = "-"
@@ -693,7 +701,7 @@ class FlatGroundTraining(Worlds):#inherits
         self.screenHeight = 620#320 #overriding
         self.worldHeight = 600#280 #overriding
         self.worldWidth = 20000 #overriding
-        self.numRobots = 15 #min 4 robots required for DE
+        self.numRobots = 15 #min 4 robots required for ComputationalIntelligence
         self.elevFromBottomWall = 10
         self.groundThickness = 10
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
@@ -860,7 +868,7 @@ class ActualImagination(Worlds):#inherits
             self.sensedObjects.append(col)
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1
-        #self.numImaginaryRobots = 4 #min 4 robots required for DE
+        #self.numImaginaryRobots = 4 #min 4 robots required for ComputationalIntelligence
         self.imaginaryRobots = []
         self.elevFromBottomWall = 0
         self.groundThickness = 10
