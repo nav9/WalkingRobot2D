@@ -220,21 +220,19 @@ class MoveMotors:#to move the motors for time n*dT, where n is the number of fra
         self.robots = listOfRobots    
         self.isMainRobot = (len(self.robots) == 1)
         self.world = parent
-        self.maxDuration = 5 #the duration (number of frames) the motor has to move
+        self.maxDuration = 15 #the duration (number of frames) the motor has to move
         self.currDuration = 0        
     def run(self):
         if self.currDuration == 0:
             self.start()
             self.currDuration += 1              
-        else:        
+        else:
             if self.currDuration == self.maxDuration:
                 self.stop()                   
                 if self.isMainRobot: self.world.runState = RunStep.REAL_GENERATION
                 else: self.world.runState = RunStep.IMAGINARY_GENERATION
-            else:             
+            else:
                 #---do something 
-                if self.isMainRobot: print('Main Duration ',self.currDuration)
-                else: print('Duration ',self.currDuration)
                 self.currDuration += 1
     def start(self):
         for robo in self.robots:
@@ -251,35 +249,28 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         self.world = parent  
         if self.isMainRobot: self.maxGens = 1 
         else: self.maxGens = 5
-        self.currGen = 0  
-    def run(self):        
+        self.currGen = 0
+    def run(self): 
         if not self.isMainRobot:
-            pass #do DE here        
-        if self.currGen == 0:
-            self.start()
-            self.currGen += 1
-            if self.isMainRobot: self.world.runState = RunStep.REAL_MOTOR_EXEC 
-            else: self.world.runState = RunStep.IMAGINARY_MOTOR_EXEC 
-        else:    
-            if self.currGen == self.maxGens:
-                #---do whatever is done at end of a generation
-                self.stop()
-                if self.isMainRobot: self.world.runState = RunStep.IMAGINARY_GENERATION 
-                else: self.world.runState = RunStep.REAL_MOTOR_EXEC               
-            else:                
-                #---do something                 
-                if self.isMainRobot: 
-                    print('Main Gen ',self.currGen)
-                    self.world.runState = RunStep.REAL_MOTOR_EXEC
-                else: 
-                    print('Gen ',self.currGen)
-                    self.world.runState = RunStep.IMAGINARY_MOTOR_EXEC
-                self.currGen += 1
+            pass #do DE here 
+        self.start()
+        if self.currGen == 0:            
+            pass
+        if self.currGen == self.maxGens:
+            #---do whatever is done at end of a generation
+            self.stop()
+            if self.isMainRobot: self.world.runState = RunStep.IMAGINARY_GENERATION 
+            else: self.world.runState = RunStep.REAL_GENERATION
+            return
+        #---do something
+        if self.isMainRobot: self.world.runState = RunStep.REAL_MOTOR_EXEC
+        else: self.world.runState = RunStep.IMAGINARY_MOTOR_EXEC
+        self.currGen += 1                  
     def start(self):
         if not self.isMainRobot:
             self.world.setImaginaryRobotPositionAndAnglesToRealRobot()        
     def stop(self):
-        self.currGen = 0  
+        self.currGen = 0
 
 # class Epoch:#to run g generations e number of times
 #     def __init__(self, listOfRobots, parent):
