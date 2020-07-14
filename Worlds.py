@@ -211,7 +211,7 @@ class Worlds(object):
 class RunStep:
     IMAGINARY_MOTOR_EXEC = 0
     IMAGINARY_GENERATION = 1
-    IMAGINARY_EPOCH = 2
+    #IMAGINARY_EPOCH = 2
     REAL_MOTOR_EXEC = 3
     REAL_GENERATION = 4   
     
@@ -265,7 +265,7 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
                 #---do whatever is done at end of a generation
                 self.stop()
                 if self.isMainRobot: self.world.runState = RunStep.REAL_MOTOR_EXEC 
-                else: self.world.runState = RunStep.IMAGINARY_EPOCH               
+                else: self.world.runState = RunStep.IMAGINARY_GENERATION               
             else:                
                 #---do something                 
                 if self.isMainRobot: 
@@ -281,29 +281,29 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
     def stop(self):
         self.currGen = 0  
 
-class Epoch:#to run g generations e number of times
-    def __init__(self, listOfRobots, parent):
-        self.robots = listOfRobots
-        #self.isMainRobot = (len(self.robots) == 1)            
-        self.world = parent
-        self.maxEpochs = 1 #increase if needed
-        self.currEpoch = 0
-    def run(self):        
-        if self.currEpoch == 0:
-            self.start()
-            self.currEpoch += 1   
-        else:    
-            if self.currEpoch == self.maxEpochs:
-                self.stop()     
-            else:                        
-                #---do something in this epoch
-                print('Epoch ',self.currEpoch)
-                self.currEpoch += 1
-        self.world.runState = RunStep.IMAGINARY_GENERATION                           
-    def start(self):
-        pass        
-    def stop(self):
-        self.currEpoch= 0  
+# class Epoch:#to run g generations e number of times
+#     def __init__(self, listOfRobots, parent):
+#         self.robots = listOfRobots
+#         #self.isMainRobot = (len(self.robots) == 1)            
+#         self.world = parent
+#         self.maxEpochs = 1 #increase if needed
+#         self.currEpoch = 0
+#     def run(self):        
+#         if self.currEpoch == 0:
+#             self.start()
+#             self.currEpoch += 1   
+#         else:    
+#             if self.currEpoch == self.maxEpochs:
+#                 self.stop()     
+#             else:                        
+#                 #---do something in this epoch
+#                 print('Epoch ',self.currEpoch)
+#                 self.currEpoch += 1
+#         self.world.runState = RunStep.IMAGINARY_GENERATION                           
+#     def start(self):
+#         pass        
+#     def stop(self):
+#         self.currEpoch= 0  
 
 #The world that has twins above which represent the imagination and run ComputationalIntelligence for a while before the 
 #original robot takes the best motor rates and runs them
@@ -347,7 +347,7 @@ class ImaginationTwin(Worlds):#inherits
         #---to run imaginary robots
         self.moveMotorsStateImagined = MoveMotors(self.imaginaryRobots, self)
         self.genStateImagined = Generation(self.imaginaryRobots, self)
-        self.epochStateImagined = Epoch(self.imaginaryRobots, self)
+        #self.epochStateImagined = Epoch(self.imaginaryRobots, self)
         #---to run main robot(s)
         self.moveMotorsStateReal = MoveMotors(self.robots, self)
         self.genStateReal = Generation(self.robots, self)        
@@ -463,7 +463,7 @@ class ImaginationTwin(Worlds):#inherits
                         
             if self.runState == RunStep.IMAGINARY_GENERATION: self.genStateImagined.run()
             if self.runState == RunStep.IMAGINARY_MOTOR_EXEC: self.moveMotorsStateImagined.run()                    
-            if self.runState == RunStep.IMAGINARY_EPOCH: self.epochStateImagined.run()
+            #if self.runState == RunStep.IMAGINARY_EPOCH: self.epochStateImagined.run()
             if self.runState == RunStep.REAL_MOTOR_EXEC: self.moveMotorsStateReal.run()
             if self.runState == RunStep.REAL_GENERATION: self.genStateReal.run()
             
