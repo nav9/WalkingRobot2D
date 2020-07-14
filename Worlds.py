@@ -208,49 +208,73 @@ class Worlds(object):
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 
+class RunStep:
+    IMAGINARY_MOTOR_EXEC = 0
+    IMAGINARY_GENERATION = 1
+    IMAGINARY_EPOCH = 2
+    REAL_MOTOR_EXEC = 3
+    REAL_GENERATION = 4   
+    
 class MoveMotors:#to move the motors for time n*dT, where n is the number of frames and dT is the frame duration
     def __init__(self, listOfRobots, parent):
         self.robots = listOfRobots    
+        self.isMainRobot = (len(self.robots) == 1)
         self.world = parent
         self.maxDuration = 5 #the duration (number of frames) the motor has to move
         self.currDuration = 0        
     def run(self):
-        toBeContinued = True
         if self.currDuration == 0:
-            self.start()                      
-        if self.currDuration >= self.maxDuration:
-            self.stop()
-            toBeContinued = False
-        if toBeContinued: self.currDuration += 1
-        return toBeContinued
+            self.start()
+            self.currDuration += 1              
+        else:        
+            if self.currDuration == self.maxDuration:
+                self.stop()                   
+                if self.isMainRobot: self.world.runState = RunStep.REAL_GENERATION
+                else: self.world.runState = RunStep.IMAGINARY_GENERATION
+            else:             
+                #---do something 
+                if self.isMainRobot: print('Main Duration ',self.currDuration)
+                else: print('Duration ',self.currDuration)
+                self.currDuration += 1
     def start(self):
         for robo in self.robots:
             robo.startMotion()
     def stop(self):
         self.currDuration = 0 #ready for next movement when state switches back to this object
         for robo in self.robots:
-            robo.stopMotion()
+            robo.stopMotion()            
 
 class Generation:#to run MoveMotors for g generations where each g = n*dT
     def __init__(self, listOfRobots, parent):
         self.robots = listOfRobots
         self.isMainRobot = (len(self.robots) == 1)
         self.world = parent  
-        if self.isMainRobot:
-            self.maxGens = 1
-        else:
-            self.maxGens = 5
+        if self.isMainRobot: self.maxGens = 1 
+        else: self.maxGens = 5
         self.currGen = 0  
-    def run(self):
-        toBeContinued = True
+    def run(self):        
+        if not self.isMainRobot:
+            pass #do DE here        
         if self.currGen == 0:
-            self.start()              
+            self.start()
+            self.currGen += 1
+            if self.isMainRobot: self.world.runState = RunStep.REAL_MOTOR_EXEC 
+            else: self.world.runState = RunStep.IMAGINARY_MOTOR_EXEC 
         else:    
-            if self.currGen >= self.maxGens:
+            if self.currGen == self.maxGens:
+                #---do whatever is done at end of a generation
                 self.stop()
-                toBeContinued = False
-        if toBeContinued: self.currGen += 1
-        return toBeContinued
+                if self.isMainRobot: self.world.runState = RunStep.REAL_MOTOR_EXEC 
+                else: self.world.runState = RunStep.IMAGINARY_EPOCH               
+            else:                
+                #---do something                 
+                if self.isMainRobot: 
+                    print('Main Gen ',self.currGen)
+                    self.world.runState = RunStep.REAL_MOTOR_EXEC
+                else: 
+                    print('Gen ',self.currGen)
+                    self.world.runState = RunStep.IMAGINARY_MOTOR_EXEC
+                self.currGen += 1
     def start(self):
         if not self.isMainRobot:
             self.world.setImaginaryRobotPositionAndAnglesToRealRobot()        
@@ -260,23 +284,22 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
 class Epoch:#to run g generations e number of times
     def __init__(self, listOfRobots, parent):
         self.robots = listOfRobots
-        self.isMainRobot = (len(self.robots) == 1)            
+        #self.isMainRobot = (len(self.robots) == 1)            
         self.world = parent
-        if self.isMainRobot:
-            self.maxEpochs = 1
-        else:
-            self.maxEpochs = 1 #increase if needed
+        self.maxEpochs = 1 #increase if needed
         self.currEpoch = 0
-    def run(self):
-        toBeContinued = True
+    def run(self):        
         if self.currEpoch == 0:
-            self.start()              
+            self.start()
+            self.currEpoch += 1   
         else:    
-            if self.currEpoch >= self.maxEpochs:
-                self.stop()
-                toBeContinued = False
-        if toBeContinued: self.currEpoch += 1
-        return toBeContinued
+            if self.currEpoch == self.maxEpochs:
+                self.stop()     
+            else:                        
+                #---do something in this epoch
+                print('Epoch ',self.currEpoch)
+                self.currEpoch += 1
+        self.world.runState = RunStep.IMAGINARY_GENERATION                           
     def start(self):
         pass        
     def stop(self):
@@ -297,7 +320,7 @@ class ImaginationTwin(Worlds):#inherits
         self.worldEndPos = self.worldWidth - 150
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
-        self.numImaginaryRobots = 30 #min 4 robots required for ComputationalIntelligence
+        self.numImaginaryRobots = 5 #min 4 robots required for ComputationalIntelligence
         self.imaginaryRobots = []
         self.elevFromBottomWall = 0
         self.groundThickness = 10
@@ -306,7 +329,7 @@ class ImaginationTwin(Worlds):#inherits
         self.moveCameraAtThisDistDiff = 75
         self.imaginationColor = 80,80,80
         self.imaginationGroundColor = 80,130,80        
-        self.runState = RunCode.CONTINUE
+        self.runState = RunStep.IMAGINARY_MOTOR_EXEC
         self.nextNode = None 
         self.cons = Constants()       
         
@@ -328,14 +351,9 @@ class ImaginationTwin(Worlds):#inherits
         #---to run main robot(s)
         self.moveMotorsStateReal = MoveMotors(self.robots, self)
         self.genStateReal = Generation(self.robots, self)        
-        self.epochStateReal = Epoch(self.robots, self)
+        #self.epochStateReal = Epoch(self.robots, self)
         #---set execution state to start with         
-        
-        
-        #self.sequenceLength = 1 #start seq len. Should start with anything from 1 to maxSequenceLength
-        #self.maxSequenceLength = 1 #The number of dT times a leg is moved
-        #self.gen = 0 #start gen
-        #self.maxGens = 5        
+
         
 #     def processRobot(self):
 #         #---check if reached end of world
@@ -413,7 +431,6 @@ class ImaginationTwin(Worlds):#inherits
         
 
     def runWorld(self):
-        self.runState = RunCode.CONTINUE
         clock = pygame.time.Clock()
         simulating = True        
         #prevTime = time.time()
@@ -426,48 +443,42 @@ class ImaginationTwin(Worlds):#inherits
                 if event.type == KEYDOWN:
                     #if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
                     #if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
-                    if event.key == K_LEFT: 
-                        self.moveCameraBy(self.cameraMoveDist[0])
-                        #self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
-                        #self.prevRobotPos = self.robots[0].getPosition()
-                    if event.key == K_RIGHT: 
-                        self.moveCameraBy(-self.cameraMoveDist[0])
-                        #self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0)
-                        #self.prevRobotPos = self.robots[0].getPosition()
-#                     if event.key == K_n: 
-#                         print('Getting ready to display action network...'); 
-#                         self.actionNetwork.displayNetwork()                     
+                    if event.key == K_LEFT: self.moveCameraBy(self.cameraMoveDist[0])
+                    if event.key == K_RIGHT: self.moveCameraBy(-self.cameraMoveDist[0])
             if not simulating: break #coz break within event for loop won't exit while
+            #---camera follow robot
             robotMovedByX = self.prevRobotPos[self.cons.xID] - self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID]            
             if abs(robotMovedByX) > self.moveCameraAtThisDistDiff:
                 self.moveCameraBy(robotMovedByX)
-                #self.cameraXY += Vec2d(robotMovedByX, 0)
-                #self.prevRobotPos = self.robots[0].getPosition()
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
             for _ in range(self.iterations): #iterations to get a more stable simulation
                 self.space.step(dt)
             #---Update world based on camera focus
             self.updatePosition()
-            if self.prevFocusRobotID != self.focusRobotID: 
-                self.updateColor()
-                self.prevFocusRobotID = self.focusRobotID
+#             if self.prevFocusRobotID != self.focusRobotID: 
+#                 self.updateColor()
+#                 self.prevFocusRobotID = self.focusRobotID
             
-            self.executionState.run()
+                        
+            if self.runState == RunStep.IMAGINARY_GENERATION: self.genStateImagined.run()
+            if self.runState == RunStep.IMAGINARY_MOTOR_EXEC: self.moveMotorsStateImagined.run()                    
+            if self.runState == RunStep.IMAGINARY_EPOCH: self.epochStateImagined.run()
+            if self.runState == RunStep.REAL_MOTOR_EXEC: self.moveMotorsStateReal.run()
+            if self.runState == RunStep.REAL_GENERATION: self.genStateReal.run()
             
-#             if self.movtTime == 0:
-#                 resetMovT = self.processRobot()
-#                 if resetMovT: self.movtTime = self.maxMovtTime
-#             else: self.movtTime -= 1
+            #---if robot reaches goal, stop
+            if self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.worldEndPos:#reached end of world
+                break
             
             #---draw all objects            
             self.draw()                
             
             #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
             clock.tick(self.fps)
-            if self.runState == RunCode.STOP: 
-                break  
-              
+#             if self.runState == RunCode.STOP: 
+#                 break  
+        
         #---actions to do after simulation
         #self.actionNetwork.saveNetwork() 
         
@@ -531,10 +542,10 @@ class ImaginationTwin(Worlds):#inherits
     def updatePosition(self):  
         updateBy = super(ImaginationTwin, self).updatePosition()    
         self.cumulativePosUpdateBy += updateBy
-        if self.behaviour.currentFittestRobot != self.focusRobotID:
-            self.focusRobotID = self.behaviour.currentFittestRobot
-        if self.behaviour.unfitThisFullGen[self.focusRobotID]:
-            self.focusRobotID = self.UNDETERMINED
+#         if self.behaviour.currentFittestRobot != self.focusRobotID:
+#             self.focusRobotID = self.behaviour.currentFittestRobot
+#         if self.behaviour.unfitThisFullGen[self.focusRobotID]:
+#             self.focusRobotID = self.UNDETERMINED
         if updateBy != (0, 0):
             for ob in self.worldObjects:
                 ob.body.position += updateBy   
@@ -544,11 +555,11 @@ class ImaginationTwin(Worlds):#inherits
     def updateColor(self):
         for obj in self.robots:
             obj.setNormalRobotColor()
-        for obj in self.imaginaryRobots:
-            if self.focusRobotID >= 0:
-                if obj == self.imaginaryRobots[self.focusRobotID]: obj.setFocusRobotColor() 
-                else: obj.setImaginaryRobotColor()
-            else: obj.setImaginaryRobotColor()                 
+#         for obj in self.imaginaryRobots:
+#             if self.focusRobotID >= 0:
+#                 if obj == self.imaginaryRobots[self.focusRobotID]: obj.setFocusRobotColor() 
+#                 else: obj.setImaginaryRobotColor()
+#             else: obj.setImaginaryRobotColor()                 
     
     def createImaginaryRobots(self):      
         for _ in range(0, self.numImaginaryRobots, 1):

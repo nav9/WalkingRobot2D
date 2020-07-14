@@ -15,6 +15,7 @@ class RunCode:
     IMAGINE = 4
     EXPERIENCE = 5
     PAUSE_AND_SWITCH_TO_IMAGINATION = 6
+         
 
 class Constants:
     UNDETERMINED = -1

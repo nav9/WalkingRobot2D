@@ -246,6 +246,9 @@ class RobotBody:
                 leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['RIGHT']); self.legs.append(leftLegA)
                 leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.obj_body, leftLegA.legWd, self.ori['RIGHT']); self.legs.append(leftLegB)                 
                 leftLegC = LegPart(self.space, self.ownBodyShapeFilter, leftLegB.obj_body, leftLegB.legWd, self.ori['RIGHT']); self.legs.append(leftLegC)                                 
+        #---limbMotorRates will store rates for DE to use, but the starting and stopping of motors can be done independent of the values in limbMotorRates
+        self.setRandomLegMotorRates()
+        self.stopMotion()
                         
     def getFitness(self, prevPos, currPos):
         if self.robotDirection(prevPos, currPos) == self.direction: 
@@ -308,10 +311,10 @@ class RobotBody:
         for i in range(0, len(self.legs)):
             self.legs[i].motor.rate = self.limbMotorRates[i]
             
-    def setLegMotorRates(self):
+    def setRandomLegMotorRates(self):
         self.limbMotorRates = []
-        for i in range(0, len(self.legs)):
-            self.limbMotorRates[i] = random.choice(self.legs[i].motor.legRateRange)                         
+        for leg in self.legs:
+            self.limbMotorRates.append(random.choice(leg.motor.legRateRange))                         
     
     def setFocusRobotColor(self): self.chassis_shape.color = (190, 0, 0)
     def setNormalRobotColor(self): self.chassis_shape.color = (170, 170, 170)
