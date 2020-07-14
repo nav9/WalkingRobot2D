@@ -264,8 +264,8 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
             if self.currGen == self.maxGens:
                 #---do whatever is done at end of a generation
                 self.stop()
-                if self.isMainRobot: self.world.runState = RunStep.REAL_MOTOR_EXEC 
-                else: self.world.runState = RunStep.IMAGINARY_GENERATION               
+                if self.isMainRobot: self.world.runState = RunStep.IMAGINARY_GENERATION 
+                else: self.world.runState = RunStep.REAL_MOTOR_EXEC               
             else:                
                 #---do something                 
                 if self.isMainRobot: 
