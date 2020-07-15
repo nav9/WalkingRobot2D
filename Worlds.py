@@ -21,6 +21,7 @@ from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from LearningRobot import LearningRobot
 from ComputationalIntelligence import DifferentialEvolution, SimpleDE, RunCode
+from pymunk.shape_filter import ShapeFilter
 
 class Worlds(object):
     def __init__(self):
@@ -220,7 +221,7 @@ class MoveMotors:#to move the motors for time n*dT, where n is the number of fra
         self.robots = listOfRobots    
         self.isMainRobot = (len(self.robots) == 1)
         self.world = parent
-        self.maxDuration = 15 #the duration (number of frames) the motor has to move
+        self.maxDuration = 40 #the duration (number of frames) the motor has to move
         self.currDuration = 0        
     def run(self):
         if self.currDuration == 0:
@@ -306,30 +307,33 @@ class ImaginationTwin(Worlds):#inherits
         #self.actionNetwork = actions
         self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        
-        self.worldWidth = 1500 #overriding
+        self.worldWidth = 900 #overriding
         self.worldHeight = 300
-        self.worldEndPos = self.worldWidth - 150
+        self.finishLine = self.worldWidth - 150 
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
         self.numImaginaryRobots = 5 #min 4 robots required for ComputationalIntelligence
         self.imaginaryRobots = []
-        self.elevFromBottomWall = 0
+        self.debrisElevFromBottomWall = 0
         self.groundThickness = 10
-        self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
+        self.robotInitPos = Vec2d(100, 100) #overrides the base class pos
         self.prevRobotPos = self.robotInitPos
         self.moveCameraAtThisDistDiff = 75
         self.imaginationColor = 80,80,80
-        self.imaginationGroundColor = 80,130,80        
-        self.runState = RunStep.IMAGINARY_MOTOR_EXEC
-        self.nextNode = None 
+        self.imaginationGroundColor = 80,130,80     
+        self.finishLineColor = 150, 0 , 0    
+        self.runState = RunStep.IMAGINARY_GENERATION
+        self.robotBodyShapeFilter = pymunk.ShapeFilter(group = 1) #to prevent collisions between robot and objects
+        #self.nextNode = None 
         self.cons = Constants()       
         
     def initialize(self):
         super(ImaginationTwin, self).initialize()
-        self.createDebris(self.elevFromBottomWall, self.imaginationColor)
+        self.createDebris(self.debrisElevFromBottomWall, self.imaginationColor)
         self.copyDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)       
-        self.createGround(0, self.elevFromBottomWall, self.groundColor)
-        self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)       
+        self.createGround(0, self.debrisElevFromBottomWall, self.groundColor)
+        self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor) 
+        self.__addRedFinishLine__()      
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
         #ubp = self.robots[self.cons.mainRobotID].getUniqueBodyAngles()
         self.cumulativePosUpdateBy = Vec2d(0,0)      
@@ -438,9 +442,9 @@ class ImaginationTwin(Worlds):#inherits
                     if event.key == K_RIGHT: self.moveCameraBy(-self.cameraMoveDist[0])
             if not simulating: break #coz break within event for loop won't exit while
             #---camera follow robot
-            robotMovedByX = self.prevRobotPos[self.cons.xID] - self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID]            
-            if abs(robotMovedByX) > self.moveCameraAtThisDistDiff:
-                self.moveCameraBy(robotMovedByX)
+#             robotMovedByX = self.prevRobotPos[self.cons.xID] - self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID]            
+#             if abs(robotMovedByX) > self.moveCameraAtThisDistDiff:
+#                 self.moveCameraBy(robotMovedByX)
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
             for _ in range(self.iterations): #iterations to get a more stable simulation
@@ -449,9 +453,8 @@ class ImaginationTwin(Worlds):#inherits
             self.updatePosition()
 #             if self.prevFocusRobotID != self.focusRobotID: 
 #                 self.updateColor()
-#                 self.prevFocusRobotID = self.focusRobotID
+#                 self.prevFocusRobotID = self.focusRobotID            
             
-                        
             if self.runState == RunStep.IMAGINARY_GENERATION: self.genStateImagined.run()
             if self.runState == RunStep.IMAGINARY_MOTOR_EXEC: self.moveMotorsStateImagined.run()                    
             #if self.runState == RunStep.IMAGINARY_EPOCH: self.epochStateImagined.run()
@@ -459,7 +462,7 @@ class ImaginationTwin(Worlds):#inherits
             if self.runState == RunStep.REAL_GENERATION: self.genStateReal.run()
             
             #---if robot reaches goal, stop
-            if self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.worldEndPos:#reached end of world
+            if self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.finishLine:#reached end of world
                 break
             
             #---draw all objects            
@@ -477,22 +480,36 @@ class ImaginationTwin(Worlds):#inherits
         self.cameraXY += Vec2d(dist, 0)
         self.prevRobotPos = self.robots[0].getPosition()        
         
+    def __addRedFinishLine__(self):
+        self.createBox(self.finishLine, self.wallThickness+142, 2, self.worldHeight-47, self.finishLineColor, self.robotBodyShapeFilter)
+    
     def createGround(self, groundX, groundY, grColor):
-        self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor)
+        self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor, None)
 
     def createDebris(self, groundY, debColor):
         debrisStartCol = 200; debrisMaxHt = 50; boxMinSz = 5; boxMaxSz = 30
         for _ in range(0, 100, 1):
-            self.createBox(random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness), random.randint(groundY+2*self.wallThickness, groundY+debrisMaxHt), random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), debColor)        
+            self.createBox(random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness), random.randint(groundY+2*self.wallThickness, groundY+debrisMaxHt), random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), debColor, None)        
         
     def copyDebrisToImaginary(self, groundY, debColor):
         for i in range(0, len(self.worldObjects), 1):
-            self.createBox(self.worldObjects[i].body.position[0], groundY+self.worldObjects[i].body.position[1], self.worldObjects[i].body.width, self.worldObjects[i].body.height, debColor)        
+            self.createBox(self.worldObjects[i].body.position[0], groundY+self.worldObjects[i].body.position[1], self.worldObjects[i].body.width, self.worldObjects[i].body.height, debColor, None)        
     
-    def createBox(self, x, y, wd, ht, colour):
-        body = pymunk.Body(body_type = pymunk.Body.KINEMATIC); body.position = Vec2d(x, y); body.width = wd; body.height = ht
-        shape = pymunk.Poly.create_box(body, (wd, ht)); shape.color = colour; shape.friction = 1.0; 
-        self.space.add(shape); self.worldObjects.append(shape)  
+    def createBox(self, x, y, wd, ht, colour, fil):
+        body = pymunk.Body(body_type = pymunk.Body.KINEMATIC)
+        body.position = Vec2d(x, y)
+        body.width = wd
+        body.height = ht
+        try:
+            shape = pymunk.Poly.create_box(body, (wd, ht))
+            if fil:
+                shape.filter = self.robotBodyShapeFilter
+            shape.color = colour
+        except:
+            pass
+        shape.friction = 1.0
+        self.space.add(shape)
+        self.worldObjects.append(shape)  
         
     def setImaginaryRobotPositionAndAnglesToRealRobot(self):
         pos = self.robots[self.cons.mainRobotID].getPositions()
@@ -704,16 +721,16 @@ class FlatGroundTraining(Worlds):#inherits
         self.worldHeight = 600#280 #overriding
         self.worldWidth = 20000 #overriding
         self.numRobots = 15 #min 4 robots required for ComputationalIntelligence
-        self.elevFromBottomWall = 10
+        self.debrisElevFromBottomWall = 10
         self.groundThickness = 10
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
-        self.elevFromBottomWall = 0 
+        self.debrisElevFromBottomWall = 0 
         self.fitGraph = FitnessStore()
         self.genBestFit = []       
    
     def initialize(self):
         super(FlatGroundTraining, self).initialize() 
-        self.createGround(0, self.elevFromBottomWall, self.groundColor)
+        self.createGround(0, self.debrisElevFromBottomWall, self.groundColor)
         self.behaviour = DifferentialEvolution(self.robots)
         self.sequenceLength = 1 #Epoch. start seq len. Should start with anything from 1 to maxSequenceLength        
         self.gen = 0 #start gen. Starts with 0
@@ -872,7 +889,7 @@ class ActualImagination(Worlds):#inherits
         self.numRobots = 1
         #self.numImaginaryRobots = 4 #min 4 robots required for ComputationalIntelligence
         self.imaginaryRobots = []
-        self.elevFromBottomWall = 0
+        self.debrisElevFromBottomWall = 0
         self.groundThickness = 10
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
         self.imaginationColor = 100,100,100
@@ -883,7 +900,7 @@ class ActualImagination(Worlds):#inherits
         
     def initialize(self):
         super(ActualImagination, self).initialize()       
-        self.createGround(0, self.elevFromBottomWall, self.groundColor)
+        self.createGround(0, self.debrisElevFromBottomWall, self.groundColor)
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
         self.createFewObjects()       
         #self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
