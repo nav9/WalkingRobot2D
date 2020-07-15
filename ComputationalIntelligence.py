@@ -29,6 +29,37 @@ class Constants:
 #------------------------------------------------------------------------------------------------
 
 # Note: At least 4 robots are required for Differential Evolution to work
+class RandomBest:#Use randomness instead of a CI algorithm  
+    def __init__(self, roboList):
+        self.robots = roboList
+        self.infoString = ""
+        self.const = Constants()
+        self.motorRatesOfFittest = None
+        self.fittestRobot = None
+    def reinitialize(self):
+        self.motorRatesOfFittest = []
+        self.fittestRobot = self.const.UNDETERMINED
+    def run(self):        
+        currBestFit = 0
+        self.motorRatesOfFittest = []
+        #---go through all robots to find if there's a new fittest one
+        for i in range(0, len(self.robots)):            
+            fit = self.robots[i].getFitness()
+            print('Fitness of ',i,'=',self.fittestRobot)
+            if fit > currBestFit:#if greater than zero
+                self.fittestRobot = i #if there was a previous generation's fittest, that won't get replaced, but everything gets reset when generations are reinitialized
+        for i in range(0, len(self.robots)):
+            if self.fittestRobot == i: 
+                print('Not changing rates for: ', i)
+                continue #don't change the motor rates for this
+            else:
+                self.robots[i].setRandomLegMotorRates()
+            
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+
+# Note: At least 4 robots are required for Differential Evolution to work
 class SimpleDE:#Differential Evolution  
     def __init__(self, iRobo, realRob): 
         self.infoString = "" 

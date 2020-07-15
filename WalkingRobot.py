@@ -207,7 +207,7 @@ class RobotBody:
         self.quadrantAccuracy = 3 #pixels
         self.__createBody__(chassisCenterPoint)
         self.decimalPrecision = 2
-        self.const = Constants()
+        self.const = Constants()        
         
     def __createBody__(self, chassisXY):
         self.obj_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.chassisWd, self.chassisHt)))
@@ -222,6 +222,7 @@ class RobotBody:
         self.space.add(self.chassis_shape, self.obj_body) 
         self.createLegs()
         self.makeRobotDynamic()
+        self.robotGenStartPos = Vec2d(self.getPosition()[0], self.getPosition()[1])
     
     def createLegs(self):
         s = self.legsCode.split("#")
@@ -250,7 +251,7 @@ class RobotBody:
         self.setRandomLegMotorRates()
         self.stopMotion()
                         
-    def getFitness(self, prevPos, currPos):
+    def __getFitnessBasedOnDirection__(self, prevPos, currPos):
         if self.robotDirection(prevPos, currPos) == self.direction: 
             return round(abs(math.sqrt((currPos[0]-prevPos[0])**2 + (currPos[1]-prevPos[1])**2)), self.decimalPrecision)
         else: 
@@ -336,6 +337,14 @@ class RobotBody:
         
     def getPosition(self):
         return self.obj_body.position
+    
+    def saveGenStartPos(self):        
+        self.robotGenStartPos = Vec2d(self.getPosition()[0], self.getPosition()[1])#current position
+        print('Saving start positions.......', self.robotGenStartPos)
+    
+    def getFitness(self):#returns 0 if movement is not in desired direction or an absolute positive value of the magnitude of displacement in desired direction
+        print('prev:',self.robotGenStartPos, ' curr:',self.getPosition())
+        return self.__getFitnessBasedOnDirection__(self.robotGenStartPos, self.getPosition())
         
     def updatePosition(self, offsetXY):
         self.obj_body.position += offsetXY 

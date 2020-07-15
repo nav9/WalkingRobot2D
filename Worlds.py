@@ -20,7 +20,7 @@ from pygame.color import THECOLORS
 from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from LearningRobot import LearningRobot
-from ComputationalIntelligence import DifferentialEvolution, SimpleDE, RunCode
+from ComputationalIntelligence import DifferentialEvolution, SimpleDE, RunCode, RandomBest
 from pymunk.shape_filter import ShapeFilter
 
 class Worlds(object):
@@ -221,7 +221,7 @@ class MoveMotors:#to move the motors for time n*dT, where n is the number of fra
         self.robots = listOfRobots    
         self.isMainRobot = (len(self.robots) == 1)
         self.world = parent
-        self.maxDuration = 40 #the duration (number of frames) the motor has to move
+        self.maxDuration = 50 #the duration (number of frames) the motor has to move
         self.currDuration = 0        
     def run(self):
         if self.currDuration == 0:
@@ -251,19 +251,26 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         if self.isMainRobot: self.maxGens = 1 
         else: self.maxGens = 5
         self.currGen = 0
-    def run(self): 
         if not self.isMainRobot:
-            pass #do DE here 
-        self.start()
-        if self.currGen == 0:            
-            pass
-        if self.currGen == self.maxGens:
+            self.CI = RandomBest(self.robots)
+    def run(self):         
+        if self.currGen == 0:#first generation
+            if not self.isMainRobot:
+                print('start gen real ----')
+                self.CI.reinitialize()
+        if self.currGen == self.maxGens:#this is the end of the epoch
             #---do whatever is done at end of a generation
             self.stop()
             if self.isMainRobot: self.world.runState = RunStep.IMAGINARY_GENERATION 
             else: self.world.runState = RunStep.REAL_GENERATION
-            return
-        #---do something
+            return                
+        #----------------------------------------
+        #--- Computation Intelligence Section ---
+        #----------------------------------------
+        if not self.isMainRobot:
+            self.CI.run()
+        self.start()
+        #---state switching etc
         if self.isMainRobot: self.world.runState = RunStep.REAL_MOTOR_EXEC
         else: self.world.runState = RunStep.IMAGINARY_MOTOR_EXEC
         self.currGen += 1                  
@@ -312,7 +319,7 @@ class ImaginationTwin(Worlds):#inherits
         self.finishLine = self.worldWidth - 150 
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
-        self.numImaginaryRobots = 5 #min 4 robots required for ComputationalIntelligence
+        self.numImaginaryRobots = 10 #min 4 robots required for ComputationalIntelligence
         self.imaginaryRobots = []
         self.debrisElevFromBottomWall = 0
         self.groundThickness = 10
@@ -517,6 +524,7 @@ class ImaginationTwin(Worlds):#inherits
         for robo in self.imaginaryRobots:
             p = pos[:]; a = angles[:] #copying values instead of references
             robo.setBodyPositionAndAngles(p, a, Vec2d(0, self.imaginaryWorldYOffset))
+            robo.saveGenStartPos()
             robo.stopMotion()
         
     def generateInfoString(self):
