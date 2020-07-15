@@ -262,7 +262,7 @@ class RobotBody:
         if ang > 270 or ang <= 91: direc = self.ori['RIGHT']
         if ang > 91 and ang <= 135: direc = self.ori['UP']
         if ang > 135 and ang <= 225: direc = self.ori['LEFT']
-        if ang > 225 and ang <= 270: direc = self.ori['DOWN']  
+        if ang > 225 and ang <= 270: direc = self.ori['DOWN']
         return direc        
     
 #     def setExperience(self, expe):       
@@ -340,10 +340,8 @@ class RobotBody:
     
     def saveGenStartPos(self):        
         self.robotGenStartPos = Vec2d(self.getPosition()[0], self.getPosition()[1])#current position
-        print('Saving start positions.......', self.robotGenStartPos)
     
     def getFitness(self):#returns 0 if movement is not in desired direction or an absolute positive value of the magnitude of displacement in desired direction
-        print('prev:',self.robotGenStartPos, ' curr:',self.getPosition())
         return self.__getFitnessBasedOnDirection__(self.robotGenStartPos, self.getPosition())
         
     def updatePosition(self, offsetXY):

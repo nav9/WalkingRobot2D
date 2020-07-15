@@ -45,12 +45,11 @@ class RandomBest:#Use randomness instead of a CI algorithm
         #---go through all robots to find if there's a new fittest one
         for i in range(0, len(self.robots)):            
             fit = self.robots[i].getFitness()
-            print('Fitness of ',i,'=',self.fittestRobot)
             if fit > currBestFit:#if greater than zero
                 self.fittestRobot = i #if there was a previous generation's fittest, that won't get replaced, but everything gets reset when generations are reinitialized
+                currBestFit = fit
         for i in range(0, len(self.robots)):
             if self.fittestRobot == i: 
-                print('Not changing rates for: ', i)
                 continue #don't change the motor rates for this
             else:
                 self.robots[i].setRandomLegMotorRates()

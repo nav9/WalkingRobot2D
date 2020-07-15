@@ -256,14 +256,13 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
     def run(self):         
         if self.currGen == 0:#first generation
             if not self.isMainRobot:
-                print('start gen real ----')
                 self.CI.reinitialize()
         if self.currGen == self.maxGens:#this is the end of the epoch
             #---do whatever is done at end of a generation
             self.stop()
             if self.isMainRobot: self.world.runState = RunStep.IMAGINARY_GENERATION 
             else: self.world.runState = RunStep.REAL_GENERATION
-            return                
+            return
         #----------------------------------------
         #--- Computation Intelligence Section ---
         #----------------------------------------
@@ -319,7 +318,7 @@ class ImaginationTwin(Worlds):#inherits
         self.finishLine = self.worldWidth - 150 
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
-        self.numImaginaryRobots = 10 #min 4 robots required for ComputationalIntelligence
+        self.numImaginaryRobots = 4 #min 4 robots required for ComputationalIntelligence
         self.imaginaryRobots = []
         self.debrisElevFromBottomWall = 0
         self.groundThickness = 10
