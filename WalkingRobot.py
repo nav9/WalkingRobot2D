@@ -315,7 +315,17 @@ class RobotBody:
     def setRandomLegMotorRates(self):
         self.limbMotorRates = []
         for leg in self.legs:
-            self.limbMotorRates.append(random.choice(leg.motor.legRateRange))                         
+            self.limbMotorRates.append(random.choice(leg.motor.legRateRange))
+
+    def setLegMotorRates(self, motorRates):#passing an empty list to this will set rates to zero
+        if len(motorRates) == 0: 
+            motorRates = [0] * len(self.legs) #[0,0,0,0]
+        self.limbMotorRates = []
+        for i in range(0, len(self.legs)):
+            self.limbMotorRates.append(motorRates[i])
+            
+    def getLegMotorRates(self):
+        return self.limbMotorRates                                           
     
     def setFocusRobotColor(self): self.chassis_shape.color = (190, 0, 0)
     def setNormalRobotColor(self): self.chassis_shape.color = (170, 170, 170)
