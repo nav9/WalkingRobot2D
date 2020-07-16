@@ -21,112 +21,6 @@ class Directions:
     def getDirn(self): 
         return self.dirn        
 
-# class Brain:
-#     def __init__(self, pos):
-#         d = Directions()
-#         self.ori = d.getDirn()
-#         self.direction = self.ori['RIGHT']
-#         #self.stuckThresh = 2 #TODO: Currently pixels. Make this a proportion of the body length
-#         #self.maxStuck = 2 #max iterations before deciding to get unstuck by going in different direction
-#         #self.stuck = 0 #counter 
-#         #self.maxRoaming = 5 #max iterations to roam in non-main direction
-#         #self.roaming = 0 #counter
-#         self.prevPos = pos
-#         self.const = Constants()
-#         self.decimalPrecision = 2
-#         
-#     def movementThinking(self, currPos):
-#         if self.roaming > 0:
-#             self.roaming -= 1
-#             if self.roaming == 0: self.setToMainDirection()#stop roaming
-#         dist = abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2))
-#         if dist <= self.stuckThresh:   
-#             self.stuck += 1
-#             if self.stuck == self.maxStuck: self.moveInDifferentDirection()
-#         else: 
-#             self.prevPos = currPos
-#             self.stuck = 0
-#             
-#     def getFitness(self, prevPos, currPos):
-#         if self.robotDirection(prevPos, currPos) == self.direction: 
-#             return round(abs(math.sqrt((currPos[0]-self.prevPos[0])**2 + (currPos[1]-self.prevPos[1])**2)), self.decimalPrecision)
-#         else: 
-#             return self.const.NOTFIT 
-#         
-#     def robotDirection(self, prevPos, currPos): 
-#         ang = round(math.degrees(math.atan2((currPos[1]-prevPos[1]), (currPos[0]-prevPos[0])))) % 360
-#         if ang > 270 or ang <= 91: direc = self.ori['RIGHT']
-#         if ang > 91 and ang <= 135: direc = self.ori['UP']
-#         if ang > 135 and ang <= 225: direc = self.ori['LEFT']
-#         if ang > 225 and ang <= 270: direc = self.ori['DOWN']  
-#         return direc
-#     
-#     def moveInDifferentDirection(self):
-#         d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
-#         while d == self.direction:
-#             d = self.ori[list(self.ori)[random.randint(0,len(self.ori)-1)]]#random direction
-#         self.direction = d
-#         self.roaming = self.maxRoaming
-#         
-#     def setToMainDirection(self): self.direction = self.ori['RIGHT']
-#     def getDirection(self): return self.direction
-
-# class ActionNetwork:
-#     def __init__(self, execLen, legs):
-#         self.actionFile = 'actionNetwork_'+str(execLen)+'_'+legs+'.gpickle'
-#         self.graph = None
-#         self.fig = plt.figure()
-#         self.fig.patch.set_facecolor('black')        
-#         plt.rcParams['axes.facecolor'] = 'black'
-#         plt.rcParams['patch.facecolor'] = 'black'
-#         self.fig.canvas.toolbar.pack_forget()#remove bottom bar        
-#         self.__loadNetwork__()
-#     
-#     def addNode(self, node): self.graph.add_node(tuple(node))        
-#     def addEdge(self, node1, node2, wt, expe, fit, dirn): self.graph.add_edge(tuple(node1), tuple(node2), weight=wt, experience=tuple(expe), fitness=fit, direction=dirn)    
-#     def getEdge(self, node1, node2): return self.graph.get_edge_data(tuple(node1), tuple(node2))
-#     
-#     def getSuccessorNodes(self, currNode):#edges going out of currNode
-#         if self.graph.out_degree[tuple(currNode)] == 0: return None 
-#         else: return self.graph.successors(tuple(currNode))
-    
-#     def displayNetwork(self):    
-#         plt.clf(); 
-#         #posType = nx.planar_layout(self.graph)        
-#         #posType = nx.circular_layout(self.graph)
-#         #posType = nx.kamada_kawai_layout(self.graph)
-#         #posType = nx.random_layout(self.graph)
-#         posType = nx.spring_layout(self.graph)
-#         #posType = nx.fruchterman_reingold_layout(self.graph)
-#         #nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', arrowsize=1, arrowstyle='fancy')
-#         nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', node_color='green', alpha=0.5, arrowsize=5)
-#         #nx.draw_circular(self.graph)
-#         #nx.draw(self.graph, with_labels=False, font_weight='bold')
-#         plt.pause(0.001)
-#         plt.show(block=False)  
-#         print('Num nodes in action network: '+str(nx.number_of_nodes(self.graph)))     
-        
-#     def saveNetwork(self):
-#         nx.write_gpickle(self.graph, self.actionFile)
-#         print('Saved network to '+self.actionFile)
-#     
-#     def __loadNetwork__(self):
-#         try:
-#             self.graph = nx.read_gpickle(self.actionFile)
-#         except:
-#             print('No '+self.actionFile+' found. Creating new action network.')
-#             self.graph = nx.MultiDiGraph()
-#         if not nx.is_empty(self.graph):
-#             #self.displayNetwork()
-#             self.actionNetworkProperties()
-#     
-#     def actionNetworkProperties(self):
-#         print('Action network properties:')
-#         print('Num nodes: '+str(nx.number_of_nodes(self.graph)))
-#         print('Num edges: '+str(nx.number_of_edges(self.graph)))
-#         print('Density: '+str(nx.density(self.graph)))
-#         print('Num self loops: '+str(nx.number_of_selfloops(self.graph)))
-
 class LegPart:#This is one leg part. Could be part A that's connected to the chassis or part B that's connected to part A
     def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight):
         self.space = pymunk.Space()
@@ -265,45 +159,6 @@ class RobotBody:
         if ang > 225 and ang <= 270: direc = self.ori['DOWN']
         return direc        
     
-#     def setExperience(self, expe):       
-#         for leg in self.legs: leg.experience[:] = []
-#         while len(expe) > 0: 
-#             for leg in self.legs: leg.experience.append(expe.pop(0))
-# 
-#     def setExperienceWithClamping(self, ex, seqLen):
-#         j = 0
-#         for leg in self.legs:
-#             leg.experience[:] = []
-#             for _ in range(0, seqLen, 1): 
-#                 v = ex[j]
-#                 if v < leg.motor.legRateRange[0] or v > leg.motor.legRateRange[-1]: 
-#                     v = random.choice(leg.motor.legRateRange)
-#                 leg.experience.append(v)
-#                 j += 1
-    
-#     def reinitializeExperienceWithRandomValues(self, seqLen):       
-#         for leg in self.legs:
-#             leg.experience[:] = []
-#             for _ in range(0, seqLen, 1):
-#                 thisRate = random.choice(leg.motor.legRateRange)
-#                 leg.experience.append(thisRate)                                    
-#     
-#     def getMotorRatesExperience(self):
-#         ex = []
-#         for leg in self.legs: 
-#             ex.extend(leg.experience)
-#         return ex
-#     
-#     def getEmptyMotorRatesExperience(self):
-#         ex = []
-#         for leg in self.legs: 
-#             ex.extend([0] * len(leg.experience))
-#         return ex    
-#     
-#     def setMotorRateForSequence(self, seqId):
-#         for leg in self.legs: 
-#             leg.motor.rate = leg.experience[seqId]
-    
     def stopMotion(self):
         for leg in self.legs: 
             leg.motor.rate = 0
@@ -327,9 +182,9 @@ class RobotBody:
     def getLegMotorRates(self):
         return self.limbMotorRates                                           
     
-    def setFocusRobotColor(self): self.chassis_shape.color = (140, 0, 0)
-    def setNormalRobotColor(self): self.chassis_shape.color = (0, 0, 220)
-                
+    def setFocusRobotColor(self): self.chassis_shape.color = (45, 160, 185)
+    def setNormalRobotColor(self): self.chassis_shape.color = (231, 30, 30)
+    
     def setImaginaryRobotColor(self):
         self.chassis_shape.color = (110, 110, 110)  
         for leg in self.legs: 
@@ -359,16 +214,6 @@ class RobotBody:
         self.obj_body.startPosition += offsetXY
         for leg in self.legs: 
             leg.updatePosition(offsetXY)
-    
-#     def getFullBodyStatesAndMotorRates(self):
-#         bodyStates = []; motorRates = []
-#         bodyStates.append(self.obj_body.angle)
-#         bodyStates.append(self.obj_body.position)
-#         for leg in self.legs:
-#             val = leg.getLegStatesAndMotorRates()
-#             bodyStates.append(val[0])
-#             motorRates.append(val[1])
-#         return (bodyStates, motorRates)
     
     def getBodyAngle(self): return round(math.degrees(self.obj_body.angle) % 360)
     

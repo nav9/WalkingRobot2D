@@ -303,7 +303,7 @@ class ImaginationTwin(Worlds):#inherits
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 900 #overriding
         self.worldHeight = 300
-        self.finishLine = self.worldWidth - 150 
+        self.finishLine = self.worldWidth - 100 
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
         self.numImaginaryRobots = 4 #min 4 robots required for ComputationalIntelligence
@@ -315,7 +315,7 @@ class ImaginationTwin(Worlds):#inherits
         self.moveCameraAtThisDistDiff = 75
         self.imaginationColor = 80,80,80
         self.imaginationGroundColor = 80,130,80     
-        self.finishLineColor = 150, 0 , 0    
+        self.finishLineColor = 225, 200 , 10    
         self.runState = RunStep.IMAGINARY_GENERATION
         self.robotBodyShapeFilter = pymunk.ShapeFilter(group = 1) #to prevent collisions between robot and objects
         self.cons = Constants()       
@@ -326,7 +326,7 @@ class ImaginationTwin(Worlds):#inherits
         self.copyDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)       
         self.createGround(0, self.debrisElevFromBottomWall, self.groundColor)
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor) 
-        self.__addRedFinishLine__()      
+        self.__addFinishLine__()      
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
         self.cumulativePosUpdateBy = Vec2d(0,0)      
         self.createImaginaryRobots()
@@ -392,7 +392,7 @@ class ImaginationTwin(Worlds):#inherits
         if abs(robotMovedByX) > self.moveCameraAtThisDistDiff:
             self.moveCameraBy(robotMovedByX)                            
         
-    def __addRedFinishLine__(self):
+    def __addFinishLine__(self):
         self.createBox(self.finishLine, self.wallThickness+142, 2, self.worldHeight-47, self.finishLineColor, self.robotBodyShapeFilter)
     
     def createGround(self, groundX, groundY, grColor):
