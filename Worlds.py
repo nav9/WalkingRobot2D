@@ -243,7 +243,7 @@ class MoveMotors:#to move the motors for time n*dT, where n is the number of fra
         for robo in self.robots:
             robo.stopMotion()
             if self.isMainRobot:
-                robo.setLegMotorRates([])#passing empty list sets rate store list to zeroes            
+                robo.setLegMotorRates([]) #passing empty list sets rate store list to zeroes            
 
 class Generation:#to run MoveMotors for g generations where each g = n*dT
     def __init__(self, listOfRobots, parent):
@@ -255,35 +255,38 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         self.currGen = 0
         if not self.isMainRobot:
             self.CI = RandomBest(self.robots)
-    def run(self):
+    def run(self):        
         if self.currGen == 0:#first generation
             if not self.isMainRobot:
-                self.CI.reinitialize()
+                self.CI.reinitialize()        
         if self.currGen == self.maxGens:#this is the end of the epoch
             #---do whatever is done at end of a generation
             self.stop()
             if self.isMainRobot: self.world.runState = RunStep.IMAGINARY_GENERATION 
             else: self.world.runState = RunStep.REAL_GENERATION
-            return
-        #----------------------------------------
-        #--- Computation Intelligence Section ---
-        #----------------------------------------
-        if not self.isMainRobot:
-            self.CI.run()
-        self.start()
-        #---state switching etc
-        if self.isMainRobot:
-            for robo in self.robots:
-                robo.setLegMotorRates(self.world.genStateImagined.CI.motorRatesOfFittest)
-            self.world.runState = RunStep.REAL_MOTOR_EXEC
-        else: 
-            self.world.runState = RunStep.IMAGINARY_MOTOR_EXEC
-        self.currGen += 1                  
+            #has to exit this function now            
+        else:
+            #----------------------------------------
+            #--- Computation Intelligence Section ---
+            #----------------------------------------
+            if not self.isMainRobot:
+                self.CI.run()
+            self.start()
+            #---state switching etc
+            if self.isMainRobot:
+                for robo in self.robots:
+                    robo.setLegMotorRates(self.world.genStateImagined.CI.motorRatesOfFittest)
+                self.world.runState = RunStep.REAL_MOTOR_EXEC
+            else: 
+                self.world.runState = RunStep.IMAGINARY_MOTOR_EXEC
+            self.currGen += 1                  
     def start(self):
         if not self.isMainRobot:
             self.world.setImaginaryRobotPositionAndAnglesToRealRobot()        
     def stop(self):
         self.currGen = 0
+    def getInfoString(self):
+        return "Gen: " + ("-" if self.currGen<=0 else str(self.currGen)) + self.CI.getInfoString()
 
 
 #The world that has twins above which represent the imagination and run ComputationalIntelligence for a while before the 
@@ -313,7 +316,6 @@ class ImaginationTwin(Worlds):#inherits
         self.finishLineColor = 150, 0 , 0    
         self.runState = RunStep.IMAGINARY_GENERATION
         self.robotBodyShapeFilter = pymunk.ShapeFilter(group = 1) #to prevent collisions between robot and objects
-        #self.nextNode = None 
         self.cons = Constants()       
         
     def initialize(self):
@@ -337,82 +339,11 @@ class ImaginationTwin(Worlds):#inherits
         self.genStateReal = Generation(self.robots, self)        
         #self.epochStateReal = Epoch(self.robots, self)
         #---set execution state to start with         
-
-        
-#     def processRobot(self):
-#         #---check if reached end of world
-#         if self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.worldEndPos:#reached end of world
-#             self.runState = RunCode.STOP
-#             print('SUCCESSFULLY REACHED END OF WORLD')
-#             return False
-#         resetMovtTime = True    
-#         
-#         if self.runState == RunCode.PAUSE_AND_SWITCH_TO_IMAGINATION:
-#             self.setForImagination()            
-#         
-#         if self.runState == RunCode.EXPERIENCE:#appropriate action edge found so just execute what is in it
-#             if self.sequenceLength > self.maxSequenceLength:
-#                 self.robots[self.cons.mainRobotID].stopMotion()
-#                 self.runState = RunCode.PAUSE_AND_SWITCH_TO_IMAGINATION         
-#             else: #---run experience for each leg
-#                 self.robots[self.cons.mainRobotID].setMotorRateForSequence(self.sequenceLength-1)
-#                 self.sequenceLength += 1
-# 
-#         if self.runState == RunCode.CONTINUE:#bottom robot's movement
-#             resetMovtTime = False
-#             self.experienceInfoString()
-#             mRates = sum([abs(x) for x in self.behaviour.fittestRobotsMotorRates])
-#             if mRates == 0:#no movement because either no fit robot was found or imagination was not run yet
-#                 self.setForImagination()
-#             else:
-#                 self.robots[self.cons.mainRobotID].setExperience(self.behaviour.fittestRobotsMotorRates)
-#                 self.sequenceLength = 1 #should be at least 1   
-#                 self.runState = RunCode.EXPERIENCE             
-# 
-#         
-#         if self.runState == RunCode.IMAGINE:#imaginary robot's movement
-#             resetMovtTime = self.runImagination()
-#         return resetMovtTime
     
-    def experienceInfoString(self):
-        self.infoString = ""
-        #self.infoStringStuckAndRoamingDir()
-        self.infoString += ",  x: "+str(round(self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0], self.decimalPrecision))
-    
-#     def setForImagination(self):
-#         #self.robots[0].brain.movementThinking(self.robots[0].getPosition())
-#         self.runState = RunCode.IMAGINE
-#         self.behaviour.startNewEpoch()
-#         self.setImaginaryRobotPositionAndAnglesToRealRobot()
-#         self.sequenceLength = 1 #should be at least 1
-#         self.gen = 0        
-        
-#     def runImagination(self):
-#         resetMovtTime = True
-#         if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
-#             self.runState = RunCode.CONTINUE
-#             self.infoString = ""
-#             resetMovtTime = False                
-#             return resetMovtTime
-# 
-#         rs = self.behaviour.run(self.sequenceLength)
-#         if rs == RunCode.NEXTGEN:#reset for next generation
-#             self.gen += 1            
-#             if self.gen == self.maxGens:#completion of one epoch
-#                 print('gen complete --------------------------------------------')
-#                 #self.createNewActionNodes() 
-#                 self.behaviour.storeExperienceOfFittestRobot()                                     
-#                 #self.storeBestFitness() #TODO: DELETE THIS
-#             self.deleteImaginaryRobots(); self.createImaginaryRobots()  
-#             self.setImaginaryRobotPositionAndAnglesToRealRobot()          
-#             self.behaviour.startNewGen()         
-#             if self.gen == self.maxGens:#completion of one epoch
-#                 self.sequenceLength += 1 
-#                 self.gen = 0                      
-#                 self.behaviour.startNewEpoch()
-#         self.generateInfoString()  
-#         return resetMovtTime
-        
+#     def experienceInfoString(self):
+#         self.infoString = ""
+#         #self.infoStringStuckAndRoamingDir()
+#         self.infoString += ",  x: "+str(round(self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0], self.decimalPrecision))       
 
     def runWorld(self):
         clock = pygame.time.Clock()
@@ -449,9 +380,11 @@ class ImaginationTwin(Worlds):#inherits
             #if self.runState == RunStep.IMAGINARY_EPOCH: self.epochStateImagined.run()
             if self.runState == RunStep.REAL_MOTOR_EXEC: self.moveMotorsStateReal.run()
             if self.runState == RunStep.REAL_GENERATION: self.genStateReal.run()
+            self.generateInfoString()
             
             #---if robot reaches goal, stop
             if self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.finishLine:#reached end of world
+                print('Crossed finish line. Congratulations!')
                 break
             
             #---draw all objects            
@@ -459,11 +392,7 @@ class ImaginationTwin(Worlds):#inherits
             
             #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
             clock.tick(self.fps)
-#             if self.runState == RunCode.STOP: 
-#                 break  
-        
-        #---actions to do after simulation
-        #self.actionNetwork.saveNetwork() 
+
         
     def moveCameraBy(self, dist):
         self.cameraXY += Vec2d(dist, 0)
@@ -509,27 +438,8 @@ class ImaginationTwin(Worlds):#inherits
             robo.saveGenStartPos()
             robo.stopMotion()
         
-    def generateInfoString(self):
-        genFittestRoboString = "-"; currFittestRoboString = "-"
-        if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
-        if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)        
-        self.infoString = ""
-        #self.infoStringStuckAndRoamingDir()
-        self.infoString += ",  SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
-        self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
-        self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
-        self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
-        
-#     def infoStringStuckAndRoamingDir(self):
-#         disp = "-"
-#         if self.robots[self.cons.mainRobotID].brain.stuck > 0: disp = "Y"
-#         self.infoString += "Stuck: "+disp; disp = "-"
-#         if self.robots[self.cons.mainRobotID].brain.roaming > 0: disp = "Y"
-#         self.infoString += "  Roam: "+disp
-#         #---get direction
-#         dirn = self.robots[self.cons.mainRobotID].brain.direction
-#         for d, v in self.robots[self.cons.mainRobotID].brain.ori.items():
-#             if dirn == v: self.infoString += " Dir: "+d 
+    def generateInfoString(self):     
+        self.infoString = self.genStateImagined.getInfoString()         
                 
     def delete(self):
         super(ImaginationTwin, self).delete()   

@@ -28,7 +28,6 @@ class Constants:
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 
-# Note: At least 4 robots are required for Differential Evolution to work
 class RandomBest:#Use randomness instead of a CI algorithm  
     def __init__(self, roboList):
         self.robots = roboList
@@ -52,6 +51,9 @@ class RandomBest:#Use randomness instead of a CI algorithm
                 continue #don't change the motor rates for this
             else:
                 self.robots[i].setRandomLegMotorRates()
+        self.infoString = " Fittest robot: "+ ('-' if self.fittestRobot<0 else str(self.fittestRobot)) +", motor rates: "+str([round(x,1) for x in self.motorRatesOfFittest])
+    def getInfoString(self):
+        return self.infoString
             
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
