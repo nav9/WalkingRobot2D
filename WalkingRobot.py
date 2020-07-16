@@ -90,7 +90,7 @@ class RobotBody:
         self.ori = d.getDirn()
         self.chassisWd = 30 #chassis width 
         self.chassisHt = 20 #chassis height
-        self.chassisMass = 10
+        self.chassisMass = 5
         self.obj_body = None #chassis body
         self.chassis_shape = None #chassis shape 
         self.legs = []
@@ -193,6 +193,9 @@ class RobotBody:
         self.chassis_shape.color = (110, 110, 110)  
         for leg in self.legs: 
             leg.leg_shape.color = (110, 110, 110)
+        
+    def makeRobotStatic(self):
+        self.obj_body.body_type = pymunk.Body.KINEMATIC
         
     def makeRobotDynamic(self):
         self.obj_body.body_type = pymunk.Body.DYNAMIC

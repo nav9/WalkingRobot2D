@@ -256,18 +256,22 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         if not self.isMainRobot:
             self.CI = RandomBest(self.robots)
     def run(self):        
-        if self.currGen == 0 and not self.isMainRobot:#first generation
-            self.CI.reinitialize()        
+        if self.currGen == 0:#first generation
+            for robo in self.robots:
+                robo.makeRobotDynamic()
+            if not self.isMainRobot:
+                self.CI.reinitialize()        
         if self.currGen == self.maxGens:#this is the end of the epoch
             #---do whatever is done at end of a generation
             self.stop()
-            if self.isMainRobot: self.world.runState = RunStep.IMAGINARY_GENERATION 
-            else: self.world.runState = RunStep.REAL_GENERATION
-            #has to exit this function now            
+            for robo in self.robots:
+                robo.makeRobotStatic()            
+            if self.isMainRobot: 
+                self.world.runState = RunStep.IMAGINARY_GENERATION 
+            else: 
+                self.world.runState = RunStep.REAL_GENERATION
+            #has to exit this run() function now            
         else:
-            #----------------------------------------
-            #--- Computation Intelligence Section ---
-            #----------------------------------------
             if not self.isMainRobot:
                 self.CI.run()
             self.start()
@@ -281,11 +285,11 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
             self.currGen += 1                  
     def start(self):
         if not self.isMainRobot:
-            self.world.setImaginaryRobotPositionAndAnglesToRealRobot()        
+            self.world.setImaginaryRobotPositionAndAnglesToRealRobot()
     def stop(self):
         self.currGen = 0
     def getInfoString(self):
-        return "Gen: " + ("-" if self.currGen<=0 else str(self.currGen)) + self.CI.getInfoString()
+        return "Gen: " + ("-" if self.currGen<=0 else str(self.currGen)) + '/' + ("-" if self.currGen<=0 else str(self.maxGens)) + self.CI.getInfoString()
     def getFittestRobot(self):
         return self.CI.getFittestRobot()
 
@@ -448,7 +452,7 @@ class ImaginationTwin(Worlds):#inherits
                 ob.body.position += updateBy   
             for obj in self.imaginaryRobots:
                 obj.updatePosition(updateBy)       
-                         
+    
     def updateColor(self):
         for robo in self.robots:#for the main robot
             robo.setNormalRobotColor()
