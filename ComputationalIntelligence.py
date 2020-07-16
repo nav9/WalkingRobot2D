@@ -33,12 +33,12 @@ class RandomBest:#Use randomness instead of a CI algorithm
         self.robots = roboList
         self.infoString = ""
         self.const = Constants()
-        self.fittestRobot = None
+        self.fittestRobot = self.const.UNDETERMINED
         self.motorRatesOfFittest = []
     def reinitialize(self):
         self.fittestRobot = self.const.UNDETERMINED
     def run(self):        
-        currBestFit = 0
+        currBestFit = 0 if self.fittestRobot == self.const.UNDETERMINED else self.robots[self.fittestRobot].getFitness()
         #---go through all robots to find if there's a new fittest one
         for i in range(0, len(self.robots)):            
             fit = self.robots[i].getFitness()
@@ -51,7 +51,7 @@ class RandomBest:#Use randomness instead of a CI algorithm
                 continue #don't change the motor rates for this
             else:
                 self.robots[i].setRandomLegMotorRates()
-        self.infoString = " Fittest robot: "+ ('-' if self.fittestRobot<0 else str(self.fittestRobot)) +", fitness: "+str(self.robots[self.fittestRobot].getFitness())+", motor rates: "+str([round(x,1) for x in self.motorRatesOfFittest])
+        self.infoString = " Fittest robot: "+ ('-' if self.fittestRobot == self.const.UNDETERMINED else str(self.fittestRobot)) +", fitness: "+str(self.robots[self.fittestRobot].getFitness())+", motor rates: "+str([round(x,1) for x in self.motorRatesOfFittest])
     def getInfoString(self):
         return self.infoString
     def getFittestRobot(self):

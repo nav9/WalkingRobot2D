@@ -52,6 +52,7 @@ class Worlds(object):
         self.cameraXY = Vec2d(self.screenWidth/2, self.screenHeight/2) 
         self.cameraMoveDist = Vec2d(100, 50)
         self.UNDETERMINED = -1
+        self.highFriction = 20
         #self.maxMovtTime = 50 #how often in time the sequences of the robot get executed        
 
     def initialize(self):
@@ -83,19 +84,19 @@ class Worlds(object):
     def createWorldBoundary(self, worldX, worldY, bouColor):
         #---top boundary        
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth/2, worldY+self.worldHeight-self.wallThickness/2)
-        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = bouColor; shape.friction = 1.0
+        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = bouColor; shape.friction = self.highFriction
         self.space.add(shape); self.boundaryObjects.append(shape)
         #---bottom boundary
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth/2, worldY+self.wallThickness/2) 
-        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = bouColor; shape.friction = 1.0
+        shape = pymunk.Poly.create_box(body, (self.worldWidth, self.wallThickness)); shape.color = bouColor; shape.friction = self.highFriction
         self.space.add(shape); self.boundaryObjects.append(shape)
         #---left boundary
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.wallThickness/2, worldY+self.worldHeight/2)
-        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = bouColor; shape.friction = 1.0
+        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = bouColor; shape.friction = self.highFriction
         self.space.add(shape); self.boundaryObjects.append(shape)
         #---right boundary
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(worldX+self.worldWidth-self.wallThickness/2, worldY+self.worldHeight/2)
-        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = bouColor; shape.friction = 1.0
+        shape = pymunk.Poly.create_box(body, (self.wallThickness, self.worldHeight)); shape.color = bouColor; shape.friction = self.highFriction
         self.space.add(shape); self.boundaryObjects.append(shape)
         
     def delete(self):
@@ -212,9 +213,8 @@ class Worlds(object):
 class RunStep:
     IMAGINARY_MOTOR_EXEC = 0
     IMAGINARY_GENERATION = 1
-    #IMAGINARY_EPOCH = 2
-    REAL_MOTOR_EXEC = 3
-    REAL_GENERATION = 4   
+    REAL_MOTOR_EXEC = 2
+    REAL_GENERATION = 3   
     
 class MoveMotors:#to move the motors for time n*dT, where n is the number of frames and dT is the frame duration
     def __init__(self, listOfRobots, parent):
@@ -256,9 +256,8 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         if not self.isMainRobot:
             self.CI = RandomBest(self.robots)
     def run(self):        
-        if self.currGen == 0:#first generation
-            if not self.isMainRobot:
-                self.CI.reinitialize()        
+        if self.currGen == 0 and not self.isMainRobot:#first generation
+            self.CI.reinitialize()        
         if self.currGen == self.maxGens:#this is the end of the epoch
             #---do whatever is done at end of a generation
             self.stop()
@@ -419,7 +418,7 @@ class ImaginationTwin(Worlds):#inherits
             shape.color = colour
         except:
             pass
-        shape.friction = 1.0
+        shape.friction = self.highFriction
         self.space.add(shape)
         self.worldObjects.append(shape)  
         
@@ -629,7 +628,7 @@ class FlatGroundTraining(Worlds):#inherits
          
     def createGround(self, groundX, groundY, grColor):
         body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2)
-        shape = pymunk.Poly.create_box(body, (self.worldWidth-2*self.wallThickness, self.wallThickness)); shape.color = grColor; shape.friction = 1.0
+        shape = pymunk.Poly.create_box(body, (self.worldWidth-2*self.wallThickness, self.wallThickness)); shape.color = grColor; shape.friction = self.highFriction
         self.space.add(shape); self.worldObjects.append(shape)   
                  
     def processRobot(self):
@@ -866,7 +865,7 @@ class ActualImagination(Worlds):#inherits
         
     def createBox(self, x, y, wd, ht, colour):
         body = pymunk.Body(body_type = pymunk.Body.KINEMATIC); body.position = Vec2d(x, y); body.width = wd; body.height = ht
-        shape = pymunk.Poly.create_box(body, (wd, ht)); shape.color = colour; shape.friction = 1.0; 
+        shape = pymunk.Poly.create_box(body, (wd, ht)); shape.color = colour; shape.friction = self.highFriction; 
         self.space.add(shape); self.worldObjects.append(shape)   
         
                                    

@@ -53,7 +53,7 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.leg_shape = pymunk.Poly.create_box(self.obj_body, (self.legWd, self.legHt))            
         self.leg_shape.filter = self.shapeFilter
         self.leg_shape.color = 200, 200, 200  
-        self.leg_shape.friction = 10.0 
+        self.leg_shape.friction = 20.0 
         self.space.add(self.leg_shape, self.obj_body) 
         
     def delete(self): self.space.remove(self.leg_shape, self.obj_body, self.pinJoint, self.motor)
@@ -116,7 +116,7 @@ class RobotBody:
         self.chassis_shape = pymunk.Poly.create_box(self.obj_body, (self.chassisWd, self.chassisHt))
         self.chassis_shape.filter = self.ownBodyShapeFilter
         self.setNormalRobotColor() 
-        self.chassis_shape.friction = 10.0
+        self.chassis_shape.friction = 20.0
         self.space.add(self.chassis_shape, self.obj_body) 
         self.createLegs()
         self.makeRobotDynamic()
