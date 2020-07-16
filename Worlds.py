@@ -287,6 +287,8 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         self.currGen = 0
     def getInfoString(self):
         return "Gen: " + ("-" if self.currGen<=0 else str(self.currGen)) + self.CI.getInfoString()
+    def getFittestRobot(self):
+        return self.CI.getFittestRobot()
 
 
 #The world that has twins above which represent the imagination and run ComputationalIntelligence for a while before the 
@@ -326,24 +328,15 @@ class ImaginationTwin(Worlds):#inherits
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor) 
         self.__addRedFinishLine__()      
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
-        #ubp = self.robots[self.cons.mainRobotID].getUniqueBodyAngles()
         self.cumulativePosUpdateBy = Vec2d(0,0)      
         self.createImaginaryRobots()
         self.behaviour = SimpleDE(self.imaginaryRobots, self.robots)
         #---to run imaginary robots
         self.moveMotorsStateImagined = MoveMotors(self.imaginaryRobots, self)
         self.genStateImagined = Generation(self.imaginaryRobots, self)
-        #self.epochStateImagined = Epoch(self.imaginaryRobots, self)
         #---to run main robot(s)
         self.moveMotorsStateReal = MoveMotors(self.robots, self)
         self.genStateReal = Generation(self.robots, self)        
-        #self.epochStateReal = Epoch(self.robots, self)
-        #---set execution state to start with         
-    
-#     def experienceInfoString(self):
-#         self.infoString = ""
-#         #self.infoStringStuckAndRoamingDir()
-#         self.infoString += ",  x: "+str(round(self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0], self.decimalPrecision))       
 
     def runWorld(self):
         clock = pygame.time.Clock()
@@ -362,22 +355,17 @@ class ImaginationTwin(Worlds):#inherits
                     if event.key == K_RIGHT: self.moveCameraBy(-self.cameraMoveDist[0])
             if not simulating: break #coz break within event for loop won't exit while
             #---camera follow robot
-#             robotMovedByX = self.prevRobotPos[self.cons.xID] - self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID]            
-#             if abs(robotMovedByX) > self.moveCameraAtThisDistDiff:
-#                 self.moveCameraBy(robotMovedByX)
+            #self.__makeCameraFollowRobot__()
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
             for _ in range(self.iterations): #iterations to get a more stable simulation
                 self.space.step(dt)
             #---Update world based on camera focus
             self.updatePosition()
-#             if self.prevFocusRobotID != self.focusRobotID: 
-#                 self.updateColor()
-#                 self.prevFocusRobotID = self.focusRobotID            
+            self.updateColor()
             
             if self.runState == RunStep.IMAGINARY_GENERATION: self.genStateImagined.run()
             if self.runState == RunStep.IMAGINARY_MOTOR_EXEC: self.moveMotorsStateImagined.run()                    
-            #if self.runState == RunStep.IMAGINARY_EPOCH: self.epochStateImagined.run()
             if self.runState == RunStep.REAL_MOTOR_EXEC: self.moveMotorsStateReal.run()
             if self.runState == RunStep.REAL_GENERATION: self.genStateReal.run()
             self.generateInfoString()
@@ -388,15 +376,21 @@ class ImaginationTwin(Worlds):#inherits
                 break
             
             #---draw all objects            
-            self.draw()                
-            
-            #self.focusRobotXY = self.robots[self.focusRobotID].chassis_body.position#use getter
+            self.draw()                            
             clock.tick(self.fps)
 
-        
+    #--------------------------------------------------------------------------------------------
+    #------------------------------------ helper functions --------------------------------------
+    #--------------------------------------------------------------------------------------------
+    
     def moveCameraBy(self, dist):
         self.cameraXY += Vec2d(dist, 0)
-        self.prevRobotPos = self.robots[0].getPosition()        
+        self.prevRobotPos = self.robots[0].getPosition()
+
+    def __makeCameraFollowRobot__(self):
+        robotMovedByX = self.prevRobotPos[self.cons.xID] - self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID]            
+        if abs(robotMovedByX) > self.moveCameraAtThisDistDiff:
+            self.moveCameraBy(robotMovedByX)                            
         
     def __addRedFinishLine__(self):
         self.createBox(self.finishLine, self.wallThickness+142, 2, self.worldHeight-47, self.finishLineColor, self.robotBodyShapeFilter)
@@ -450,25 +444,21 @@ class ImaginationTwin(Worlds):#inherits
     def updatePosition(self):  
         updateBy = super(ImaginationTwin, self).updatePosition()    
         self.cumulativePosUpdateBy += updateBy
-#         if self.behaviour.currentFittestRobot != self.focusRobotID:
-#             self.focusRobotID = self.behaviour.currentFittestRobot
-#         if self.behaviour.unfitThisFullGen[self.focusRobotID]:
-#             self.focusRobotID = self.UNDETERMINED
         if updateBy != (0, 0):
             for ob in self.worldObjects:
                 ob.body.position += updateBy   
             for obj in self.imaginaryRobots:
-                obj.updatePosition(updateBy)                
-                
+                obj.updatePosition(updateBy)       
+                         
     def updateColor(self):
-        for obj in self.robots:
-            obj.setNormalRobotColor()
-#         for obj in self.imaginaryRobots:
-#             if self.focusRobotID >= 0:
-#                 if obj == self.imaginaryRobots[self.focusRobotID]: obj.setFocusRobotColor() 
-#                 else: obj.setImaginaryRobotColor()
-#             else: obj.setImaginaryRobotColor()                 
-    
+        for robo in self.robots:#for the main robot
+            robo.setNormalRobotColor()
+        fittestRobotID = self.genStateImagined.getFittestRobot()
+        fittestRobotID = fittestRobotID if fittestRobotID else -1
+        for i in range(0, len(self.imaginaryRobots)):
+            if i == fittestRobotID: self.imaginaryRobots[i].setFocusRobotColor()
+            else: self.imaginaryRobots[i].setImaginaryRobotColor()
+            
     def createImaginaryRobots(self):      
         for _ in range(0, self.numImaginaryRobots, 1):
             self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset), self.legsCode))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon

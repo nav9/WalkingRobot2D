@@ -327,8 +327,8 @@ class RobotBody:
     def getLegMotorRates(self):
         return self.limbMotorRates                                           
     
-    def setFocusRobotColor(self): self.chassis_shape.color = (190, 0, 0)
-    def setNormalRobotColor(self): self.chassis_shape.color = (170, 170, 170)
+    def setFocusRobotColor(self): self.chassis_shape.color = (140, 0, 0)
+    def setNormalRobotColor(self): self.chassis_shape.color = (0, 0, 220)
                 
     def setImaginaryRobotColor(self):
         self.chassis_shape.color = (110, 110, 110)  

@@ -54,6 +54,8 @@ class RandomBest:#Use randomness instead of a CI algorithm
         self.infoString = " Fittest robot: "+ ('-' if self.fittestRobot<0 else str(self.fittestRobot)) +", motor rates: "+str([round(x,1) for x in self.motorRatesOfFittest])
     def getInfoString(self):
         return self.infoString
+    def getFittestRobot(self):
+        return self.fittestRobot
             
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
