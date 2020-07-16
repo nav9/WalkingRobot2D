@@ -153,7 +153,7 @@ class Worlds(object):
         
     def initializeRobots(self):      
         for _ in range(0, self.numRobots, 1):
-            self.robots.append(RobotBody(self.space, self.robotInitPos, self.legsCode))             
+            self.robots.append(RobotBody(self.space, self.robotInitPos, self.legsCode, self.fps))             
     
     def displayStats(self, displayStr):
         if isinstance(displayStr, str): self.screen.blit(self.font.render(displayStr, 1, THECOLORS["green"]), self.statsPos)
@@ -221,7 +221,7 @@ class MoveMotors:#to move the motors for time n*dT, where n is the number of fra
         self.robots = listOfRobots    
         self.isMainRobot = (len(self.robots) == 1)
         self.world = parent
-        self.maxDuration = 50 #the duration (number of frames) the motor has to move
+        self.maxDuration = 50 #this duration will get overridden at start 
         self.currDuration = 0        
     def run(self):
         if self.currDuration == 0:
@@ -461,7 +461,7 @@ class ImaginationTwin(Worlds):#inherits
             
     def createImaginaryRobots(self):      
         for _ in range(0, self.numImaginaryRobots, 1):
-            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset), self.legsCode))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
+            self.imaginaryRobots.append(RobotBody(self.space, self.robotInitPos + Vec2d(0, self.imaginaryWorldYOffset), self.legsCode, self.fps))#deliberately placing it outside screen since it'll be brought back on screen in robot's position soon
             
     def deleteImaginaryRobots(self):
         for r in self.imaginaryRobots:

@@ -76,13 +76,14 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.space.add(self.pinJoint, self.motor)
         self.motor.rate = 0
         self.motor.max_force = 10000000
-        self.motor.legRateRange = np.linspace(-maxMotorRate, maxMotorRate, motorRateRangePieces)         
+        self.motor.legRateRange = np.linspace(-maxMotorRate, maxMotorRate, motorRateRangePieces)
+        #print('legRateRange: ',str(self.motor.legRateRange), 'len:', len(self.motor.legRateRange))         
         
     def updatePosition(self, offsetXY): self.obj_body.position = self.obj_body.position + offsetXY         
     def getLegAngle(self): return round(math.degrees(self.obj_body.angle) % 360)        
 
 class RobotBody:
-    def __init__(self, pymunkSpace, chassisCenterPoint, legCode):
+    def __init__(self, pymunkSpace, chassisCenterPoint, legCode, maxMotorMovementDuration):#the maxMotorMovementDuration can be changed to any value. It's kept at the fps falue just to keep movements short
         self.legsCode = legCode
         self.ownBodyShapeFilter = pymunk.ShapeFilter(group=1) #to prevent collisions between robot body parts
         d = Directions()  #leg at left or right of chassis
@@ -94,6 +95,9 @@ class RobotBody:
         self.chassis_shape = None #chassis shape 
         self.legs = []
         self.limbMotorRates = []
+        self.motorMovementDuration = 50 #set according to the frames per second, but will be changed by CI classes
+        self.motorMovementDurationRange = np.linspace(0, maxMotorMovementDuration, maxMotorMovementDuration/5)
+        #print('motorMovementDurationRange: ',str(self.motorMovementDurationRange), 'len:', len(self.motorMovementDurationRange))
         self.direction = self.ori['RIGHT'] #direction the robot needs to go in
         #self.currentActionNode = []#node on the action network        
         #self.brain = None       
