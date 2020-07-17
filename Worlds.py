@@ -232,6 +232,7 @@ class MoveMotors:#to move the motors for time n*dT, where n is the number of fra
                 self.stop()                   
                 if self.isMainRobot: self.world.runState = RunStep.REAL_GENERATION
                 else: self.world.runState = RunStep.IMAGINARY_GENERATION
+                #has to exit run() function now. Should not increment currDuration
             else:
                 #---do something 
                 self.currDuration += 1
@@ -254,7 +255,9 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         else: self.maxGens = 5
         self.currGen = 0
         if not self.isMainRobot:
-            self.CI = RandomBest(self.robots)
+            #self.CI = RandomBest(self.robots)
+            self.CI = SimpleDE(self.robots)
+            
     def run(self):        
         if self.currGen == 0:#first generation
             for robo in self.robots:
@@ -333,7 +336,7 @@ class ImaginationTwin(Worlds):#inherits
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
         self.cumulativePosUpdateBy = Vec2d(0,0)      
         self.createImaginaryRobots()
-        self.behaviour = SimpleDE(self.imaginaryRobots, self.robots)
+        #self.behaviour = SimpleDE(self.imaginaryRobots, self.robots)
         #---to run imaginary robots
         self.moveMotorsStateImagined = MoveMotors(self.imaginaryRobots, self)
         self.genStateImagined = Generation(self.imaginaryRobots, self)

@@ -175,6 +175,9 @@ class RobotBody:
         self.limbMotorRates = []
         for leg in self.legs:
             self.limbMotorRates.append(random.choice(leg.motor.legRateRange))
+            
+    def getMinMaxLegRates(self):
+        return min(self.legs[0].motor.legRateRange), max(self.legs[0].motor.legRateRange) 
 
     def setLegMotorRates(self, motorRates):#passing an empty list to this will set rates to zero
         if len(motorRates) == 0: 
