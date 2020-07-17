@@ -2,17 +2,14 @@
 # Created: April 2019
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
+# Note: WalkingRobot is for ImaginationTwin and LearningRobot is for ActualImagination
+
 import math
 import pymunk
 import random
 import numpy as np
-#import networkx as nx
 from ComputationalIntelligence import Constants
-import matplotlib.pyplot as plt
-from pymunk import Vec2d, shapes
-from pygame import _numpysurfarray
-from collections import defaultdict
-from matplotlib.animation import FuncAnimation
+from pymunk import Vec2d
 
 class Directions:
     def __init__(self):

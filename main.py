@@ -15,26 +15,8 @@
 # Now simply run using: 
 # >>> python3 main.py
 
-import time
+#import time
 from Worlds import *
-#from WalkingRobot import ActionNetwork
-#from LearningRobot import LegPartActionNetwork
-
-class TestSimulator(object):
-    def __init__(self, legs):
-        self.worlds = []
-        self.worldOrdinal = -1        
-        #---registration of the worlds to runWorld
-        self.worlds.append(TestWorld(legs))
-       
-    def nextWorld(self):
-        self.worldOrdinal += 1
-        if self.worldOrdinal < len(self.worlds):
-            w = self.worlds[self.worldOrdinal]
-            w.initialize()
-            w.runWorld()   
-            w.delete() 
-        return self.worldOrdinal < len(self.worlds)#any more worlds to process?
     
 class MainSimulator(object):
     def __init__(self, execLen, legs):
@@ -84,6 +66,5 @@ if __name__ == '__main__':
     legs = '--#--'
     sim = MainSimulator(execLen, legs)
     #sim = ImaginationVisualizationSimulator(legs)
-    #sim = TestSimulator(legs)
     while sim.nextWorld():
         pass

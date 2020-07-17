@@ -16,11 +16,10 @@ from pygame.locals import *
 from pygame.locals import *
 from StatesAndSensors import *
 import matplotlib.pyplot as plt
-from pygame.color import THECOLORS
 from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from LearningRobot import LearningRobot
-from ComputationalIntelligence import DifferentialEvolution, SimpleDE, RunCode, RandomBest
+from ComputationalIntelligence import SimpleDE, RunCode, RandomBest
 from pymunk.shape_filter import ShapeFilter
 
 class Worlds(object):
@@ -473,214 +472,7 @@ class ImaginationTwin(Worlds):#inherits
         for r in self.imaginaryRobots:
             r.delete()
         self.imaginaryRobots[:] = []    
-
-                             
-#------------------------------------------------------------------------------------------------
-#------------------------------------------------------------------------------------------------
-#------------------------------------------------------------------------------------------------
-
-class TestWorld(Worlds):#inherits
-    def __init__(self, legsCode):
-        self.legsCode = legsCode
-        super(TestWorld, self).__init__()
-        self.screenWidth = 900
-        self.screenHeight = 620 #keep at at least 350        
-        self.worldWidth = 900 #overriding
-        self.worldHeight = 620 #overriding        
-        self.numRobots = 1 
-        self.statsPos = Vec2d(15,15)
-    
-    def runWorld(self): #may get overridden in child class
-        clock = pygame.time.Clock()
-        simulating = True
-        rot = 0.2
-        r1 = self.robots[0]
-        while simulating:
-            for event in pygame.event.get():
-                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
-                    sys.exit(0)
-                if event.type == KEYDOWN:
-                    if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])
-                    if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
-                    if event.key == K_LEFT: self.cameraXY += Vec2d(self.cameraMoveDist[0], 0)
-                    if event.key == K_RIGHT: self.cameraXY += Vec2d(-self.cameraMoveDist[0], 0) 
-                    if event.key == K_1: r1.legs[0].motor.rate = rot
-                    if event.key == K_2: r1.legs[1].motor.rate = rot
-                    if event.key == K_3: r1.legs[2].motor.rate = rot
-                    if event.key == K_4: r1.legs[3].motor.rate = rot
-                if event.type == KEYUP:
-                    self.robots[0].stopMotion()
-            
-            #---Update physics
-            dt = 1.0 / float(self.fps) / float(self.iterations)
-            for x in range(self.iterations): #iterations to get a more stable simulation
-                self.space.step(dt)
-            #---Update world based on player focus
-            self.updatePosition()
-            self.infoString = []
-            self.infoString.append("Tip1: "+str(r1.legs[0].getTip())+"Tip2: "+str(r1.legs[1].getTip())+"Tip3: "+str(r1.legs[2].getTip())+"Tip3: "+str(r1.legs[3].getTip()))
-            self.infoString.append("Quadrants: "+str(r1.getLegQuadrants()))
-            #---draw all objects
-            self.draw()            
-            clock.tick(self.fps)
-    
-    def initializeRobots(self):#overriding  
-        widthSep = 100; heightSep = 100; counter = 0; sf = pymunk.ShapeFilter(group=1)
-        for i in range(350, self.worldHeight, heightSep):
-            if counter >= self.numRobots: break
-            for j in range(450, self.worldWidth, widthSep):
-                robo = LearningRobot(self.space, Vec2d(j, i), self.legsCode, None)
-                self.robots.append(robo); x = robo.getPosition()[0]; y = robo.getPosition()[1]; w = 100
-                for k in range(0, 100, self.robots[0].quadrantAccuracy):
-                    l1 = pymunk.Segment(self.space.static_body, (x-w, y+k), (x+w, y+k), 0.1)
-                    l2 = pymunk.Segment(self.space.static_body, (x-w, y-k), (x+w, y-k), 0.1)
-                    l3 = pymunk.Segment(self.space.static_body, (x+k, y-w), (x+k, y+w), 0.1)
-                    l4 = pymunk.Segment(self.space.static_body, (x-k, y-w), (x-k, y+w), 0.1)
-                    l1.filter = sf; l2.filter = sf; l3.filter = sf; l4.filter = sf;   
-                    l1.color = (100, 100, 100); l2.color = (100, 100, 100); l3.color = (100, 100, 100); l4.color = (100, 100, 100)
-                    self.space.add(l1, l2, l3, l4)
-                    for leg in robo.legs:
-                        tip = leg.getTip()
-#                         leg.tipBody = pymunk.Body(0, 0); leg.tipBody.position = leg.getTip()
-#                         leg.tipShape = pymunk.Poly.create_box(leg.tipBody, (1,1))          
-                        leg.tip = pymunk.Segment(self.space.static_body, tip, tip+(1,1), 0.1)
-                        leg.tip.color = (0, 255, 0); self.space.add(leg.tip);#self.space.add(leg.tipBody, leg.tipShape)
-                counter += 1 
-                if counter >= self.numRobots: break
-#         for robo in self.robots:
-#             robo.setState(BrainState_RandomMovement(robo))
-
-    def removeBoundary(self):
-        for ob in self.boundaryObjects:
-            self.space.remove(ob)
-        self.boundaryObjects[:] = []#clear the list
-                         
-    def delete(self):
-        super(TestWorld, self).delete()   
-        for ob in self.worldObjects: self.space.remove(ob)
-        self.worldObjects[:] = []  
-        for ob in self.space: self.space.remove(ob)
-     
-    def updatePosition(self):  
-        updateBy = super(TestWorld, self).updatePosition()    
-        if updateBy != (0, 0):
-            for ob in self.worldObjects:
-                ob.body.position += updateBy 
-#         for leg in self.robots[0].legs:
-#             leg.tipBody.position = leg.getTip()
-
-#------------------------------------------------------------------------------------------------
-#------------------------------------------------------------------------------------------------
-#------------------------------------------------------------------------------------------------
-
-class FitnessStore:
-    def __init__(self):
-        self.fitness = [] 
-    def addGenerationsBestFitness(self, fit): #list of highest fitness achieved by any robot in each gen of epoch 
-        self.fitness.append(fit)
-    def showFitnessAcrossIncreasingSeqLengths(self):
-        genLen = len(self.fitness[0]); epochLen = len(self.fitness)
-        self.fig = plt.figure() 
-        self.fig.patch.set_facecolor('white')           
-        plt.clf(); styles = ['-r','-b','-g','-c','-m','-y','-k','--r','--b','--g','--c','--m','--y','--k','-.r','-.b','-.g','-.c','-.m','-.y','-.k',':r',':b',':g',':c',':m',':y',':k']
-        for e in range(0, epochLen, 1):
-            plt.plot(np.linspace(1, genLen, genLen), self.fitness[e], styles[e], label='seqlen: '+str(e))
-        plt.title('Fitness across'+str(epochLen)+' epochs for '+str(genLen)+' gen')
-        plt.xlabel('generations', fontsize=12);plt.ylabel('fitness', fontsize=12)
-        plt.rcParams['axes.facecolor'] = 'white';plt.rcParams['patch.facecolor'] = 'white'
-        self.fig.canvas.toolbar.pack_forget() #remove bottom bar  
-        plt.pause(0.001); plt.legend(loc='best');plt.show()           
-    def showFitnessAcrossEpochs(self):
-        self.fig = plt.figure() 
-        self.fig.patch.set_facecolor('white')           
-        genLen = len(self.fitness[0]); epochLen = len(self.fitness)
-        avg = []
-        for g in range(0, genLen, 1):
-            tot = 0
-            for e in range(0, epochLen, 1):
-                tot += self.fitness[e][g]
-            avg.append(tot / epochLen)
-        plt.clf()
-        plt.plot(np.linspace(1, genLen, genLen), avg)
-        plt.title('Average best fitness across'+str(epochLen)+' epochs for '+str(genLen)+' gen')
-        plt.xlabel('generations', fontsize=12);plt.ylabel('fitness', fontsize=12)
-        self.fig.canvas.toolbar.pack_forget() #remove bottom bar  
-        plt.pause(0.001); plt.show() 
-
-class FlatGroundTraining(Worlds):#inherits
-    def __init__(self, execLen, legsCode):
-        super(FlatGroundTraining, self).__init__()
-        self.legsCode = legsCode
-        self.maxMovtTime = execLen
-        self.screenWidth = 900 #overriding
-        self.screenHeight = 620#320 #overriding
-        self.worldHeight = 600#280 #overriding
-        self.worldWidth = 20000 #overriding
-        self.numRobots = 15 #min 4 robots required for ComputationalIntelligence
-        self.debrisElevFromBottomWall = 10
-        self.groundThickness = 10
-        self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
-        self.debrisElevFromBottomWall = 0 
-        self.fitGraph = FitnessStore()
-        self.genBestFit = []       
-   
-    def initialize(self):
-        super(FlatGroundTraining, self).initialize() 
-        self.createGround(0, self.debrisElevFromBottomWall, self.groundColor)
-        self.behaviour = DifferentialEvolution(self.robots)
-        self.sequenceLength = 1 #Epoch. start seq len. Should start with anything from 1 to maxSequenceLength        
-        self.gen = 0 #start gen. Starts with 0
-        self.maxGens = 50
-        self.maxSequenceLength = 10 #The number of dT times a leg is moved. Total epochs (not related to gen coz seqLen changes)
-         
-    def createGround(self, groundX, groundY, grColor):
-        body = pymunk.Body(body_type=pymunk.Body.KINEMATIC); body.position = Vec2d(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2)
-        shape = pymunk.Poly.create_box(body, (self.worldWidth-2*self.wallThickness, self.wallThickness)); shape.color = grColor; shape.friction = self.highFriction
-        self.space.add(shape); self.worldObjects.append(shape)   
-                 
-    def processRobot(self):
-        if self.sequenceLength > self.maxSequenceLength:#completion of all experience length's
-            self.fitGraph.showFitnessAcrossIncreasingSeqLengths()
-            self.fitGraph.showFitnessAcrossEpochs()
-            return RunCode.STOP
-         
-        runCode = self.behaviour.run(self.sequenceLength)
-        if runCode == RunCode.NEXTGEN:#reset for next generation
-            self.genBestFit.append(self.behaviour.currentBestFitness)
-            self.gen += 1
-            self.deleteRobots(); self.initializeRobots()            
-            self.behaviour.startNewGen()         
-            if self.gen == self.maxGens:#completion of one epoch
-                self.fitGraph.addGenerationsBestFitness(self.genBestFit)
-                self.sequenceLength += 1 
-                self.gen = 0; self.genBestFit = []
-                self.behaviour.startNewEpoch()
-        #---info dashboard
-        genFittestRoboString = "-"; currFittestRoboString = "-"
-        if self.behaviour.epochBestFitness > 0: genFittestRoboString = str(self.behaviour.epochFittestRobot)
-        if self.behaviour.currentFittestRobot > 0: currFittestRoboString = str(self.behaviour.currentFittestRobot)
-        self.infoString = "SeqLen: "+str(self.sequenceLength)+"/"+str(self.maxSequenceLength)+"  Gen: "+str(self.gen)+"/"+str(self.maxGens)
-        self.infoString += "  SeqRep: "+str(self.behaviour.repeatSeq)+"/"+str(self.behaviour.maxSeqRepetitions)
-        self.infoString += "  Seq: "+str(self.behaviour.seqNum+1)+"/"+str(self.sequenceLength)
-        self.infoString += "  Fittest: "+str(currFittestRoboString)+" | "+str(genFittestRoboString)+"  Fit: "+str(self.behaviour.currentBestFitness)+" | "+str(self.behaviour.epochBestFitness)
-         
-    def delete(self):
-        super(FlatGroundTraining, self).delete()   
-        for ob in self.worldObjects:
-            self.space.remove(ob)
-        self.worldObjects[:] = []  
-     
-    def updatePosition(self):  
-        updateBy = super(FlatGroundTraining, self).updatePosition()    
-        if self.behaviour.currentFittestRobot != self.focusRobotID:
-            self.focusRobotID = self.behaviour.currentFittestRobot
-        if self.behaviour.unfitThisFullGen[self.focusRobotID]:
-            self.focusRobotID = self.UNDETERMINED
-        if updateBy != (0, 0):
-            for ob in self.worldObjects:
-                ob.body.position += updateBy     
-                            
-                            
+             
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
@@ -715,7 +507,7 @@ class Heaven(Worlds):#inherits
                 break               
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
-            for x in range(self.iterations): #iterations to get a more stable simulation
+            for _ in range(self.iterations): #iterations to get a more stable simulation
                 self.space.step(dt)
             #---Update world based on player focus
             self.updatePosition()
@@ -776,9 +568,9 @@ class ActualImagination(Worlds):#inherits
         self.worldHeight = 300
         self.sensedObjects = []
         #---create array representation of world for imagination
-        for r in range(0, self.worldWidth, 1):
+        for _ in range(0, self.worldWidth, 1):
             col = []
-            for c in range(0, self.worldHeight, 1):
+            for _ in range(0, self.worldHeight, 1):
                 col.append(0)
             self.sensedObjects.append(col)
         self.imaginaryWorldYOffset = self.worldHeight 
@@ -821,7 +613,7 @@ class ActualImagination(Worlds):#inherits
                 break               
             #---Update physics
             dt = 1.0 / float(self.fps) / float(self.iterations)
-            for x in range(self.iterations): #iterations to get a more stable simulation
+            for _ in range(self.iterations): #iterations to get a more stable simulation
                 self.space.step(dt)
             #---Update world based on player focus
             self.updatePosition()

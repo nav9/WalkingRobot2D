@@ -2,6 +2,8 @@
 # Created: April 2019
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
+# Note: WalkingRobot is for ImaginationTwin and LearningRobot is for ActualImagination
+
 import math
 import pymunk
 import random
@@ -23,60 +25,6 @@ class LegAppendage:
     A = 0
     B = 1
     C = 2
-
-# class LegPartActionNetwork:#stores actions of each movable part as a node
-#     def __init__(self, legs):
-#         self.actionFile = 'actionNetwork_'+legs+'.gpickle'
-#         self.graph = None
-#         self.fig = plt.figure()
-#         self.fig.patch.set_facecolor('black')        
-#         plt.rcParams['axes.facecolor'] = 'black'
-#         plt.rcParams['patch.facecolor'] = 'black'
-#         self.fig.canvas.toolbar.pack_forget()#remove bottom bar        
-#         self.__loadNetwork__()
-#     
-#     def addNode(self, node): self.graph.add_node(tuple(node))        
-#     def addEdge(self, node1, node2, wt, rate, duration):
-#         edge = self.graph.get_edge_data(tuple(node1), tuple(node2))
-#         if not edge == None:
-#             for e in edge:
-#                 if edge[e]['rate']==rate and edge[e]['duration']==duration:
-#                     return #because edge is already present 
-#         self.graph.add_edge(tuple(node1), tuple(node2), weight=wt, rate=rate, duration=duration)    
-#         
-#     def getEdge(self, node1, node2): return self.graph.get_edge_data(tuple(node1), tuple(node2))
-#     
-#     def getSuccessorNodes(self, currNode):#edges going out of currNode
-#         if self.graph.out_degree[tuple(currNode)] == 0: return None 
-#         else: return self.graph.successors(tuple(currNode))
-#     
-#     def displayNetwork(self):    
-#         plt.clf(); posType = nx.spring_layout(self.graph)
-#         nx.draw_networkx(self.graph, pos=posType, arrows=True, with_labels=False, node_size=20, edge_color='green', node_color='green', alpha=0.5, arrowsize=5)
-#         plt.pause(0.001); plt.show(block=False)  
-#         print('Num nodes in action network: '+str(nx.number_of_nodes(self.graph)))     
-#         
-#     def saveNetwork(self):
-#         nx.write_gpickle(self.graph, self.actionFile)
-#         self.actionNetworkProperties()
-#         print('Saved network to '+self.actionFile)
-#     
-#     def __loadNetwork__(self):
-#         try:
-#             self.graph = nx.read_gpickle(self.actionFile)
-#         except:
-#             print('No '+self.actionFile+' found. Creating new action network.')
-#             self.graph = nx.MultiDiGraph()
-#         if not nx.is_empty(self.graph):
-#             #self.displayNetwork()
-#             self.actionNetworkProperties()
-#    
-#     def actionNetworkProperties(self):
-#         print('Action network properties:')
-#         print('Num nodes: '+str(nx.number_of_nodes(self.graph)))
-#         print('Num edges: '+str(nx.number_of_edges(self.graph)))
-#         print('Density: '+str(nx.density(self.graph)))
-#         print('Num self loops: '+str(nx.number_of_selfloops(self.graph)))
     
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
@@ -167,7 +115,7 @@ class LearningRobotLegPart:#This is one leg part. Could be part A that's connect
         return (self.id, self.leftRight, quadrant)         
 #     def getLegAngle(self): return round(math.degrees(self.obj_body.angle)%360)        
 
-class LearningRobot:
+class LearningRobot:#Used in the actual imagination world
     def __init__(self, world, chassisCenterPoint, legCode, showImagination=True): #def __init__(self, world, chassisCenterPoint, legCode, actionNet, showImagination=True):
         self.world = world
         self.legsCode = legCode
@@ -328,64 +276,3 @@ class LearningRobot:
 #                 self.body.actionNetwork.addAction([i, dist, ang, self.body.legs[i].motor.rate]) #HASH: [legID, distance, angle, motorRate]
 #         
 
-    
-                                    
-#     def setExperience(self, expe):       
-#         for leg in self.legs: leg.experience[:] = []
-#         while len(expe) > 0: 
-#             for leg in self.legs: leg.experience.append(expe.pop(0))
-#              
-#     def reinitializeWithRandomValues(self, seqLen):       
-#         for leg in self.legs:
-#             leg.experience[:] = []
-#             for i in range(0, seqLen, 1):
-#                 thisRate = random.choice(leg.motor.legRateRange)
-#                 leg.experience.append(thisRate)                                    
-#     
-#     def getValues(self):
-#         ex = []
-#         for leg in self.legs: ex.extend(leg.experience)
-#         return ex
-#     
-#     def setValuesWithClamping(self, ex, seqLen):
-#         j = 0
-#         for leg in self.legs:
-#             leg.experience[:] = []
-#             for i in range(0, seqLen, 1): 
-#                 v = ex[j]
-#                 if v < leg.motor.legRateRange[0] or v > leg.motor.legRateRange[-1]: v = random.choice(leg.motor.legRateRange)
-#                 leg.experience.append(v)
-#                 j += 1
-#     
-#     def setMotorRateForSequence(self, seqId):
-#         for leg in self.legs: leg.motor.rate = leg.experience[seqId]   
-#     def getUniqueBodyAngles(self):
-#         ang = [self.roundToNearest(self.getBodyAngle())]
-#         for leg in self.legs: ang.append(self.roundToNearest(leg.getLegAngle()))
-#         return ang
-#     
-#     def setBodyPositionAndAngles(self, pos, angles, offset):
-#         p = pos.pop(0)
-#         self.obj_body.position = Vec2d(p[0], p[1]) + offset
-#         self.obj_body.startPosition = Vec2d(p[0], p[1]) + offset
-#         self.obj_body.angle = math.radians(angles.pop(0))
-#         for leg in self.legs:
-#             p = pos.pop(0)
-#             leg.obj_body.position = Vec2d(p[0], p[1]) + offset
-#             leg.obj_body.angle = math.radians(angles.pop(0))
-#         return pos    
-#     
-#     def getPositions(self):
-#         pos = [Vec2d(self.obj_body.position)]
-#         for leg in self.legs: pos.append(Vec2d(leg.obj_body.position))
-#         return pos
-#         
-#     def roundToNearest(self, num):
-#         roundOffPrecision = 5
-#         rem = num % roundOffPrecision
-#         if rem < roundOffPrecision / 2: num = int(num/roundOffPrecision) * roundOffPrecision
-#         else: num = int((num+roundOffPrecision) / roundOffPrecision) * roundOffPrecision
-#         return num
-     
-
-         
