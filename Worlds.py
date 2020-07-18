@@ -70,10 +70,10 @@ class Worlds(object):
         pygame.init()
         pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
         self.screen = pygame.display.set_mode((self.screenWidth, self.screenHeight), self.display_flags)
-        self.font = pygame.font.SysFont("Arial", 14)
+        self.font = pygame.font.SysFont("arial", 16)
         #width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
-        self.draw_options.constraint_color = 150,150,150
+        self.draw_options.constraint_color = 140,140,140
         #self.draw_options.flags = pymunk.SpaceDebugDrawOptions.DRAW_SHAPES
         #self.draw_options.flags |= pymunk.SpaceDebugDrawOptions.DRAW_COLLISION_POINTS
 
@@ -156,10 +156,10 @@ class Worlds(object):
             self.robots.append(RobotBody(self.space, self.robotInitPos, self.legsCode, self.fps))             
     
     def displayStats(self, displayStr):
-        if isinstance(displayStr, str): self.screen.blit(self.font.render(displayStr, 1, THECOLORS["green"]), self.statsPos)
+        if isinstance(displayStr, str): self.screen.blit(self.font.render(displayStr, 1, THECOLORS["gray"]), self.statsPos)
         else:
             sep = 15
-            for i in range(0,len(displayStr),1): self.screen.blit(self.font.render(displayStr[i], 1, THECOLORS["green"]), self.statsPos+(0,i*sep))
+            for i in range(0,len(displayStr),1): self.screen.blit(self.font.render(displayStr[i], 1, THECOLORS["gray"]), self.statsPos+(0,i*sep))
 
     def runWorld(self): #may get overridden in child class
         runState = RunCode.CONTINUE
@@ -292,7 +292,8 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
     def stop(self):
         self.currGen = 0
     def getInfoString(self):
-        return "Gen: " + ("-" if self.currGen<=0 else str(self.currGen)) + '/' + ("-" if self.currGen<=0 else str(self.maxGens)) + self.CI.getInfoString()
+        whichGen = ("-" if self.currGen<=0 else str(self.currGen)) + '/' + ("-" if self.currGen<=0 else str(self.maxGens)) 
+        return "Gen: " + whichGen + self.CI.getInfoString()
     def getFittestRobot(self):
         return self.CI.getFittestRobot()
 

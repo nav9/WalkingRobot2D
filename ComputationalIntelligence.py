@@ -56,7 +56,7 @@ class RandomBest:#Use randomness instead of a CI algorithm
                 continue #don't change the motor rates for this
             else:
                 self.robots[i].setRandomLegMotorRates()
-        self.infoString = " Fittest robot: "+ ('-' if self.fittestRobot == self.const.UNDETERMINED else str(self.fittestRobot)) +", fitness: "+str(self.robots[self.fittestRobot].getFitness())+", motor rates: "+str([round(x,1) for x in self.motorRatesOfFittest])
+        self.infoString = ",  Random,  fittest robot: "+ ('-' if self.fittestRobot == self.const.UNDETERMINED else str(self.fittestRobot)) +",  fitness: "+str(self.robots[self.fittestRobot].getFitness())+",  motor rates: "+str([round(x,1) for x in self.motorRatesOfFittest])
     def getInfoString(self):
         return self.infoString
     def getFittestRobot(self):
@@ -72,11 +72,9 @@ class SimpleDE:#Use randomness instead of a CI algorithm
         self.robots = roboList
         self.infoString = ""
         self.const = Constants()
-        self.fittestRobot = self.const.UNDETERMINED
         #self.motorRatesOfFittest = []
         #---Differential Evolution parameters
         self.masterBeta = 2.0 #beta is real number belongs to [0 -> 2]
-        self.vBeta = 0 #variable beta
         self.vBetaReductionFactor = 1/20
         self.crProba = 0.3 #crossover probability range [0 -> 1]  
         self.vBeta = self.masterBeta  
@@ -85,6 +83,7 @@ class SimpleDE:#Use randomness instead of a CI algorithm
         self.maxLegMotorRate = maxRate
     def reinitialize(self):
         self.fittestRobot = self.const.UNDETERMINED
+        self.vBeta = self.masterBeta
     def run(self):        
         currBestFit = 0 if self.fittestRobot == self.const.UNDETERMINED else self.robots[self.fittestRobot].getFitness()
         #---go through all robots to find if there's a new fittest one
@@ -126,7 +125,7 @@ class SimpleDE:#Use randomness instead of a CI algorithm
         if self.vBeta > self.vBetaReductionFactor: 
             self.vBeta = self.vBeta - self.vBetaReductionFactor    
 
-        self.infoString = " Fittest robot: "+ ('-' if self.fittestRobot == self.const.UNDETERMINED else str(self.fittestRobot)) +", fitness: "+str(self.robots[self.fittestRobot].getFitness())+", motor rates: "+str([round(x,1) for x in self.motorRatesOfFittest])
+        self.infoString = ",  DE,  fittest robot: "+ ('-' if self.fittestRobot == self.const.UNDETERMINED else str(self.fittestRobot)) +",  fitness: "+str(self.robots[self.fittestRobot].getFitness())+",  motor rates: "+str([round(x,1) for x in self.motorRatesOfFittest])
         
     def getInfoString(self):
         return self.infoString
@@ -142,21 +141,21 @@ class SimplePSO:#Use randomness instead of a CI algorithm
     def __init__(self, roboList):
         self.robots = roboList
         self.infoString = ""
-        self.const = Constants()
-        self.fittestRobot = self.const.UNDETERMINED
-        self.motorRatesOfFittest = [0] * len(self.robots) #creates [0,0,...,0] #global best rate
+        self.const = Constants()        
         self.numLegs = len(self.robots[0].legs)
         #---PSO parameters
         self.c1 = 1 #cognitive coefficient
         self.c2 = 2 #social coefficient        
-        self.velocitiesPSO = self.__initializeLocalZeroArrays__(len(self.robots), self.numLegs)
-        self.personalBestRates = self.__initializeLocalZeroArrays__(len(self.robots), self.numLegs)
-        self.pastFitnesses = [0] * len(self.robots) #creates [0,0,...,0] 
+        self.reinitialize() 
         minRate, maxRate = self.robots[0].getMinMaxLegRates()
         self.minLegMotorRate = minRate
         self.maxLegMotorRate = maxRate        
     def reinitialize(self):
         self.fittestRobot = self.const.UNDETERMINED
+        self.motorRatesOfFittest = [0] * len(self.robots) #creates [0,0,...,0] #global best rate
+        self.velocitiesPSO = self.__initializeLocalZeroArrays__(len(self.robots), self.numLegs)
+        self.personalBestRates = self.__initializeLocalZeroArrays__(len(self.robots), self.numLegs)
+        self.pastFitnesses = [0] * len(self.robots) #creates [0,0,...,0]         
     def run(self):        
         currBestFit = 0 if self.fittestRobot == self.const.UNDETERMINED else self.robots[self.fittestRobot].getFitness()
         #---go through all robots to find if there's a new fittest one
@@ -191,7 +190,10 @@ class SimplePSO:#Use randomness instead of a CI algorithm
                     if currentRates[ii] < self.minLegMotorRate: currentRates[ii] = self.minLegMotorRate
                 self.robots[i].setLegMotorRates(currentRates)
 
-        self.infoString = " Fittest robot: "+ ('-' if self.fittestRobot == self.const.UNDETERMINED else str(self.fittestRobot)) +", fitness: "+str(self.robots[self.fittestRobot].getFitness())+", motor rates: "+str([round(x,1) for x in self.motorRatesOfFittest])
+        fittestRobotString = "fittest robot: "+ ('-' if self.fittestRobot == self.const.UNDETERMINED else str(self.fittestRobot))
+        fitnessString = ",  fitness: "+str(self.robots[self.fittestRobot].getFitness())
+        motorRatesString = ",  motor rates: "+str([round(x,1) for x in self.motorRatesOfFittest])
+        self.infoString = ",  PSO,  " + fittestRobotString + fitnessString + motorRatesString
         
     def getInfoString(self):
         return self.infoString
