@@ -301,10 +301,9 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
 #The world that has twins above which represent the imagination and run ComputationalIntelligence for a while before the 
 #original robot takes the best motor rates and runs them
 class ImaginationTwin(Worlds):#inherits
-    def __init__(self, execLen, legCode): #def __init__(self, actions, execLen, legCode):        
+    def __init__(self, legCode): #def __init__(self, actions, execLen, legCode):        
         super(ImaginationTwin, self).__init__()
         self.legsCode = legCode
-        self.maxMovtTime = execLen        
         #self.actionNetwork = actions
         self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        

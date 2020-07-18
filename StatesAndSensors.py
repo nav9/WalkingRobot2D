@@ -52,9 +52,9 @@ class BrainState_RandomMovement:#used by Heaven World
         for leg in self.bodyPart.legs:
             leg.state.run()
             if leg.state.runState == RunState.DONE:
-                newNode = self.bodyPart.getNodeUID(leg)#node after leg has moved for duration at rate
-                if leg.oldNode != newNode:
-                    self.bodyPart.actions.addEdge(leg.oldNode, newNode, 1, leg.currentRate, leg.currentDura)
+#                 newNode = self.bodyPart.getNodeUID(leg)#node after leg has moved for duration at rate
+#                 if leg.oldNode != newNode:
+#                     self.bodyPart.actions.addEdge(leg.oldNode, newNode, 1, leg.currentRate, leg.currentDura)
                 self.setRandomMovementState(leg)
 
 class BrainState_WhatHappensIfITryThis:

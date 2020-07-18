@@ -1,14 +1,12 @@
 # Author: Navin Ipe
-# Created: April 2019
+# Created: April 2019. Remodified: July 2020. See Git history.
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
-
-# Requirements: Python 3.5+ and Linux (These requirements are due to the use of NetworkX which does not have an implementation for Windows and also needs Python 3.5+)
-# Installation instructions: 
-# First install dependent libraries:
+ 
+# Installation instructions:
+# It is recommended that you install Python as part of a virtual environment like pyEnv so that it does not mess up your system's Python. Python3 is preferred.
+# Install dependent libraries:
 # >>> pip3 install pygame
 # >>> pip3 install pymunk
-# >>> pip3 install networkx[all]
-# >>> pip3 install networkx
 # >>> pip3 install numpy
 # >>> pip3 install scipy
 # >>> pip3 install matplotlib
@@ -16,16 +14,24 @@
 # >>> python3 main.py
 
 #import time
-from Worlds import *
+from Worlds import ImaginationTwin, ActualImagination, Heaven
+
+class Run:
+    IMAGINATION_TWIN = 1
+    ACTUAL_IMAGINATION = 2
+    HEAVEN = 3
     
 class MainSimulator(object):
-    def __init__(self, execLen, legs):
-        #self.actions = ActionNetwork(execLen, legs)
+    def __init__(self, legs, simulationToRun):
         self.worlds = []
         self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
-        #self.worlds.append(FlatGroundTraining(execLen, legs))
-        self.worlds.append(ImaginationTwin(execLen, legs)) #self.worlds.append(ImaginationTwin(self.actions, execLen, legs))
+        if simulationToRun == Run.IMAGINATION_TWIN:
+            self.worlds.append(ImaginationTwin(legs)) 
+        if simulationToRun == Run.ACTUAL_IMAGINATION:
+            self.worlds.append(Heaven(legs))
+        if simulationToRun == Run.HEAVEN:
+            self.worlds.append(ActualImagination(legs))             
        
     def nextWorld(self):
         self.worldOrdinal += 1
@@ -37,34 +43,19 @@ class MainSimulator(object):
             w.delete()    
         return self.worldOrdinal < len(self.worlds)#any more worlds to process?
 
-class ImaginationVisualizationSimulator(object):
-    def __init__(self, legs):
-        #self.actions = LegPartActionNetwork(legs)
-        self.worlds = []
-        self.worldOrdinal = -1        
-        #---registration of the worlds to runWorld
-        #self.worlds.append(Heaven(legs, self.actions))
-        self.worlds.append(ActualImagination(legs)) #self.worlds.append(ActualImagination(legs, self.actions))
-       
-    def nextWorld(self):
-        self.worldOrdinal += 1
-        if self.worldOrdinal < len(self.worlds):
-            w = self.worlds[self.worldOrdinal]
-            w.initialize()
-            w.runWorld()    
-            w.delete()
-        return self.worldOrdinal < len(self.worlds)#any more worlds to process?
-    
 #-----------------------------------------------
 #-----------------------------------------------
 #             PROGRAM STARTS HERE
 #-----------------------------------------------
 #-----------------------------------------------
 if __name__ == '__main__':
-    execLen = 10 #how many times motor gets executed per second. For simulator1
     # - Single leg part, -- Two leg parts, # Chassis
-    legs = '--#--'
-    sim = MainSimulator(execLen, legs)
-    #sim = ImaginationVisualizationSimulator(legs)
+    legs = '--#--'    
+    sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
+    #sim = MainSimulator(legs, Run.ACTUAL_IMAGINATION)
+    #sim = MainSimulator(legs, Run.HEAVEN)
+    
     while sim.nextWorld():
         pass
+
+
