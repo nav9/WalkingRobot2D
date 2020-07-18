@@ -21,6 +21,7 @@ from WalkingRobot import Constants
 from LearningRobot import LearningRobot
 from ComputationalIntelligence import SimpleDE, RunCode, RandomBest, SimplePSO
 from pymunk.shape_filter import ShapeFilter
+from absl.app import run
 
 class Worlds(object):
     def __init__(self):
@@ -215,6 +216,17 @@ class RunStep:
     REAL_MOTOR_EXEC = 2
     REAL_GENERATION = 3   
     
+class RunCI:
+    RANDOM = 1
+    DE = 2
+    PSO = 3
+    
+class Terrains:
+    FLAT_GROUND = 1
+    RANDOM_BOXES_LOW_DENSE = 2
+    RANDOM_SPHERES_LOW_DENSE = 3
+     
+    
 class MoveMotors:#to move the motors for time n*dT, where n is the number of frames and dT is the frame duration
     def __init__(self, listOfRobots, parent):
         self.robots = listOfRobots    
@@ -254,10 +266,10 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         else: self.maxGens = 5
         self.currGen = 0
         if not self.isMainRobot:
-            #self.CI = RandomBest(self.robots)
-            #self.CI = SimpleDE(self.robots)
-            self.CI = SimplePSO(self.robots)
-            
+            if self.world.runWhichCI == RunCI.RANDOM: self.CI = RandomBest(self.robots)
+            if self.world.runWhichCI == RunCI.DE: self.CI = SimpleDE(self.robots)
+            if self.world.runWhichCI == RunCI.PSO: self.CI = SimplePSO(self.robots)
+
     def run(self):        
         if self.currGen == 0:#first generation
             for robo in self.robots:
@@ -301,10 +313,11 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
 #The world that has twins above which represent the imagination and run ComputationalIntelligence for a while before the 
 #original robot takes the best motor rates and runs them
 class ImaginationTwin(Worlds):#inherits
-    def __init__(self, legCode): #def __init__(self, actions, execLen, legCode):        
+    def __init__(self, legCode, runWhichCI, runWhichTerrain): #def __init__(self, actions, execLen, legCode):        
         super(ImaginationTwin, self).__init__()
         self.legsCode = legCode
-        #self.actionNetwork = actions
+        self.runWhichCI = runWhichCI
+        self.runWhichTerrain = runWhichTerrain
         self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 900 #overriding
@@ -336,7 +349,6 @@ class ImaginationTwin(Worlds):#inherits
         self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
         self.cumulativePosUpdateBy = Vec2d(0,0)      
         self.createImaginaryRobots()
-        #self.behaviour = SimpleDE(self.imaginaryRobots, self.robots)
         #---to run imaginary robots
         self.moveMotorsStateImagined = MoveMotors(self.imaginaryRobots, self)
         self.genStateImagined = Generation(self.imaginaryRobots, self)

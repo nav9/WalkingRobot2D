@@ -14,10 +14,12 @@
 # >>> python3 main.py
 
 #import time
+from Worlds import RunCI, Terrains
 from Worlds import ImaginationTwin, ActualImagination, Heaven
 
 class Run:
-    IMAGINATION_TWIN = 1
+    IMAGINATION_TWIN = 0
+    IMAGINATION_TWIN_TRIAL_RUNS = 1
     ACTUAL_IMAGINATION = 2
     HEAVEN = 3
     
@@ -26,13 +28,15 @@ class MainSimulator(object):
         self.worlds = []
         self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
-        if simulationToRun == Run.IMAGINATION_TWIN:
-            self.worlds.append(ImaginationTwin(legs)) 
-        if simulationToRun == Run.ACTUAL_IMAGINATION:
-            self.worlds.append(Heaven(legs))
-        if simulationToRun == Run.HEAVEN:
-            self.worlds.append(ActualImagination(legs))             
-       
+        if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND))
+        if simulationToRun == Run.IMAGINATION_TWIN_TRIAL_RUNS:
+            numTrials = 10
+            for _ in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND))
+            for _ in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE))
+            for _ in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE))
+        if simulationToRun == Run.ACTUAL_IMAGINATION: self.worlds.append(Heaven(legs))
+        if simulationToRun == Run.HEAVEN: self.worlds.append(ActualImagination(legs))             
+    
     def nextWorld(self):
         self.worldOrdinal += 1
         if self.worldOrdinal < len(self.worlds):
