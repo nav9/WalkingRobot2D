@@ -73,7 +73,7 @@ class SimpleDE:#Use randomness instead of a CI algorithm
         self.infoString = ""
         self.const = Constants()
         self.fittestRobot = self.const.UNDETERMINED
-        self.motorRatesOfFittest = []
+        #self.motorRatesOfFittest = []
         #---Differential Evolution parameters
         self.masterBeta = 2.0 #beta is real number belongs to [0 -> 2]
         self.vBeta = 0 #variable beta
@@ -83,7 +83,6 @@ class SimpleDE:#Use randomness instead of a CI algorithm
         minRate, maxRate = self.robots[0].getMinMaxLegRates()
         self.minLegMotorRate = minRate
         self.maxLegMotorRate = maxRate
-        print('min:', self.minLegMotorRate,' max:', self.maxLegMotorRate)
     def reinitialize(self):
         self.fittestRobot = self.const.UNDETERMINED
     def run(self):        
@@ -95,7 +94,7 @@ class SimpleDE:#Use randomness instead of a CI algorithm
             fit = self.robots[i].getFitness()
             if fit > currBestFit:#if greater than zero
                 self.fittestRobot = i #if there was a previous generation's fittest, that won't get replaced, but everything gets reset when generations are reinitialized
-                self.motorRatesOfFittest = self.robots[i].getLegMotorRates()
+                #self.motorRatesOfFittest = self.robots[i].getLegMotorRates()
                 currBestFit = fit        
         #---mutations for each robot
         for i in range(0, len(self.robots)):
@@ -133,4 +132,75 @@ class SimpleDE:#Use randomness instead of a CI algorithm
         return self.infoString
     def getFittestRobot(self):
         return self.fittestRobot
-            
+    
+    
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+#Particle Swarm Optimization
+class SimplePSO:#Use randomness instead of a CI algorithm  
+    def __init__(self, roboList):
+        self.robots = roboList
+        self.infoString = ""
+        self.const = Constants()
+        self.fittestRobot = self.const.UNDETERMINED
+        self.motorRatesOfFittest = [0] * len(self.robots) #creates [0,0,...,0] #global best rate
+        self.numLegs = len(self.robots[0].legs)
+        #---PSO parameters
+        self.c1 = 1 #cognitive coefficient
+        self.c2 = 2 #social coefficient        
+        self.velocitiesPSO = self.__initializeLocalZeroArrays__(len(self.robots), self.numLegs)
+        self.personalBestRates = self.__initializeLocalZeroArrays__(len(self.robots), self.numLegs)
+        self.pastFitnesses = [0] * len(self.robots) #creates [0,0,...,0] 
+        minRate, maxRate = self.robots[0].getMinMaxLegRates()
+        self.minLegMotorRate = minRate
+        self.maxLegMotorRate = maxRate        
+    def reinitialize(self):
+        self.fittestRobot = self.const.UNDETERMINED
+    def run(self):        
+        currBestFit = 0 if self.fittestRobot == self.const.UNDETERMINED else self.robots[self.fittestRobot].getFitness()
+        #---go through all robots to find if there's a new fittest one
+        robotIndexes = []
+        for i in range(len(self.robots)):
+            robotIndexes.append(i)            
+            fit = self.robots[i].getFitness()
+            if fit > currBestFit:#if greater than zero
+                self.fittestRobot = i #if there was a previous generation's fittest, that won't get replaced, but everything gets reset when generations are reinitialized
+                self.motorRatesOfFittest = self.robots[i].getLegMotorRates()
+                currBestFit = fit        
+        #---mutations for each robot
+        for i in range(len(self.robots)):
+            if self.fittestRobot == i: continue #don't change the motor rates for fittest
+            else:
+                currentRates = self.robots[i].getLegMotorRates()
+                currentFitness = self.robots[i].getFitness()
+                if currentFitness > self.pastFitnesses[i]:
+                    self.pastFitnesses[i] = currentFitness
+                    self.personalBestRates[i] = currentRates
+                for ii in range(self.numLegs):
+                    cognitive = self.c1 * random.random() * (self.personalBestRates[i][ii] - currentRates[ii])
+                    social = self.c2 * random.random() * (self.motorRatesOfFittest[ii] - currentRates[ii])                    
+                    self.velocitiesPSO[i][ii] = self.velocitiesPSO[i][ii] + cognitive + social
+                    #---velocity clamping
+                    if self.velocitiesPSO[i][ii] > self.maxLegMotorRate / 2: self.velocitiesPSO[i][ii] = self.maxLegMotorRate / 2
+                    if self.velocitiesPSO[i][ii] < self.minLegMotorRate / 2: self.velocitiesPSO[i][ii] = self.minLegMotorRate / 2
+                    #---rate update 
+                    currentRates[ii] = currentRates[ii] + self.velocitiesPSO[i][ii]
+                    #---rate clamping
+                    if currentRates[ii] > self.maxLegMotorRate: currentRates[ii] = self.maxLegMotorRate
+                    if currentRates[ii] < self.minLegMotorRate: currentRates[ii] = self.minLegMotorRate
+                self.robots[i].setLegMotorRates(currentRates)
+
+        self.infoString = " Fittest robot: "+ ('-' if self.fittestRobot == self.const.UNDETERMINED else str(self.fittestRobot)) +", fitness: "+str(self.robots[self.fittestRobot].getFitness())+", motor rates: "+str([round(x,1) for x in self.motorRatesOfFittest])
+        
+    def getInfoString(self):
+        return self.infoString
+    def getFittestRobot(self):
+        return self.fittestRobot
+    def __initializeLocalZeroArrays__(self, numRobots, numLegs):
+        a = []
+        for _ in range(numRobots):
+            a.append([0] * numLegs) #[0,0,0,0] 
+        return a
+    
+    
