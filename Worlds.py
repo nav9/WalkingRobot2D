@@ -21,7 +21,6 @@ from WalkingRobot import Constants
 from LearningRobot import LearningRobot
 from ComputationalIntelligence import SimpleDE, RunCode, RandomBest, SimplePSO
 from pymunk.shape_filter import ShapeFilter
-from absl.app import run
 
 class Worlds(object):
     def __init__(self):
@@ -225,7 +224,8 @@ class Terrains:
     FLAT_GROUND = 1
     RANDOM_BOXES_LOW_DENSE = 2
     RANDOM_SPHERES_LOW_DENSE = 3
-     
+    STAIRCASE_SINGLE_RIGHTWARD = 4
+    STEEPLE_CHASE = 5
     
 class MoveMotors:#to move the motors for time n*dT, where n is the number of frames and dT is the frame duration
     def __init__(self, listOfRobots, parent):
@@ -341,8 +341,13 @@ class ImaginationTwin(Worlds):#inherits
         
     def initialize(self):
         super(ImaginationTwin, self).initialize()
-        self.createDebris(self.debrisElevFromBottomWall, self.imaginationColor)
-        self.copyDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)       
+        if self.runWhichTerrain == Terrains.FLAT_GROUND: pass #no need to create any obstacles
+        if self.runWhichTerrain == Terrains.RANDOM_BOXES_LOW_DENSE: self.createTerrainRandomBoxesLowDense()
+        if self.runWhichTerrain == Terrains.RANDOM_SPHERES_LOW_DENSE: self.createSpheresTerrain()
+        if self.runWhichTerrain == Terrains.STAIRCASE_SINGLE_RIGHTWARD: self.createStaircaseTerrain()
+        if self.runWhichTerrain == Terrains.STEEPLE_CHASE: self.createTerrainBoxesInRowWithSpaces()
+
+        #self.replicateDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)       
         self.createGround(0, self.debrisElevFromBottomWall, self.groundColor)
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor) 
         self.__addFinishLine__()      
@@ -416,14 +421,38 @@ class ImaginationTwin(Worlds):#inherits
     def createGround(self, groundX, groundY, grColor):
         self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor, None)
 
-    def createDebris(self, groundY, debColor):
+    def createTerrainRandomBoxesLowDense(self):
         debrisStartCol = 200; debrisMaxHt = 50; boxMinSz = 5; boxMaxSz = 30
         for _ in range(0, 100, 1):
-            self.createBox(random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness), random.randint(groundY+2*self.wallThickness, groundY+debrisMaxHt), random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), debColor, None)        
-        
-    def copyDebrisToImaginary(self, groundY, debColor):
-        for i in range(0, len(self.worldObjects), 1):
-            self.createBox(self.worldObjects[i].body.position[0], groundY+self.worldObjects[i].body.position[1], self.worldObjects[i].body.width, self.worldObjects[i].body.height, debColor, None)        
+            col = random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness)
+            row = random.randint(self.debrisElevFromBottomWall+2*self.wallThickness, self.debrisElevFromBottomWall+debrisMaxHt)
+            wid = random.randint(boxMinSz, boxMaxSz)
+            ht = random.randint(boxMinSz, boxMaxSz)
+            self.createBox(col, row, wid, ht, self.imaginationColor, None)
+            self.createBox(col, self.imaginaryWorldYOffset+row, wid, ht, self.imaginationColor, None)
+            
+    def createTerrainBoxesInRowWithSpaces(self):
+        w = 20; h = 45
+        for col in range(200, self.finishLine, w*3):
+            self.createBox(col, h, w, h, self.imaginationColor, None)
+            self.createBox(col, self.imaginaryWorldYOffset+h, w, h, self.imaginationColor, None)  
+    
+    def createStaircaseTerrain(self): 
+        w = 20; h = 10; row = 35
+        for col in range(300, self.finishLine, w):
+            self.createBox(col, row, w, h, self.imaginationColor, None)
+            self.createBox(col, row+self.imaginaryWorldYOffset, w, h, self.imaginationColor, None) 
+            row = row + 8           
+    
+    def createSpheresTerrain(self):
+        numSpheres = 50; minSize = 5; maxSize = 6
+        minX = 250; maxX = 950
+        yPosition = 40
+        for _ in range(numSpheres):
+            xPos = random.randint(minX, maxX)
+            sphereSize = random.randint(minSize, maxSize)
+            self.createSphere(xPos, yPosition, sphereSize)
+            self.createSphere(xPos, self.imaginaryWorldYOffset+yPosition, sphereSize)                                                         
     
     def createBox(self, x, y, wd, ht, colour, fil):
         body = pymunk.Body(body_type = pymunk.Body.KINEMATIC)
@@ -440,6 +469,19 @@ class ImaginationTwin(Worlds):#inherits
         shape.friction = self.highFriction
         self.space.add(shape)
         self.worldObjects.append(shape)  
+        
+    def createSphere(self, xPosition, yPosition, radius):
+        sphereMass = 5000
+        sphereInertia = pymunk.moment_for_circle(sphereMass, 0, radius, (0, 0))
+        body = pymunk.Body(sphereMass, sphereInertia)
+        #x = random.randint(115, 350)
+        body.position = xPosition, yPosition
+        shape = pymunk.Circle(body, radius, (0, 0))
+        #shape.elasticity = 0.95
+        shape.friction = 20
+        shape.color = self.imaginationColor
+        self.space.add(body, shape)
+        self.worldObjects.append(shape)          
         
     def setImaginaryRobotPositionAndAnglesToRealRobot(self):
         pos = self.robots[self.cons.mainRobotID].getPositions()
@@ -486,84 +528,6 @@ class ImaginationTwin(Worlds):#inherits
             r.delete()
         self.imaginaryRobots[:] = []    
              
-#------------------------------------------------------------------------------------------------
-#------------------------------------------------------------------------------------------------
-#------------------------------------------------------------------------------------------------
-class BoxesInRowWithSpacesTerrain:
-    def __init__(self, parent, world):
-        self.parent = parent
-        self.world = world
-        
-    def createTerrain(self, groundX, elevFromBottom, worldWidth, wallThickness, screenWidth):
-        self.world.robotInitPos = Vec2d(200, 50) 
-        self.parent.createBox(groundX+worldWidth/2, elevFromBottom+wallThickness+wallThickness/2, worldWidth-2*wallThickness, wallThickness, self.parent.terrainColor, None)
-        self.world.initializeRobots()
-        w = 20; h = 10
-        for col in range(300, self.parent.finishLine, w*3):
-            self.parent.createBox(col, 35, w, h, self.parent.obstacleColor, None) 
-            
-    def getMetrics(self, metricsInst):
-        #metricsInst.results[RLT.TERRAIN_NAME] = self.__class__.__name__
-        return metricsInst           
-
-class StepsTerrain:
-    def __init__(self, parent, world):
-        self.parent = parent
-        self.world = world
-        
-    def createTerrain(self, groundX, elevFromBottom, worldWidth, wallThickness, screenWidth):
-        self.world.robotInitPos = Vec2d(200, 50) 
-        self.parent.createBox(groundX+worldWidth/2, elevFromBottom+wallThickness+wallThickness/2, worldWidth-2*wallThickness, wallThickness, self.parent.terrainColor, None)
-        self.world.initializeRobots()
-        w = 20; h = 10; row = 35
-        for col in range(300, self.parent.finishLine, w):
-            self.parent.createBox(col, row, w, h, self.parent.obstacleColor, None) 
-            row = row + 5
-            
-    def getMetrics(self, metricsInst):
-        #metricsInst.results[RLT.TERRAIN_NAME] = self.__class__.__name__
-        return metricsInst  
-    
-class SpheresTerrain:
-    def __init__(self, parent, world):
-        self.parent = parent
-        self.world = world
-        
-    def createTerrain(self, groundX, elevFromBottom, worldWidth, wallThickness, screenWidth):
-        self.world.robotInitPos = Vec2d(200, 50) 
-        self.parent.createBox(groundX+worldWidth/2, elevFromBottom+wallThickness+wallThickness/2, worldWidth-2*wallThickness, wallThickness, self.parent.terrainColor, None)
-        self.world.initializeRobots()
-        numSpheres = 50; minSize = 5; maxSize = 6
-        minX = 250; maxX = 950
-        yPosition = 40
-        for _ in range(numSpheres):
-            xPos = random.randint(minX, maxX)
-            sphereSize = minSize #random.randint(minSize, maxSize)
-            self.parent.createSphere(xPos, yPosition, sphereSize) 
-            
-    def getMetrics(self, metricsInst):
-        #metricsInst.results[RLT.TERRAIN_NAME] = self.__class__.__name__
-        return metricsInst      
-
-class MinMaxTerrain:
-    def __init__(self, parent, world):
-        self.parent = parent
-        self.world = world
-        
-    def createTerrain(self, groundX, elevFromBottom, worldWidth, wallThickness, screenWidth):
-        self.world.robotInitPos = Vec2d(worldWidth/2, 250) 
-        self.parent.createBox(groundX+worldWidth/2, elevFromBottom+wallThickness+wallThickness/2, worldWidth-2*wallThickness, wallThickness, self.parent.terrainColor, None)
-        self.world.initializeRobots()
-        self.createDebris(elevFromBottom)
-        
-    def createDebris(self, groundY):
-        debrisStartCol = self.world.wallThickness * 2
-        debrisMaxHt = 200
-        boxMinSz = 5
-        boxMaxSz = 30
-        for _ in range(0, 100, 1):
-            self.parent.createBox(random.randint(debrisStartCol, self.world.worldWidth-2*self.world.wallThickness), random.randint(groundY+2*self.world.wallThickness, groundY+debrisMaxHt), random.randint(boxMinSz, boxMaxSz), random.randint(boxMinSz, boxMaxSz), self.parent.debrisColor, None)        
-         
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
