@@ -762,21 +762,27 @@ class TestWorld(Worlds):#inherits
     def runWorld(self): #may get overridden in child class
         #---first test scenario
         self.testAccuracyOfRepeatedSimilarMotorRates()
-                
+    
     def testAccuracyOfRepeatedSimilarMotorRates(self):
         originalPosition = self.robots[0].getPositions()
-        originalAngles = self.robots[0].getUniqueBodyAngles()   
-        self.robots[0].setLegMotorRates([1,1,1,1])     
-        self.runSimulationWithMotorRates()
-        self.resetRobotToOriginalPosition(originalPosition, originalAngles)
+        originalAngles = self.robots[0].getUniqueBodyAngles()
+        numTrials = 10
+        numSimulations = 10
+        durationToRun = 50
+        for trial in range(numTrials):   
+            print('Trial ', trial, "------------------------")
+            rates = self.robots[0].setRandomLegMotorRates()
+            for sim in range(numSimulations):  
+                self.robots[0].setLegMotorRates(rates)   
+                self.runSimulation(durationToRun)
+                self.resetRobotToOriginalPosition(originalPosition, originalAngles)
+                self.infoString = "Trial:" + str(trial) + ", RateRep: " + str(sim) + ", MotorRates: " + str([round(x, 2) for x in rates])
         
-        
-    def runSimulationWithMotorRates(self):
+    def runSimulation(self, durationToRun):
         clock = pygame.time.Clock()
         simulating = True
-        self.robots[0].startMotion()
-        numberOfIterationsToRun = 50
-        iter = 0
+        self.robots[0].startMotion()        
+        counter = 0
         while simulating:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
@@ -792,14 +798,15 @@ class TestWorld(Worlds):#inherits
             #---draw all objects
             self.draw()            
             clock.tick(self.fps)
-            iter = iter + 1
-            if iter >= numberOfIterationsToRun: break
-        #---actions to do after simulation        
+            counter = counter + 1
+            if counter >= durationToRun: break
+        #---actions to do after simulation  
+        print(self.robots[0].getPosition())      
     
     def initializeRobots(self):#overriding  
         widthSep = 100; heightSep = 100; counter = 0
         motorMovtDuration = 50
-        for i in range(100, self.worldHeight, heightSep):
+        for i in range(50, self.worldHeight, heightSep):
             if counter >= self.numRobots: break
             for j in range(200, self.worldWidth, widthSep):
                 self.robots.append(RobotBody(self.space, Vec2d(j, i), self.legsCode, motorMovtDuration)) #self.robots.append(LearningRobot(self, Vec2d(j, i), self.legsCode, self.actions))
@@ -809,11 +816,11 @@ class TestWorld(Worlds):#inherits
             robo.makeRobotDynamic()
             
     def resetRobotToOriginalPosition(self, pos, angles):
-        for robo in self.imaginaryRobots:
+        for robo in self.robots:
             p = pos[:]; a = angles[:] #copying values instead of references
             robo.setBodyPositionAndAngles(p, a, Vec2d(0, 0))
             robo.saveGenStartPos()
-            robo.stopMotion()            
+            robo.stopMotion()          
 
     def removeBoundary(self):
         for ob in self.boundaryObjects:
