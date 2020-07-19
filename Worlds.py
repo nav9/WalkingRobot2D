@@ -19,8 +19,9 @@ import matplotlib.pyplot as plt
 from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from LearningRobot import LearningRobot
-from ComputationalIntelligence import SimpleDE, RunCode, RandomBest, SimplePSO
 from pymunk.shape_filter import ShapeFilter
+from Analytics import TestAnalyticsForMovementAccuracy
+from ComputationalIntelligence import SimpleDE, RunCode, RandomBest, SimplePSO
 
 class Worlds(object):
     def __init__(self):
@@ -726,6 +727,10 @@ class ActualImagination(Worlds):#inherits
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
+class TestRunMode:
+    CREATING_RESULTS = 1
+    VIEWING_RESULTS = 2
+    
 class TestWorld(Worlds):#inherits
     def __init__(self, legCode):    #def __init__(self, legCode, actionNet):        
         super(TestWorld, self).__init__()
@@ -749,7 +754,8 @@ class TestWorld(Worlds):#inherits
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
         self.imaginationColor = 100,100,100
         self.imaginationGroundColor = 100,150,100
-        self.cons = Constants()       
+        self.cons = Constants()     
+        self.runMode = TestRunMode.CREATING_RESULTS
         
     def initialize(self):
         super(TestWorld, self).initialize()       
@@ -764,20 +770,34 @@ class TestWorld(Worlds):#inherits
         self.testAccuracyOfRepeatedSimilarMotorRates()
     
     def testAccuracyOfRepeatedSimilarMotorRates(self):
+        analytics = TestAnalyticsForMovementAccuracy()
+        folderToStoreResults = "testAccuracyOfRepeatedSimilarMotorRates/"
         originalPosition = self.robots[0].getPositions()
         originalAngles = self.robots[0].getUniqueBodyAngles()
-        numTrials = 10
-        numSimulations = 10
+        numTrials = 20
+        numSimulations = 100
         durationToRun = 50
-        for trial in range(numTrials):   
-            print('Trial ', trial, "------------------------")
-            rates = self.robots[0].setRandomLegMotorRates()
-            for sim in range(numSimulations):  
-                self.robots[0].setLegMotorRates(rates)   
-                self.runSimulation(durationToRun)
-                self.resetRobotToOriginalPosition(originalPosition, originalAngles)
-                self.infoString = "Trial:" + str(trial) + ", RateRep: " + str(sim) + ", MotorRates: " + str([round(x, 2) for x in rates])
-        
+        if self.runMode == TestRunMode.CREATING_RESULTS:
+            for trial in range(numTrials):                   
+                rates = self.robots[0].setRandomLegMotorRates()                
+                print('Trial ', trial, "----------. Rates:", rates)
+                ratesAndPositions = []
+                ratesAndPositions.append(rates)
+                for sim in range(numSimulations): 
+                    filename = analytics.generateFilename(trial, sim)
+                    self.robots[0].setLegMotorRates(rates)   
+                    self.runSimulation(durationToRun)
+                    position = self.robots[0].getPosition()
+                    ratesAndPositions.append([position[0], position[1]])
+                    self.resetRobotToOriginalPosition(originalPosition, originalAngles)
+                    self.infoString = "Trial:" + str(trial) + "/" + str(numTrials) + ", RateRep: " + str(sim) + "/" + str(numSimulations) + ", MotorRates: " + str([round(x, 2) for x in rates])
+                analytics.saveDataToDisk(folderToStoreResults, filename, ratesAndPositions)
+        if self.runMode == TestRunMode.VIEWING_RESULTS:
+            for trial in range(numTrials):   
+                pass
+                for sim in range(numSimulations):  
+                    pass            
+    
     def runSimulation(self, durationToRun):
         clock = pygame.time.Clock()
         simulating = True
@@ -801,7 +821,7 @@ class TestWorld(Worlds):#inherits
             counter = counter + 1
             if counter >= durationToRun: break
         #---actions to do after simulation  
-        print(self.robots[0].getPosition())      
+     
     
     def initializeRobots(self):#overriding  
         widthSep = 100; heightSep = 100; counter = 0
