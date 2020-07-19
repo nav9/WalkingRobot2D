@@ -445,8 +445,8 @@ class ImaginationTwin(Worlds):#inherits
             row = row + 8           
     
     def createSpheresTerrain(self):
-        numSpheres = 50; minSize = 5; maxSize = 6
-        minX = 250; maxX = 950
+        numSpheres = 50; minSize = 5; maxSize = 20
+        minX = 200; maxX = self.finishLine
         yPosition = 40
         for _ in range(numSpheres):
             xPos = random.randint(minX, maxX)
@@ -473,7 +473,7 @@ class ImaginationTwin(Worlds):#inherits
     def createSphere(self, xPosition, yPosition, radius):
         sphereMass = 5000
         sphereInertia = pymunk.moment_for_circle(sphereMass, 0, radius, (0, 0))
-        body = pymunk.Body(sphereMass, sphereInertia)
+        body = pymunk.Body(sphereMass, sphereInertia, body_type=pymunk.Body.KINEMATIC)
         #x = random.randint(115, 350)
         body.position = xPosition, yPosition
         shape = pymunk.Circle(body, radius, (0, 0))
@@ -723,3 +723,125 @@ class ActualImagination(Worlds):#inherits
         self.space.add(shape); self.worldObjects.append(shape)   
         
                                    
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+class TestWorld(Worlds):#inherits
+    def __init__(self, legCode):    #def __init__(self, legCode, actionNet):        
+        super(TestWorld, self).__init__()
+        self.legsCode = legCode      
+        self.screenWidth = 900
+        self.screenHeight = 620 #keep at at least 350        
+        self.worldWidth = 3000 #overriding
+        self.worldHeight = 300
+        self.sensedObjects = []
+        #---create array representation of world for imagination
+        for _ in range(0, self.worldWidth, 1):
+            col = []
+            for _ in range(0, self.worldHeight, 1):
+                col.append(0)
+            self.sensedObjects.append(col)
+        self.imaginaryWorldYOffset = self.worldHeight 
+        self.numRobots = 1
+        self.imaginaryRobots = []
+        self.debrisElevFromBottomWall = 0
+        self.groundThickness = 10
+        self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
+        self.imaginationColor = 100,100,100
+        self.imaginationGroundColor = 100,150,100
+        self.cons = Constants()       
+        
+    def initialize(self):
+        super(TestWorld, self).initialize()       
+        self.createGround(0, self.debrisElevFromBottomWall, self.groundColor)
+        self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
+        #self.createFewObjects()       
+        #self.createGround(0, self.imaginaryWorldYOffset, self.imaginationGroundColor)        
+        self.cumulativePosUpdateBy = Vec2d(0,0)            
+    
+    def runWorld(self): #may get overridden in child class
+        #---first test scenario
+        self.testAccuracyOfRepeatedSimilarMotorRates()
+                
+    def testAccuracyOfRepeatedSimilarMotorRates(self):
+        originalPosition = self.robots[0].getPositions()
+        originalAngles = self.robots[0].getUniqueBodyAngles()   
+        self.robots[0].setLegMotorRates([1,1,1,1])     
+        self.runSimulationWithMotorRates()
+        self.resetRobotToOriginalPosition(originalPosition, originalAngles)
+        
+        
+    def runSimulationWithMotorRates(self):
+        clock = pygame.time.Clock()
+        simulating = True
+        self.robots[0].startMotion()
+        numberOfIterationsToRun = 50
+        iter = 0
+        while simulating:
+            for event in pygame.event.get():
+                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
+                    simulating = False #sys.exit(0)                   
+            if not simulating: 
+                break               
+            #---Update physics
+            dt = 1.0 / float(self.fps) / float(self.iterations)
+            for _ in range(self.iterations): #iterations to get a more stable simulation
+                self.space.step(dt)
+            #---Update world based on player focus
+            self.updatePosition()
+            #---draw all objects
+            self.draw()            
+            clock.tick(self.fps)
+            iter = iter + 1
+            if iter >= numberOfIterationsToRun: break
+        #---actions to do after simulation        
+    
+    def initializeRobots(self):#overriding  
+        widthSep = 100; heightSep = 100; counter = 0
+        motorMovtDuration = 50
+        for i in range(100, self.worldHeight, heightSep):
+            if counter >= self.numRobots: break
+            for j in range(200, self.worldWidth, widthSep):
+                self.robots.append(RobotBody(self.space, Vec2d(j, i), self.legsCode, motorMovtDuration)) #self.robots.append(LearningRobot(self, Vec2d(j, i), self.legsCode, self.actions))
+                counter += 1 
+                if counter >= self.numRobots: break
+        for robo in self.robots:
+            robo.makeRobotDynamic()
+            
+    def resetRobotToOriginalPosition(self, pos, angles):
+        for robo in self.imaginaryRobots:
+            p = pos[:]; a = angles[:] #copying values instead of references
+            robo.setBodyPositionAndAngles(p, a, Vec2d(0, 0))
+            robo.saveGenStartPos()
+            robo.stopMotion()            
+
+    def removeBoundary(self):
+        for ob in self.boundaryObjects:
+            self.space.remove(ob)
+        self.boundaryObjects[:] = []#clear the list
+                         
+    def delete(self):
+        super(TestWorld, self).delete()   
+        for ob in self.worldObjects:
+            self.space.remove(ob)
+        self.worldObjects[:] = []  
+     
+    def updatePosition(self):  
+        updateBy = super(TestWorld, self).updatePosition()    
+        if updateBy != (0, 0):
+            for ob in self.worldObjects:
+                ob.body.position += updateBy     
+                                    
+    def createGround(self, groundX, groundY, grColor):
+        self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor)
+
+#     def createFewObjects(self):
+#         w = 10; h = 40
+#         self.createBox(50, 50, w, w, self.groundColor)
+#         self.createBox(120, 60, w, h, self.groundColor)
+        
+    def createBox(self, x, y, wd, ht, colour):
+        body = pymunk.Body(body_type = pymunk.Body.KINEMATIC); body.position = Vec2d(x, y); body.width = wd; body.height = ht
+        shape = pymunk.Poly.create_box(body, (wd, ht)); shape.color = colour; shape.friction = self.highFriction; 
+        self.space.add(shape); self.worldObjects.append(shape)   
+        
