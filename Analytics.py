@@ -55,7 +55,7 @@ class TestAnalyticsForMovementAccuracy:
         self.file = FileOperations()
 
     def saveDataToDisk(self, directory, filename, data):
-        self.file.savePickleFile(directory, filename, data) #saves [[motorRates], [x1,y1], [x2,y2]...] or [numTouch1, numTouch2,...4]        
+        self.file.savePickleFile(directory, filename, data) #saves [[motorRates], [x1,y1], [x2,y2]...] or [numTouch1, numTouch2,...4] or [[angle1, angle2...angleNumFrames], [],...]        
     
     def loadRatesPositionDataFromDisk(self, directory, filename):
         ratesAndPositions = self.file.loadPickleFile(directory, filename) #returns [[motorRates], [x1,y1], [x2,y2]...]
@@ -67,20 +67,37 @@ class TestAnalyticsForMovementAccuracy:
         return rate, positions
 
     def loadSurfaceTouchDataFromDisk(self, directory, filename):
-        return self.file.loadPickleFile(directory, filename) #returns [numTouch1, numTouch2,...4]        
+        return self.file.loadPickleFile(directory, filename) #returns [numTouch1, numTouch2,...4]     
+
+    def loadChassisAngleDataFromDisk(self, directory, filename):
+        return self.file.loadPickleFile(directory, filename) #[[angle1, angle2...angleNumFrames], [],...]    
     
     def generateRatesPositionFilename(self, trial):
         return "TestMotorRateAccuracy_trial"+str(trial)
     
     def generateSurfaceTouchFilename(self, trial):
         return "SurfaceTouch_trial"+str(trial)
+        
+    def generateChassisAngleFilename(self, trial):
+        return "ChassisAngle_trial"+str(trial)    
 
-    def plot(self, xPositions, yPositions, rates, surfaceTouch):#arrays will be in the form xPositions = [[1,2,5], [5,7,2,2,5], [7,2,5]...]. Same for yPositions
-        self.boxPlots(xPositions, yPositions)
-        self.groupedBarsMotorRates(rates)
-        self.groupedBarsSurfaceTouch(surfaceTouch)        
+    def plot(self, directory, xPositions, yPositions, rates, surfaceTouch, chassisAngles):#arrays will be in the form xPositions = [[1,2,5], [5,7,2,2,5], [7,2,5]...]. Same for yPositions
+        self.boxPlots(directory,xPositions, yPositions)
+        self.groupedBarsMotorRates(directory,rates)
+        self.groupedBarsSurfaceTouch(directory,surfaceTouch)        
+        self.multipleLines(directory,chassisAngles)     
+        
+    def multipleLines(self, directory, angles):#[[[a1,a2,...aNumFrames], [], []], []]. angles[0] gives all simulation run's for first trial = [[a1,a2,...aNumFrames], [], []], []]        
+        x = np.arange(len(angles[0][0]))#range from 0 to numFrames
+        for t in range(len(angles)):
+            plt.figure()
+            for sim in angles[t]:
+                plt.plot(x, sim)
+            plt.xlabel('angle'); plt.ylabel('frames')
+            plt.savefig(directory+'chassisAngles_trial'+str(t)+'.png')
+            plt.show(block=False)            
     
-    def groupedBarsMotorRates(self, rates):
+    def groupedBarsMotorRates(self, directory, rates):
         print(rates)
         labels = []#the groups
         m1=[]; m2=[]; m3=[]; m4=[]
@@ -116,10 +133,10 @@ class TestAnalyticsForMovementAccuracy:
         ax.legend(bbox_to_anchor=(0.,1.02,1.,.102),loc='lower left', mode="expand", ncol=4)    
         #autolabel(rects1); autolabel(rects2); autolabel(rects3); autolabel(rects4)    
         fig.tight_layout()
-        plt.savefig('motorRatesForXYAccuracies.png')
+        plt.savefig(directory+'motorRatesForXYAccuracies.png')
         plt.show(block=False)     
         
-    def groupedBarsSurfaceTouch(self, surfaceTouch):
+    def groupedBarsSurfaceTouch(self, directory, surfaceTouch):
         print(surfaceTouch)
         labels = []#the groups
         leg1=[]; leg2=[]; leg3=[]; leg4=[]
@@ -155,10 +172,10 @@ class TestAnalyticsForMovementAccuracy:
         ax.legend(bbox_to_anchor=(0.,1.02,1.,.102),loc='lower left', mode="expand", ncol=4)    
         #autolabel(rects1); autolabel(rects2); autolabel(rects3); autolabel(rects4)    
         fig.tight_layout()
-        plt.savefig('surfaceTouchesForXYAccuracies.png')
+        plt.savefig(directory+'surfaceTouchesForXYAccuracies.png')
         plt.show(block=False)         
     
-    def boxPlots(self, xPositions, yPositions):
+    def boxPlots(self, directory, xPositions, yPositions):
         ticks = []
         for i in range(len(xPositions)):
             ticks.append(str(i+1))
@@ -177,7 +194,7 @@ class TestAnalyticsForMovementAccuracy:
         
         plt.xticks(rangeAndOffsetsForLeftBox , ticks)
         plt.tight_layout()
-        plt.savefig('xyAccuracies.png')
+        plt.savefig(directory+'xyAccuracies.png')
         plt.show(block=False) 
         
     def changeBoxColor(self, boxPlot, c):
