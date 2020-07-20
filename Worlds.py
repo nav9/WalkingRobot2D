@@ -756,11 +756,12 @@ class TestWorld(Worlds):#inherits
         self.imaginationColor = 100,100,100
         self.imaginationGroundColor = 100,150,100
         self.cons = Constants()   
+        self.numberOfTimesLegsTouchSurface = None
         #------------------------------------------
         #--- run mode
         #------------------------------------------  
-        #self.runMode = TestRunMode.CREATING_RESULTS
-        self.runMode = TestRunMode.VIEWING_RESULTS
+        self.runMode = TestRunMode.CREATING_RESULTS
+        #self.runMode = TestRunMode.VIEWING_RESULTS
         
     def initialize(self):
         super(TestWorld, self).initialize()       
@@ -782,13 +783,14 @@ class TestWorld(Worlds):#inherits
         numTrials = 20
         numSimulations = 100
         durationToRun = 50
-        if self.runMode == TestRunMode.CREATING_RESULTS:
+        if self.runMode == TestRunMode.CREATING_RESULTS:#run the trials
             for trial in range(numTrials):                   
                 rates = self.robots[0].setRandomLegMotorRates()                
                 print('Trial ', trial, "----------. Motor rates:", rates)
                 ratesAndPositions = []
                 ratesAndPositions.append(rates)
-                filename = analytics.generateFilename(trial)
+                filename1 = analytics.generateRatesPositionFilename(trial)
+                filename2 = analytics.generateSurfaceTouchFilename(trial)
                 for sim in range(numSimulations):                     
                     self.robots[0].setLegMotorRates(rates)   
                     self.runSimulation(durationToRun)
@@ -796,25 +798,30 @@ class TestWorld(Worlds):#inherits
                     ratesAndPositions.append([position[0], position[1]])
                     self.resetRobotToOriginalPosition(originalPosition, originalAngles)
                     self.infoString = "Trial:" + str(trial) + "/" + str(numTrials) + ", RateRep: " + str(sim) + "/" + str(numSimulations) + ", MotorRates: " + str([round(x, 2) for x in rates])
-                analytics.saveDataToDisk(folderToStoreResults, filename, ratesAndPositions)
-        if self.runMode == TestRunMode.VIEWING_RESULTS:
+                analytics.saveDataToDisk(folderToStoreResults, filename1, ratesAndPositions)
+                analytics.saveDataToDisk(folderToStoreResults, filename2, self.numberOfTimesLegsTouchSurface)
+        
+        if self.runMode == TestRunMode.VIEWING_RESULTS:#view analytics of saved results 
             xPositions = []; yPositions = []; rates = []
             for trial in range(numTrials):   
-                filename = analytics.generateFilename(trial)
+                filename1 = analytics.generateRatesPositionFilename(trial)
+                filename2 = analytics.generateSurfaceTouchFilename(trial)
                 dx = []; dy = []
-                rate, positions = analytics.loadDataFromDisk(folderToStoreResults, filename)
+                rate, positions = analytics.loadRatesPositionDataFromDisk(folderToStoreResults, filename1)
+                surfaceTouch = analytics.loadSurfaceTouchDataFromDisk(folderToStoreResults, filename2)
                 for pos in positions:
                     dx.append(pos[0]); dy.append(pos[1])
                 rates.append(rate)
-                print('Rate: ', rate)
+                print('Rate: ', rate, ' surfaceTouch:', surfaceTouch)                
                 print('dx: mean=', statistics.mean(dx), ", variance=", statistics.variance(dx), "std deviation=", statistics.stdev(dx))
                 xPositions.append(dx); yPositions.append(dy)
-            analytics.plot(xPositions, yPositions, rates)
+            analytics.plot(xPositions, yPositions, rates, surfaceTouch)
     
     def runSimulation(self, durationToRun):
         clock = pygame.time.Clock()
         simulating = True
-        self.robots[0].startMotion()        
+        self.robots[0].startMotion()    
+        self.numberOfTimesLegsTouchSurface = [0] * len(self.robots[0].legs)            
         counter = 0
         while simulating:
             for event in pygame.event.get():
@@ -828,6 +835,10 @@ class TestWorld(Worlds):#inherits
                 self.space.step(dt)
             #---Update world based on player focus
             self.updatePosition()
+            #---get tactile info
+            tactileInputPerLeg = self.robots[0].getNumContactPointsForEachLeg()
+            for i in range(len(tactileInputPerLeg)):
+                self.numberOfTimesLegsTouchSurface[i] = self.numberOfTimesLegsTouchSurface[i] + tactileInputPerLeg[i]  
             #---draw all objects
             self.draw()            
             clock.tick(self.fps)

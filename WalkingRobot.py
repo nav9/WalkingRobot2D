@@ -19,7 +19,7 @@ class Directions:
         return self.dirn        
 
 class LegPart:#This is one leg part. Could be part A that's connected to the chassis or part B that's connected to part A
-    def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight):
+    def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight, limbOrder):
         self.space = pymunk.Space()
         d = Directions()
         self.ori = d.getDirn()
@@ -33,7 +33,9 @@ class LegPart:#This is one leg part. Could be part A that's connected to the cha
         self.obj_body = None
         self.leg_shape = None
         self.pinJoint = None
-        self.motor = None        
+        self.motor = None   
+        self.id = limbOrder #A, B or C
+        self.attr = None #L1_A etc. Gets assigned in the function that creates legs
         self.space = pymunkSpace
         self.shapeFilter = ownBodyShapeFilter
         self.prevBodyXY = prevBody.position
@@ -102,7 +104,7 @@ class RobotBody:
         self.quadrantAccuracy = 3 #pixels
         self.__createBody__(chassisCenterPoint)
         self.decimalPrecision = 2
-        self.const = Constants()        
+        self.const = Constants()              
         
     def __createBody__(self, chassisXY):
         self.obj_body = pymunk.Body(self.chassisMass, pymunk.moment_for_box(self.chassisMass, (self.chassisWd, self.chassisHt)))
@@ -118,34 +120,41 @@ class RobotBody:
         self.createLegs()
         self.makeRobotDynamic()
         self.robotGenStartPos = Vec2d(self.getPosition()[0], self.getPosition()[1])
+        self.tactileSensor = Tactile_Sensor()  
+        for leg in self.legs:
+            self.tactileSensor.add(leg)#adding the chassis also will affect the analytics code which needs points of contact, so check that part     
     
     def createLegs(self):
         s = self.legsCode.split("#")
         lt = s[0]; rt = s[1]; rt = rt[::-1]#reverse string rt
         for s in lt.split(","):#number of left legs
             if len(s) == 1:
-                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['LEFT']); self.legs.append(leftLegA)
+                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['LEFT'], 'A'); self.legs.append(leftLegA)
             if len(s) == 2:
-                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['LEFT']); self.legs.append(leftLegA)
-                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.obj_body, leftLegA.legWd, self.ori['LEFT']); self.legs.append(leftLegB)                
+                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['LEFT'], 'A'); self.legs.append(leftLegA)
+                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.obj_body, leftLegA.legWd, self.ori['LEFT'], 'B'); self.legs.append(leftLegB)                
             if len(s) == 3:
-                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['LEFT']); self.legs.append(leftLegA)
-                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.obj_body, leftLegA.legWd, self.ori['LEFT']); self.legs.append(leftLegB)                 
-                leftLegC = LegPart(self.space, self.ownBodyShapeFilter, leftLegB.obj_body, leftLegB.legWd, self.ori['LEFT']); self.legs.append(leftLegC)                                 
+                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['LEFT'], 'A'); self.legs.append(leftLegA)
+                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.obj_body, leftLegA.legWd, self.ori['LEFT'], 'B'); self.legs.append(leftLegB)                 
+                leftLegC = LegPart(self.space, self.ownBodyShapeFilter, leftLegB.obj_body, leftLegB.legWd, self.ori['LEFT'], 'C'); self.legs.append(leftLegC)                                 
         for s in rt.split(","):#number of right legs
             if len(s) == 1:
-                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['RIGHT']); self.legs.append(rightLegA)
+                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['RIGHT'], 'A'); self.legs.append(rightLegA)
             if len(s) == 2:
-                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['RIGHT']); self.legs.append(rightLegA) 
-                rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.obj_body, rightLegA.legWd, self.ori['RIGHT']); self.legs.append(rightLegB)                        
+                rightLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['RIGHT'], 'A'); self.legs.append(rightLegA) 
+                rightLegB = LegPart(self.space, self.ownBodyShapeFilter, rightLegA.obj_body, rightLegA.legWd, self.ori['RIGHT'], 'B'); self.legs.append(rightLegB)                        
             if len(s) == 3:
-                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['RIGHT']); self.legs.append(leftLegA)
-                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.obj_body, leftLegA.legWd, self.ori['RIGHT']); self.legs.append(leftLegB)                 
-                leftLegC = LegPart(self.space, self.ownBodyShapeFilter, leftLegB.obj_body, leftLegB.legWd, self.ori['RIGHT']); self.legs.append(leftLegC)                                 
+                leftLegA = LegPart(self.space, self.ownBodyShapeFilter, self.obj_body, self.chassisWd, self.ori['RIGHT'], 'A'); self.legs.append(leftLegA)
+                leftLegB = LegPart(self.space, self.ownBodyShapeFilter, leftLegA.obj_body, leftLegA.legWd, self.ori['RIGHT'], 'B'); self.legs.append(leftLegB)                 
+                leftLegC = LegPart(self.space, self.ownBodyShapeFilter, leftLegB.obj_body, leftLegB.legWd, self.ori['RIGHT'], 'C'); self.legs.append(leftLegC)
+        i = 0
+        for limb in self.legs:
+            limb.attr = 'L' + str(i) + '_' + str(limb.id) #L1_A, L0_C ... etc.
+            i = i + 1                                                 
         #---limbMotorRates will store rates for DE to use, but the starting and stopping of motors can be done independent of the values in limbMotorRates
         self.setRandomLegMotorRates()
         self.stopMotion()
-                        
+    
     def __getFitnessBasedOnDirection__(self, prevPos, currPos):
         if self.robotDirection(prevPos, currPos) == self.direction: 
             return round(abs(math.sqrt((currPos[0]-prevPos[0])**2 + (currPos[1]-prevPos[1])**2)), self.decimalPrecision)
@@ -266,4 +275,31 @@ class RobotBody:
         tPt[0] = tPt[0] * math.cos(theta) - tPt[1] * math.sin(theta) #rotate
         tPt[1] = tPt[0] * math.sin(theta) + tPt[1] * math.cos(theta) #rotate
         return (math.floor(tPt[0]/self.quadrantAccuracy), math.floor(tPt[1]/self.quadrantAccuracy))
+        
+    def getNumContactPointsForEachLeg(self):#can use this only if tactile sensor is added
+        return self.tactileSensor.get() #[numContactPointsForLeg1, numContactPointsForLeg2, numContactPointsForLeg3, numContactPointsForLeg4]
+
+class Tactile_Sensor:
+    def __init__(self):
+        self.bodyParts = [] 
+        self.partPointMap = {}
+        self.points = None
+        self.bodyPartBeingArbited = None
+    
+    def add(self, bodyPart):
+        self.bodyParts.append(bodyPart)
+    
+    def get(self):
+        self.partPointMap = {}
+        for bodyPart in self.bodyParts: self.partPointMap[bodyPart.attr] = 0       
+        self.points = []
+        for bodyPart in self.bodyParts:            
+            self.bodyPartBeingArbited = bodyPart
+            bodyPart.obj_body.each_arbiter(self.__contactInfo__) #invoke callback fn
+            self.points.append(self.partPointMap[self.bodyPartBeingArbited.attr])
+        return self.points
+    
+    def __contactInfo__(self, arbiter): #callback fn    
+        self.partPointMap[self.bodyPartBeingArbited.attr] = self.partPointMap[self.bodyPartBeingArbited.attr] + len(arbiter.contact_point_set.points)
+        
         
