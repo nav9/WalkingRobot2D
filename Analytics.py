@@ -69,7 +69,48 @@ class TestAnalyticsForMovementAccuracy:
     def generateFilename(self, trial):
         return "TestMotorRateAccuracy_trial"+str(trial)
 
-    def plot(self, xPositions, yPositions):#arrays will be in the form xPositions = [[1,2,5], [5,7,2,2,5], [7,2,5]...]. Same for yPositions
+    def plot(self, xPositions, yPositions, rates):#arrays will be in the form xPositions = [[1,2,5], [5,7,2,2,5], [7,2,5]...]. Same for yPositions
+        #self.boxPlots(xPositions, yPositions)
+        self.groupedBars(rates)        
+        
+    def groupedBars(self, rates):
+        labels = []#the groups
+        m1=[]; m2=[]; m3=[]; m4=[]
+        i = 1
+        for rateList in rates:
+            m1.append(abs(rateList[0]))
+            m2.append(abs(rateList[1]))
+            m3.append(abs(rateList[2]))
+            m4.append(abs(rateList[3]))
+            labels.append(str(i)); i = i + 1
+        x = np.arange(len(labels)) #label locations
+        width = 0.08 #bar width
+        fig, ax = plt.subplots()
+        rects1 = ax.bar(x - 2*width+(width/2), m1, width, label='motor1')
+        rects2 = ax.bar(x - width/2, m2, width, label='motor2')
+        rects3 = ax.bar(x + width/2, m3, width, label='motor3')
+        rects4 = ax.bar(x + 2*width-(width/2), m4, width, label='motor4')    
+        #function within function
+#         def autolabel(rects):
+#             """Attach a text label above each bar in *rects*, displaying its height."""
+#             for rect in rects:
+#                 height = rect.get_height()
+#                 ax.annotate('{}'.format(int(height)),
+#                             xy=(rect.get_x() + rect.get_width() / 2, height),
+#                             xytext=(0, 0),  # 3 points vertical offset
+#                             textcoords="offset points",
+#                             ha='center', va='bottom')
+        ax.set_ylabel('Fitness')
+        #ax.set_title('Avg. best fitness in 2500 gen.')
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels)
+        #ax.legend(bbox_to_anchor=(1.05,1),loc='upper left')
+        ax.legend(bbox_to_anchor=(0.,1.02,1.,.102),loc='lower left', mode="expand", ncol=4)    
+        #autolabel(rects1); autolabel(rects2); autolabel(rects3); autolabel(rects4)    
+        fig.tight_layout()
+        plt.show()     
+                
+    def boxPlots(self, xPositions, yPositions):
         ticks = []
         for i in range(len(xPositions)):
             ticks.append(str(i+1))
@@ -79,7 +120,7 @@ class TestAnalyticsForMovementAccuracy:
         rangeAndOffsetsForRightBox = np.array(range(len(yPositions))) * 2 + 1.7
         bpLeft = plt.boxplot(xPositions, positions = rangeAndOffsetsForLeftBox + 0.4, sym="")
         bpRight = plt.boxplot(yPositions, positions = rangeAndOffsetsForRightBox + 0.4, sym="")
-        red = '#D7191C'; black = '#000000'; blue = '#2C7BB6' #http://colorbrewer2.org/ 
+        red = '#D7191C'; black = '#000000'; #blue = '#2C7BB6' #http://colorbrewer2.org/ 
         self.changeBoxColor(bpLeft, red)
         self.changeBoxColor(bpRight, black)
         

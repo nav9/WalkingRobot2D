@@ -785,7 +785,7 @@ class TestWorld(Worlds):#inherits
         if self.runMode == TestRunMode.CREATING_RESULTS:
             for trial in range(numTrials):                   
                 rates = self.robots[0].setRandomLegMotorRates()                
-                print('Trial ', trial, "----------. Rates:", rates)
+                print('Trial ', trial, "----------. Motor rates:", rates)
                 ratesAndPositions = []
                 ratesAndPositions.append(rates)
                 filename = analytics.generateFilename(trial)
@@ -798,17 +798,18 @@ class TestWorld(Worlds):#inherits
                     self.infoString = "Trial:" + str(trial) + "/" + str(numTrials) + ", RateRep: " + str(sim) + "/" + str(numSimulations) + ", MotorRates: " + str([round(x, 2) for x in rates])
                 analytics.saveDataToDisk(folderToStoreResults, filename, ratesAndPositions)
         if self.runMode == TestRunMode.VIEWING_RESULTS:
-            xPositions = []; yPositions = []
+            xPositions = []; yPositions = []; rates = []
             for trial in range(numTrials):   
                 filename = analytics.generateFilename(trial)
                 dx = []; dy = []
                 rate, positions = analytics.loadDataFromDisk(folderToStoreResults, filename)
                 for pos in positions:
                     dx.append(pos[0]); dy.append(pos[1])
+                rates.append(rate)
                 print('Rate: ', rate)
                 print('dx: mean=', statistics.mean(dx), ", variance=", statistics.variance(dx), "std deviation=", statistics.stdev(dx))
                 xPositions.append(dx); yPositions.append(dy)
-            analytics.plot(xPositions, yPositions)
+            analytics.plot(xPositions, yPositions, rates)
     
     def runSimulation(self, durationToRun):
         clock = pygame.time.Clock()
