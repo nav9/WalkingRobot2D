@@ -89,13 +89,14 @@ class TestAnalyticsForMovementAccuracy:
         
     def multipleLines(self, directory, angles):#[[[a1,a2,...aNumFrames], [], []], []]. angles[0] gives all simulation run's for first trial = [[a1,a2,...aNumFrames], [], []], []]        
         x = np.arange(len(angles[0][0]))#range from 0 to numFrames
-        for t in range(len(angles)):
+        for t in range(len(angles)):#number of trials
             plt.figure()
-            for sim in angles[t]:
+            for sim in angles[t]:#number of frames in each simulation
                 plt.plot(x, sim)
-            plt.xlabel('angle'); plt.ylabel('frames')
+            plt.xlabel('chassis angle'); plt.ylabel('frames'); plt.title('Trial'+str(t+1)+'. '+str(len(angles[t]))+' simulations', loc='center', pad=None)
             plt.savefig(directory+'chassisAngles_trial'+str(t)+'.png')
-            plt.show(block=False)            
+            plt.show(block=False)  
+            #break          
     
     def groupedBarsMotorRates(self, directory, rates):
         print(rates)

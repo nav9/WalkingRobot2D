@@ -761,8 +761,8 @@ class TestWorld(Worlds):#inherits
         #------------------------------------------
         #--- run mode
         #------------------------------------------  
-        self.runMode = TestRunMode.CREATING_RESULTS
-        #self.runMode = TestRunMode.VIEWING_RESULTS
+        #self.runMode = TestRunMode.CREATING_RESULTS
+        self.runMode = TestRunMode.VIEWING_RESULTS
         
     def initialize(self):
         super(TestWorld, self).initialize()       
