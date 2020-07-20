@@ -75,19 +75,20 @@ class TestAnalyticsForMovementAccuracy:
             ticks.append(str(i+1))
         plt.figure()
         
-        bpl = plt.boxplot(xPositions, positions=np.array(range(len(xPositions))) * 2.0, sym='', widths=0.6)
-        bpr = plt.boxplot(yPositions, positions=np.array(range(len(yPositions))) * 2.0, sym='', widths=0.6)
-        self.changeBoxColor(bpl, '#D7191C') # colors are from http://colorbrewer2.org/
-        self.changeBoxColor(bpr, '#2C7BB6')
+        rangeAndOffsetsForLeftBox = np.array(range(len(xPositions))) * 2+ 1
+        rangeAndOffsetsForRightBox = np.array(range(len(yPositions))) * 2 + 1.7
+        bpLeft = plt.boxplot(xPositions, positions = rangeAndOffsetsForLeftBox + 0.4, sym="")
+        bpRight = plt.boxplot(yPositions, positions = rangeAndOffsetsForRightBox + 0.4, sym="")
+        red = '#D7191C'; black = '#000000'; blue = '#2C7BB6' #http://colorbrewer2.org/ 
+        self.changeBoxColor(bpLeft, red)
+        self.changeBoxColor(bpRight, black)
         
-        # draw temporary red and blue lines and use them to create a legend
-        plt.plot([], c='#D7191C', label='dx')
-        plt.plot([], c='#2C7BB6', label='dy')
+        plt.plot([], c=red, label='dx'); plt.plot([], c=black, label='dy') #temporary lines for legend
         plt.legend()
         
-        #plt.xticks(range(0, len(ticks) * 2, 2), ticks);plt.xlim(-2, len(ticks) * 2);plt.ylim(0, 8)
+        plt.xticks(rangeAndOffsetsForLeftBox , ticks)
         plt.tight_layout()
-        plt.savefig('boxcompare.png')
+        plt.savefig('xyAccuracies.png')
         plt.show()
         
     def changeBoxColor(self, boxPlot, c):

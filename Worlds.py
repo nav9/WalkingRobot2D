@@ -8,6 +8,7 @@ import math
 import pygame
 import random
 import pymunk
+import statistics
 import numpy as np
 from pymunk import Vec2d
 import pymunk.pygame_util
@@ -804,6 +805,8 @@ class TestWorld(Worlds):#inherits
                 rate, positions = analytics.loadDataFromDisk(folderToStoreResults, filename)
                 for pos in positions:
                     dx.append(pos[0]); dy.append(pos[1])
+                print('Rate: ', rate)
+                print('dx: mean=', statistics.mean(dx), ", variance=", statistics.variance(dx), "std deviation=", statistics.stdev(dx))
                 xPositions.append(dx); yPositions.append(dy)
             analytics.plot(xPositions, yPositions)
     
