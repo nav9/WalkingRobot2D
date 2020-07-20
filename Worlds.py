@@ -754,8 +754,12 @@ class TestWorld(Worlds):#inherits
         self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
         self.imaginationColor = 100,100,100
         self.imaginationGroundColor = 100,150,100
-        self.cons = Constants()     
-        self.runMode = TestRunMode.CREATING_RESULTS
+        self.cons = Constants()   
+        #------------------------------------------
+        #--- run mode
+        #------------------------------------------  
+        #self.runMode = TestRunMode.CREATING_RESULTS
+        self.runMode = TestRunMode.VIEWING_RESULTS
         
     def initialize(self):
         super(TestWorld, self).initialize()       
@@ -783,8 +787,8 @@ class TestWorld(Worlds):#inherits
                 print('Trial ', trial, "----------. Rates:", rates)
                 ratesAndPositions = []
                 ratesAndPositions.append(rates)
-                for sim in range(numSimulations): 
-                    filename = analytics.generateFilename(trial, sim)
+                filename = analytics.generateFilename(trial)
+                for sim in range(numSimulations):                     
                     self.robots[0].setLegMotorRates(rates)   
                     self.runSimulation(durationToRun)
                     position = self.robots[0].getPosition()
@@ -793,10 +797,15 @@ class TestWorld(Worlds):#inherits
                     self.infoString = "Trial:" + str(trial) + "/" + str(numTrials) + ", RateRep: " + str(sim) + "/" + str(numSimulations) + ", MotorRates: " + str([round(x, 2) for x in rates])
                 analytics.saveDataToDisk(folderToStoreResults, filename, ratesAndPositions)
         if self.runMode == TestRunMode.VIEWING_RESULTS:
+            xPositions = []; yPositions = []
             for trial in range(numTrials):   
-                pass
-                for sim in range(numSimulations):  
-                    pass            
+                filename = analytics.generateFilename(trial)
+                dx = []; dy = []
+                rate, positions = analytics.loadDataFromDisk(folderToStoreResults, filename)
+                for pos in positions:
+                    dx.append(pos[0]); dy.append(pos[1])
+                xPositions.append(dx); yPositions.append(dy)
+            analytics.plot(xPositions, yPositions)
     
     def runSimulation(self, durationToRun):
         clock = pygame.time.Clock()

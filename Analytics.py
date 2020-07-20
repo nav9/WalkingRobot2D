@@ -4,24 +4,24 @@
 
 import os
 import pickle
+import numpy as np
+import matplotlib.pyplot as plt
 
 class FileOperations:
     def __init__(self):
         pass
     
     def savePickleFile(self, directory, filename, data):
-        direc = self.dataDir + directory 
-        self.createDirectoryIfNotExisting(direc)
-        with open(os.path.join(direc, filename), 'wb') as handle:
+        self.createDirectoryIfNotExisting(directory)
+        with open(os.path.join(directory, filename), 'wb') as handle:
             pickle.dump(data, handle, protocol = pickle.HIGHEST_PROTOCOL)
-            print('Saved ',direc, filename)
+            print('Saved ',directory, filename)
         
     def loadPickleFile(self, directory, filename):
         data = None #data will be loaded in exactly the same format it was stored in
         try:
-            direc = self.dataDir + directory
-            self.createDirectoryIfNotExisting(direc) 
-            with open(os.path.join(direc, filename), 'rb') as handle:
+            self.createDirectoryIfNotExisting(directory) 
+            with open(os.path.join(directory, filename), 'rb') as handle:
                 data = pickle.load(handle)
                 print('Loaded ',directory, filename)
         except FileNotFoundError:
@@ -66,6 +66,33 @@ class TestAnalyticsForMovementAccuracy:
             else: rate = pos;gotRate = True
         return rate, positions
     
-    def generateFilename(self, trial, sim):
-        return "TestMotorRateAccuracy_trial"+str(trial)+"_sim"+str(sim) 
+    def generateFilename(self, trial):
+        return "TestMotorRateAccuracy_trial"+str(trial)
+
+    def plot(self, xPositions, yPositions):#arrays will be in the form xPositions = [[1,2,5], [5,7,2,2,5], [7,2,5]...]. Same for yPositions
+        ticks = []
+        for i in range(len(xPositions)):
+            ticks.append(str(i+1))
+        plt.figure()
+        
+        bpl = plt.boxplot(xPositions, positions=np.array(range(len(xPositions))) * 2.0, sym='', widths=0.6)
+        bpr = plt.boxplot(yPositions, positions=np.array(range(len(yPositions))) * 2.0, sym='', widths=0.6)
+        self.changeBoxColor(bpl, '#D7191C') # colors are from http://colorbrewer2.org/
+        self.changeBoxColor(bpr, '#2C7BB6')
+        
+        # draw temporary red and blue lines and use them to create a legend
+        plt.plot([], c='#D7191C', label='dx')
+        plt.plot([], c='#2C7BB6', label='dy')
+        plt.legend()
+        
+        #plt.xticks(range(0, len(ticks) * 2, 2), ticks);plt.xlim(-2, len(ticks) * 2);plt.ylim(0, 8)
+        plt.tight_layout()
+        plt.savefig('boxcompare.png')
+        plt.show()
+        
+    def changeBoxColor(self, boxPlot, c):
+        plt.setp(boxPlot['boxes'], color=c)
+        plt.setp(boxPlot['whiskers'], color=c)
+        plt.setp(boxPlot['caps'], color=c)
+        plt.setp(boxPlot['medians'], color=c)
 
