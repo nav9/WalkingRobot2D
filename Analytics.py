@@ -81,6 +81,7 @@ class TestAnalyticsForMovementAccuracy:
         self.groupedBarsSurfaceTouch(surfaceTouch)        
     
     def groupedBarsMotorRates(self, rates):
+        print(rates)
         labels = []#the groups
         m1=[]; m2=[]; m3=[]; m4=[]
         i = 1
@@ -116,9 +117,10 @@ class TestAnalyticsForMovementAccuracy:
         #autolabel(rects1); autolabel(rects2); autolabel(rects3); autolabel(rects4)    
         fig.tight_layout()
         plt.savefig('motorRatesForXYAccuracies.png')
-        plt.show()     
+        plt.show(block=False)     
         
     def groupedBarsSurfaceTouch(self, surfaceTouch):
+        print(surfaceTouch)
         labels = []#the groups
         leg1=[]; leg2=[]; leg3=[]; leg4=[]
         i = 1
@@ -153,8 +155,8 @@ class TestAnalyticsForMovementAccuracy:
         ax.legend(bbox_to_anchor=(0.,1.02,1.,.102),loc='lower left', mode="expand", ncol=4)    
         #autolabel(rects1); autolabel(rects2); autolabel(rects3); autolabel(rects4)    
         fig.tight_layout()
-        plt.savefig('motorRatesForXYAccuracies.png')
-        plt.show()            
+        plt.savefig('surfaceTouchesForXYAccuracies.png')
+        plt.show(block=False)         
     
     def boxPlots(self, xPositions, yPositions):
         ticks = []
@@ -176,7 +178,7 @@ class TestAnalyticsForMovementAccuracy:
         plt.xticks(rangeAndOffsetsForLeftBox , ticks)
         plt.tight_layout()
         plt.savefig('xyAccuracies.png')
-        plt.show()
+        plt.show(block=False) 
         
     def changeBoxColor(self, boxPlot, c):
         plt.setp(boxPlot['boxes'], color=c)

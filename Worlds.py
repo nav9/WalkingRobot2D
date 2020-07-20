@@ -760,8 +760,8 @@ class TestWorld(Worlds):#inherits
         #------------------------------------------
         #--- run mode
         #------------------------------------------  
-        self.runMode = TestRunMode.CREATING_RESULTS
-        #self.runMode = TestRunMode.VIEWING_RESULTS
+        #self.runMode = TestRunMode.CREATING_RESULTS
+        self.runMode = TestRunMode.VIEWING_RESULTS
         
     def initialize(self):
         super(TestWorld, self).initialize()       
@@ -802,7 +802,7 @@ class TestWorld(Worlds):#inherits
                 analytics.saveDataToDisk(folderToStoreResults, filename2, self.numberOfTimesLegsTouchSurface)
         
         if self.runMode == TestRunMode.VIEWING_RESULTS:#view analytics of saved results 
-            xPositions = []; yPositions = []; rates = []
+            xPositions = []; yPositions = []; rates = []; surfaceTouches = []
             for trial in range(numTrials):   
                 filename1 = analytics.generateRatesPositionFilename(trial)
                 filename2 = analytics.generateSurfaceTouchFilename(trial)
@@ -811,11 +811,11 @@ class TestWorld(Worlds):#inherits
                 surfaceTouch = analytics.loadSurfaceTouchDataFromDisk(folderToStoreResults, filename2)
                 for pos in positions:
                     dx.append(pos[0]); dy.append(pos[1])
-                rates.append(rate)
+                rates.append(rate); surfaceTouches.append(surfaceTouch)
                 print('Rate: ', rate, ' surfaceTouch:', surfaceTouch)                
                 print('dx: mean=', statistics.mean(dx), ", variance=", statistics.variance(dx), "std deviation=", statistics.stdev(dx))
                 xPositions.append(dx); yPositions.append(dy)
-            analytics.plot(xPositions, yPositions, rates, surfaceTouch)
+            analytics.plot(xPositions, yPositions, rates, surfaceTouches)
     
     def runSimulation(self, durationToRun):
         clock = pygame.time.Clock()
