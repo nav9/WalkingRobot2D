@@ -23,6 +23,7 @@ class Constants:
     xID = 0
     yID = 1
     mainRobotID = 0
+    terrainObjectsFolder = 'terrainObjects/'
 
 # IMPORTANT NOTE: A motor rate that produced a certain kind of motion in one execution may not always
 # produce the same kind of motion again, due to the unreliability of the friction, joint movements and
@@ -38,8 +39,8 @@ class RandomBest:#Use randomness instead of a CI algorithm
         self.robots = roboList
         self.infoString = ""
         self.const = Constants()
-        self.fittestRobot = self.const.UNDETERMINED
         self.motorRatesOfFittest = []
+        self.reinitialize()
     def reinitialize(self):
         self.fittestRobot = self.const.UNDETERMINED
     def run(self):        
@@ -72,7 +73,7 @@ class SimpleDE:#Use randomness instead of a CI algorithm
         self.robots = roboList
         self.infoString = ""
         self.const = Constants()
-        #self.motorRatesOfFittest = []
+        self.motorRatesOfFittest = []
         #---Differential Evolution parameters
         self.masterBeta = 2.0 #beta is real number belongs to [0 -> 2]
         self.vBetaReductionFactor = 1/20
@@ -81,6 +82,7 @@ class SimpleDE:#Use randomness instead of a CI algorithm
         minRate, maxRate = self.robots[0].getMinMaxLegRates()
         self.minLegMotorRate = minRate
         self.maxLegMotorRate = maxRate
+        self.reinitialize()
     def reinitialize(self):
         self.fittestRobot = self.const.UNDETERMINED
         self.vBeta = self.masterBeta
@@ -93,7 +95,7 @@ class SimpleDE:#Use randomness instead of a CI algorithm
             fit = self.robots[i].getFitness()
             if fit > currBestFit:#if greater than zero
                 self.fittestRobot = i #if there was a previous generation's fittest, that won't get replaced, but everything gets reset when generations are reinitialized
-                #self.motorRatesOfFittest = self.robots[i].getLegMotorRates()
+                self.motorRatesOfFittest = self.robots[i].getLegMotorRates()
                 currBestFit = fit        
         #---mutations for each robot
         for i in range(0, len(self.robots)):

@@ -21,9 +21,27 @@ from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from LearningRobot import LearningRobot
 from pymunk.shape_filter import ShapeFilter
-from Analytics import TestAnalyticsForMovementAccuracy
+from Analytics import TestAnalyticsForMovementAccuracy, FileOperations
 from ComputationalIntelligence import SimpleDE, RunCode, RandomBest, SimplePSO
 
+class RunStep:
+    IMAGINARY_MOTOR_EXEC = 0
+    IMAGINARY_GENERATION = 1
+    REAL_MOTOR_EXEC = 2
+    REAL_GENERATION = 3   
+    
+class RunCI:
+    RANDOM = 'RANDOM'
+    DE = 'DE'
+    PSO = 'PSO'
+    
+class Terrains:
+    FLAT_GROUND = 'FLAT_GROUND' 
+    RANDOM_BOXES_LOW_DENSE = 'RANDOM_BOXES_LOW_DENSE'
+    RANDOM_SPHERES_LOW_DENSE = 'RANDOM_SPHERES_LOW_DENSE'
+    STAIRCASE_SINGLE_RIGHTWARD = 'STAIRCASE_SINGLE_RIGHTWARD'
+    STEEPLE_CHASE = 'STEEPLE_CHASE'
+    
 class Worlds(object):
     def __init__(self):
         #self.focusRobotXY = Vec2d(0, 0)#will be overridden below        
@@ -210,24 +228,6 @@ class Worlds(object):
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
-
-class RunStep:
-    IMAGINARY_MOTOR_EXEC = 0
-    IMAGINARY_GENERATION = 1
-    REAL_MOTOR_EXEC = 2
-    REAL_GENERATION = 3   
-    
-class RunCI:
-    RANDOM = 1
-    DE = 2
-    PSO = 3
-    
-class Terrains:
-    FLAT_GROUND = 1
-    RANDOM_BOXES_LOW_DENSE = 2
-    RANDOM_SPHERES_LOW_DENSE = 3
-    STAIRCASE_SINGLE_RIGHTWARD = 4
-    STEEPLE_CHASE = 5
     
 class MoveMotors:#to move the motors for time n*dT, where n is the number of frames and dT is the frame duration
     def __init__(self, listOfRobots, parent):
@@ -351,6 +351,7 @@ class ImaginationTwin(Worlds):#inherits
         self.robotBodyShapeFilter = pymunk.ShapeFilter(group = 1) #to prevent collisions between robot and objects
         self.cons = Constants()
         self.trialNumber = trialNum #Used when multi-trials are being run. If "None", the trial uses a randomized terrain. If it has a value, the trial either loads a previously stored terrain from a file or if none exists, it creates a terrain for that trial
+        self.fileOps = FileOperations()
         
     def initialize(self):
         super(ImaginationTwin, self).initialize()
@@ -434,10 +435,9 @@ class ImaginationTwin(Worlds):#inherits
     def createGround(self, groundX, groundY, grColor):
         self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor, None)
         
-    def createTerrainObjects(self, terrainObjects):
-        #terrainObjects = {RECTANGLE: [{COL: val}, {ROW: val} ...], CIRCLE: [{}, {} ...]}
+    def createTerrainObjects(self, terrainObjects): #terrainObjects = {RECTANGLE: [{COL: val}, {ROW: val} ...], CIRCLE: [{}, {} ...]}
         for shapeType in terrainObjects:#find rectangles or circles
-            for o in terrainObjects[shapeType]:#get the list of dicts that represent objects              
+            for o in terrainObjects[shapeType]:#iterate list of dicts that represent objects              
                 if shapeType == ShapeTypes.RECTANGLE:           
                     self.createBox(o[ShapeProperties.COL], o[ShapeProperties.ROW], o[ShapeProperties.WIDTH], o[ShapeProperties.HEIGHT], self.imaginationColor, None)
                     self.createBox(o[ShapeProperties.COL], self.imaginaryWorldYOffset+o[ShapeProperties.ROW], o[ShapeProperties.WIDTH], o[ShapeProperties.HEIGHT], self.imaginationColor, None)
@@ -445,10 +445,22 @@ class ImaginationTwin(Worlds):#inherits
                     self.createSphere(o[ShapeProperties.COL], o[ShapeProperties.ROW], o[ShapeProperties.RADIUS])
                     self.createSphere(o[ShapeProperties.COL], self.imaginaryWorldYOffset+o[ShapeProperties.ROW], o[ShapeProperties.RADIUS])
     
-    def createTerrainRandomBoxesLowDense(self):    
+    def getUniqueNameForTerrainTrials(self):
+        return self.runWhichTerrain + str(self.trialNumber) + '_' + str(self.numImaginaryRobots) + '.pickle'
+    
+    def loadOrCreateTerrain(self):        
+        filename = self.getUniqueNameForTerrainTrials()
+        self.fileOps.createDirectoryIfNotExisting(self.cons.terrainObjectsFolder)
+        fileExists = self.fileOps.checkIfFileExists(self.cons.terrainObjectsFolder, filename) #check if a terrain is already generated for a trial number
+        if fileExists: terrainObjects = self.fileOps.loadPickleFile(self.cons.terrainObjectsFolder, filename)
+        else: terrainObjects = None
+        return terrainObjects, filename, fileExists
+        
+    def createTerrainRandomBoxesLowDense(self):
+        terrainObjects = None; fileExists = None
         if self.trialNumber:
-            self.loadOrCreateTerrain()
-        else:
+            terrainObjects, filename, fileExists = self.loadOrCreateTerrain()
+        if terrainObjects == None or self.trialNumber == None: #then create fresh randomized objects
             terrainObjects = {ShapeTypes.RECTANGLE: []}
             numObjects = 100; debrisStartCol = 200; debrisMaxHt = 50; boxMinSz = 5; boxMaxSz = 30
             for _ in range(numObjects):                
@@ -459,7 +471,10 @@ class ImaginationTwin(Worlds):#inherits
                 rect = {ShapeProperties.COL: col}; rect[ShapeProperties.ROW] = row; rect[ShapeProperties.WIDTH] = wid; rect[ShapeProperties.HEIGHT] = ht
                 terrainObjects[ShapeTypes.RECTANGLE].append(rect)
         self.createTerrainObjects(terrainObjects)
-    
+        #---write
+        if not fileExists and self.trialNumber:#write to file only if it's one of the trials
+            self.fileOps.savePickleFile(self.cons.terrainObjectsFolder, filename, terrainObjects)
+            
     def createTerrainBoxesInRowWithSpaces(self):
         if self.trialNumber:
             self.loadOrCreateTerrain()
@@ -531,7 +546,7 @@ class ImaginationTwin(Worlds):#inherits
             robo.stopMotion()
         
     def generateInfoString(self):     
-        self.infoString = self.genStateImagined.getInfoString()         
+        self.infoString = self.genStateImagined.getInfoString() + ", terrain: " + self.runWhichTerrain.lower()
                 
     def delete(self):
         super(ImaginationTwin, self).delete()   

@@ -32,7 +32,10 @@ class FileOperations:
         if not os.path.exists(folder): 
             try: os.makedirs(folder)
             except FileExistsError:#in case there's a race condition where some other process creates the directory before makedirs is called
-                pass      
+                pass  
+            
+    def checkIfFileExists(self, directory, filename):
+        return os.path.isfile(os.path.join(directory, filename))
 
 class FitnessAnalytics:    
     def __init__(self):
