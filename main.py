@@ -33,10 +33,10 @@ class MainSimulator(object):
         #-------------------- SINGLE RUNS -----------------------
         #--------------------------------------------------------
         #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, None))
-        if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE, None))
+        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE, None))
         #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE, None))
         #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STAIRCASE_SINGLE_RIGHTWARD, None))
-        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STEEPLE_CHASE, None))
+        if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STEEPLE_CHASE, None))
         #--------------------------------------------------------
         #--------------------- LONG RUNS ------------------------
         #--------------------------------------------------------        
@@ -46,13 +46,13 @@ class MainSimulator(object):
 #             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.FLAT_GROUND, trialNum))
 #             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.FLAT_GROUND, trialNum))
             
-            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
-            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
-            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
+#             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
+#             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
+#             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
             
-            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
-            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
-            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
+#             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
+#             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
+#             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
             
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STAIRCASE_SINGLE_RIGHTWARD, trialNum))
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.STAIRCASE_SINGLE_RIGHTWARD, trialNum))
@@ -87,8 +87,8 @@ class MainSimulator(object):
 if __name__ == '__main__':
     # - Single leg part, -- Two leg parts, # Chassis
     legs = '--#--'    
-    #sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
-    sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
+    sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
+    #sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
     #sim = MainSimulator(legs, Run.ACTUAL_IMAGINATION)
     #sim = MainSimulator(legs, Run.HEAVEN)
     #sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)

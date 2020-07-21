@@ -90,7 +90,7 @@ class Worlds(object):
         pygame.init()
         pygame.mixer.quit()#disable sound output that causes annoying sound effects if any other external music player is playing
         self.screen = pygame.display.set_mode((self.screenWidth, self.screenHeight), self.display_flags)
-        self.font = pygame.font.SysFont("arial", 16)
+        self.font = pygame.font.SysFont("arial", 14)
         #width, height = self.screen.get_size()
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
         self.draw_options.constraint_color = 140,140,140
@@ -318,9 +318,8 @@ class ShapeTypes:
 class ShapeProperties:
     COL = 'COL'
     ROW = 'ROW'
-    WIDTH = 'WIDTH'
+    WIDTH = 'WIDTH' #Also used as radius of circle
     HEIGHT = 'HEIGHT'
-    RADIUS = 'RADIUS'
         
 #The world that has twins above which represent the imagination and run ComputationalIntelligence for a while before the 
 #original robot takes the best motor rates and runs them
@@ -442,8 +441,8 @@ class ImaginationTwin(Worlds):#inherits
                     self.createBox(o[ShapeProperties.COL], o[ShapeProperties.ROW], o[ShapeProperties.WIDTH], o[ShapeProperties.HEIGHT], self.imaginationColor, None)
                     self.createBox(o[ShapeProperties.COL], self.imaginaryWorldYOffset+o[ShapeProperties.ROW], o[ShapeProperties.WIDTH], o[ShapeProperties.HEIGHT], self.imaginationColor, None)
                 if shapeType == ShapeTypes.CIRCLE:
-                    self.createSphere(o[ShapeProperties.COL], o[ShapeProperties.ROW], o[ShapeProperties.RADIUS])
-                    self.createSphere(o[ShapeProperties.COL], self.imaginaryWorldYOffset+o[ShapeProperties.ROW], o[ShapeProperties.RADIUS])
+                    self.createSphere(o[ShapeProperties.COL], o[ShapeProperties.ROW], o[ShapeProperties.WIDTH])
+                    self.createSphere(o[ShapeProperties.COL], self.imaginaryWorldYOffset+o[ShapeProperties.ROW], o[ShapeProperties.WIDTH])
     
     def getUniqueNameForTerrainTrials(self):
         return self.runWhichTerrain + str(self.trialNumber) + '_' + str(self.numImaginaryRobots) + '.pickle'
@@ -458,15 +457,12 @@ class ImaginationTwin(Worlds):#inherits
         
     def createTerrainRandomBoxesLowDense(self):
         terrainObjects = None; fileExists = False
-        print('trial:', self.trialNumber)
         if not self.trialNumber == None:
             terrainObjects, filename, fileExists = self.loadOrCreateTerrain()
-            print('filename:', filename, ' exists:', fileExists)
         if terrainObjects == None or self.trialNumber == None: #then create fresh randomized objects
-            print('creating fresh ones')
             terrainObjects = {ShapeTypes.RECTANGLE: []}
             numObjects = 100; debrisStartCol = 200; debrisMaxHt = 50; boxMinSz = 5; boxMaxSz = 30
-            for _ in range(numObjects):                
+            for _ in range(numObjects):
                 col = random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness)
                 row = random.randint(self.debrisElevFromBottomWall+2*self.wallThickness, self.debrisElevFromBottomWall+debrisMaxHt)
                 wid = random.randint(boxMinSz, boxMaxSz)
@@ -478,38 +474,37 @@ class ImaginationTwin(Worlds):#inherits
         if not fileExists and not self.trialNumber == None:#write to file only if it's one of the trials
             self.fileOps.savePickleFile(self.cons.terrainObjectsFolder, filename, terrainObjects)
             
-    def createTerrainBoxesInRowWithSpaces(self):
-        if self.trialNumber:
-            self.loadOrCreateTerrain()
-        else:        
-            w = 20; h = 45
-            for col in range(200, self.finishLine, w*3):
-                self.createBox(col, h, w, h, self.imaginationColor, None)
-                self.createBox(col, self.imaginaryWorldYOffset+h, w, h, self.imaginationColor, None)  
+    def createTerrainBoxesInRowWithSpaces(self):  
+        w = 20; h = 45
+        for col in range(200, self.worldWidth-150, w*3):
+            self.createBox(col, h, w, h, self.imaginationColor, None)
+            self.createBox(col, self.imaginaryWorldYOffset+h, w, h, self.imaginationColor, None)  
     
     def createStaircaseTerrain(self):
-        if self.trialNumber:
-            self.loadOrCreateTerrain()
-        else:         
-            w = 20; h = 10; row = 35
-            for col in range(300, self.finishLine, w):
-                self.createBox(col, row, w, h, self.imaginationColor, None)
-                self.createBox(col, row+self.imaginaryWorldYOffset, w, h, self.imaginationColor, None) 
-                row = row + 8           
+        w = 20; h = 10; row = 35
+        for col in range(300, self.worldWidth-150, w):
+            self.createBox(col, row, w, h, self.imaginationColor, None)
+            self.createBox(col, row+self.imaginaryWorldYOffset, w, h, self.imaginationColor, None) 
+            row = row + 8           
     
     def createSpheresTerrain(self):
-        if self.trialNumber:
-            self.loadOrCreateTerrain()
-        else:        
-            numSpheres = 50; minSize = 5; maxSize = 20
-            minX = 200; maxX = self.finishLine
-            yPosition = 40
-            for _ in range(numSpheres):
+        terrainObjects = None; fileExists = False
+        if not self.trialNumber == None:
+            terrainObjects, filename, fileExists = self.loadOrCreateTerrain()
+        if terrainObjects == None or self.trialNumber == None: #then create fresh randomized objects
+            terrainObjects = {ShapeTypes.CIRCLE: []}
+            numObjects = 50; minSize = 5; maxSize = 20
+            minX = 200; maxX = self.worldWidth-150; yPosition = 40
+            for _ in range(numObjects):
                 xPos = random.randint(minX, maxX)
                 sphereSize = random.randint(minSize, maxSize)
-                self.createSphere(xPos, yPosition, sphereSize)
-                self.createSphere(xPos, self.imaginaryWorldYOffset+yPosition, sphereSize)                                                         
-    
+                circ = {ShapeProperties.COL: xPos}; circ[ShapeProperties.ROW] = yPosition; circ[ShapeProperties.WIDTH] = sphereSize
+                terrainObjects[ShapeTypes.CIRCLE].append(circ)
+        self.createTerrainObjects(terrainObjects)
+        #---write
+        if not fileExists and not self.trialNumber == None:#write to file only if it's one of the trials
+            self.fileOps.savePickleFile(self.cons.terrainObjectsFolder, filename, terrainObjects)
+                                                       
     def createBox(self, x, y, wd, ht, colour, fil):
         body = pymunk.Body(body_type = pymunk.Body.KINEMATIC)
         body.position = Vec2d(x, y)
@@ -549,7 +544,7 @@ class ImaginationTwin(Worlds):#inherits
             robo.stopMotion()
         
     def generateInfoString(self):     
-        self.infoString = self.genStateImagined.getInfoString() + ", terrain: " + self.runWhichTerrain.lower()
+        self.infoString = self.genStateImagined.getInfoString() + ("" if self.trialNumber==None else ", trial: "+str(self.trialNumber+1)) +  ", terrain: " + self.runWhichTerrain.lower()
                 
     def delete(self):
         super(ImaginationTwin, self).delete()   
