@@ -457,10 +457,13 @@ class ImaginationTwin(Worlds):#inherits
         return terrainObjects, filename, fileExists
         
     def createTerrainRandomBoxesLowDense(self):
-        terrainObjects = None; fileExists = None
-        if self.trialNumber:
+        terrainObjects = None; fileExists = False
+        print('trial:', self.trialNumber)
+        if not self.trialNumber == None:
             terrainObjects, filename, fileExists = self.loadOrCreateTerrain()
+            print('filename:', filename, ' exists:', fileExists)
         if terrainObjects == None or self.trialNumber == None: #then create fresh randomized objects
+            print('creating fresh ones')
             terrainObjects = {ShapeTypes.RECTANGLE: []}
             numObjects = 100; debrisStartCol = 200; debrisMaxHt = 50; boxMinSz = 5; boxMaxSz = 30
             for _ in range(numObjects):                
@@ -472,7 +475,7 @@ class ImaginationTwin(Worlds):#inherits
                 terrainObjects[ShapeTypes.RECTANGLE].append(rect)
         self.createTerrainObjects(terrainObjects)
         #---write
-        if not fileExists and self.trialNumber:#write to file only if it's one of the trials
+        if not fileExists and not self.trialNumber == None:#write to file only if it's one of the trials
             self.fileOps.savePickleFile(self.cons.terrainObjectsFolder, filename, terrainObjects)
             
     def createTerrainBoxesInRowWithSpaces(self):

@@ -41,7 +41,7 @@ class MainSimulator(object):
         #--------------------- LONG RUNS ------------------------
         #--------------------------------------------------------        
         if simulationToRun == Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS:
-            numTrials = 1
+            numTrials = 2
 #             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, trialNum));
 #             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.FLAT_GROUND, trialNum))
 #             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.FLAT_GROUND, trialNum))
