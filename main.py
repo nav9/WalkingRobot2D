@@ -19,7 +19,7 @@ from Worlds import ImaginationTwin, ActualImagination, Heaven, TestWorld
 
 class Run:
     IMAGINATION_TWIN = 0
-    IMAGINATION_TWIN_TRIAL_RUNS = 1
+    IMAGINATION_TWIN_TRIAL_MULTI_RUNS = 1
     ACTUAL_IMAGINATION = 2
     HEAVEN = 3
     MOVEMENT_ACCURACY_CHECKER = 4
@@ -29,16 +29,42 @@ class MainSimulator(object):
         self.worlds = []
         self.worldOrdinal = -1        
         #---registration of the worlds to runWorld
-        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND))
-        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE))
-        if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE))
-        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STAIRCASE_SINGLE_RIGHTWARD))
-        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STEEPLE_CHASE))
-        if simulationToRun == Run.IMAGINATION_TWIN_TRIAL_RUNS:
-            numTrials = 10
-            for _ in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND))
-            for _ in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE))
-            for _ in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE))
+        #--------------------------------------------------------
+        #-------------------- SINGLE RUNS -----------------------
+        #--------------------------------------------------------
+        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, None))
+        if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE, None))
+        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE, None))
+        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STAIRCASE_SINGLE_RIGHTWARD, None))
+        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STEEPLE_CHASE, None))
+        #--------------------------------------------------------
+        #--------------------- LONG RUNS ------------------------
+        #--------------------------------------------------------        
+        if simulationToRun == Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS:
+            numTrials = 1
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, trialNum));
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.FLAT_GROUND, trialNum))
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.FLAT_GROUND, trialNum))
+            
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
+            
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
+            
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STAIRCASE_SINGLE_RIGHTWARD, trialNum))
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.STAIRCASE_SINGLE_RIGHTWARD, trialNum))
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.STAIRCASE_SINGLE_RIGHTWARD, trialNum))
+            
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STEEPLE_CHASE, trialNum))
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.STEEPLE_CHASE, trialNum))
+            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.STEEPLE_CHASE, trialNum))   
+    
+        #--------------------------------------------------------
+        #--------------------- MISC RUNS ------------------------
+        #--------------------------------------------------------            
         if simulationToRun == Run.ACTUAL_IMAGINATION: self.worlds.append(Heaven(legs))
         if simulationToRun == Run.HEAVEN: self.worlds.append(ActualImagination(legs))  
         if simulationToRun == Run.MOVEMENT_ACCURACY_CHECKER: self.worlds.append(TestWorld(legs))           
@@ -61,10 +87,11 @@ class MainSimulator(object):
 if __name__ == '__main__':
     # - Single leg part, -- Two leg parts, # Chassis
     legs = '--#--'    
-    #sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
+    sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
+    #sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
     #sim = MainSimulator(legs, Run.ACTUAL_IMAGINATION)
     #sim = MainSimulator(legs, Run.HEAVEN)
-    sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)
+    #sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)
     
     while sim.nextWorld():
         pass

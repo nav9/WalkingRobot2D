@@ -311,11 +311,21 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
     def getFittestRobot(self):
         return self.CI.getFittestRobot()
 
-
+class ShapeTypes:
+    RECTANGLE = 1
+    CIRCLE = 2
+    
+class ShapeProperties:
+    COL = 'COL'
+    ROW = 'ROW'
+    WIDTH = 'WIDTH'
+    HEIGHT = 'HEIGHT'
+    RADIUS = 'RADIUS'
+        
 #The world that has twins above which represent the imagination and run ComputationalIntelligence for a while before the 
 #original robot takes the best motor rates and runs them
 class ImaginationTwin(Worlds):#inherits
-    def __init__(self, legCode, runWhichCI, runWhichTerrain): #def __init__(self, actions, execLen, legCode):        
+    def __init__(self, legCode, runWhichCI, runWhichTerrain, trialNum): #def __init__(self, actions, execLen, legCode):        
         super(ImaginationTwin, self).__init__()
         self.legsCode = legCode
         self.runWhichCI = runWhichCI
@@ -324,7 +334,7 @@ class ImaginationTwin(Worlds):#inherits
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 900 #overriding
         self.worldHeight = 300
-        self.finishLine = self.worldWidth - 100 
+        self.finishLine = self.worldWidth - 700 
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
         self.numImaginaryRobots = 4 #min 4 robots required for ComputationalIntelligence
@@ -339,7 +349,8 @@ class ImaginationTwin(Worlds):#inherits
         self.finishLineColor = 225, 200 , 10    
         self.runState = RunStep.IMAGINARY_GENERATION
         self.robotBodyShapeFilter = pymunk.ShapeFilter(group = 1) #to prevent collisions between robot and objects
-        self.cons = Constants()       
+        self.cons = Constants()
+        self.trialNumber = trialNum #Used when multi-trials are being run. If "None", the trial uses a randomized terrain. If it has a value, the trial either loads a previously stored terrain from a file or if none exists, it creates a terrain for that trial
         
     def initialize(self):
         super(ImaginationTwin, self).initialize()
@@ -422,39 +433,64 @@ class ImaginationTwin(Worlds):#inherits
     
     def createGround(self, groundX, groundY, grColor):
         self.createBox(groundX+self.worldWidth/2, groundY+self.wallThickness+self.wallThickness/2, self.worldWidth-2*self.wallThickness, self.wallThickness, grColor, None)
-
-    def createTerrainRandomBoxesLowDense(self):
-        debrisStartCol = 200; debrisMaxHt = 50; boxMinSz = 5; boxMaxSz = 30
-        for _ in range(0, 100, 1):
-            col = random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness)
-            row = random.randint(self.debrisElevFromBottomWall+2*self.wallThickness, self.debrisElevFromBottomWall+debrisMaxHt)
-            wid = random.randint(boxMinSz, boxMaxSz)
-            ht = random.randint(boxMinSz, boxMaxSz)
-            self.createBox(col, row, wid, ht, self.imaginationColor, None)
-            self.createBox(col, self.imaginaryWorldYOffset+row, wid, ht, self.imaginationColor, None)
-            
-    def createTerrainBoxesInRowWithSpaces(self):
-        w = 20; h = 45
-        for col in range(200, self.finishLine, w*3):
-            self.createBox(col, h, w, h, self.imaginationColor, None)
-            self.createBox(col, self.imaginaryWorldYOffset+h, w, h, self.imaginationColor, None)  
+        
+    def createTerrainObjects(self, terrainObjects):
+        #terrainObjects = {RECTANGLE: [{COL: val}, {ROW: val} ...], CIRCLE: [{}, {} ...]}
+        for shapeType in terrainObjects:#find rectangles or circles
+            for o in terrainObjects[shapeType]:#get the list of dicts that represent objects              
+                if shapeType == ShapeTypes.RECTANGLE:           
+                    self.createBox(o[ShapeProperties.COL], o[ShapeProperties.ROW], o[ShapeProperties.WIDTH], o[ShapeProperties.HEIGHT], self.imaginationColor, None)
+                    self.createBox(o[ShapeProperties.COL], self.imaginaryWorldYOffset+o[ShapeProperties.ROW], o[ShapeProperties.WIDTH], o[ShapeProperties.HEIGHT], self.imaginationColor, None)
+                if shapeType == ShapeTypes.CIRCLE:
+                    self.createSphere(o[ShapeProperties.COL], o[ShapeProperties.ROW], o[ShapeProperties.RADIUS])
+                    self.createSphere(o[ShapeProperties.COL], self.imaginaryWorldYOffset+o[ShapeProperties.ROW], o[ShapeProperties.RADIUS])
     
-    def createStaircaseTerrain(self): 
-        w = 20; h = 10; row = 35
-        for col in range(300, self.finishLine, w):
-            self.createBox(col, row, w, h, self.imaginationColor, None)
-            self.createBox(col, row+self.imaginaryWorldYOffset, w, h, self.imaginationColor, None) 
-            row = row + 8           
+    def createTerrainRandomBoxesLowDense(self):    
+        if self.trialNumber:
+            self.loadOrCreateTerrain()
+        else:
+            terrainObjects = {ShapeTypes.RECTANGLE: []}
+            numObjects = 100; debrisStartCol = 200; debrisMaxHt = 50; boxMinSz = 5; boxMaxSz = 30
+            for _ in range(numObjects):                
+                col = random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness)
+                row = random.randint(self.debrisElevFromBottomWall+2*self.wallThickness, self.debrisElevFromBottomWall+debrisMaxHt)
+                wid = random.randint(boxMinSz, boxMaxSz)
+                ht = random.randint(boxMinSz, boxMaxSz)
+                rect = {ShapeProperties.COL: col}; rect[ShapeProperties.ROW] = row; rect[ShapeProperties.WIDTH] = wid; rect[ShapeProperties.HEIGHT] = ht
+                terrainObjects[ShapeTypes.RECTANGLE].append(rect)
+        self.createTerrainObjects(terrainObjects)
+    
+    def createTerrainBoxesInRowWithSpaces(self):
+        if self.trialNumber:
+            self.loadOrCreateTerrain()
+        else:        
+            w = 20; h = 45
+            for col in range(200, self.finishLine, w*3):
+                self.createBox(col, h, w, h, self.imaginationColor, None)
+                self.createBox(col, self.imaginaryWorldYOffset+h, w, h, self.imaginationColor, None)  
+    
+    def createStaircaseTerrain(self):
+        if self.trialNumber:
+            self.loadOrCreateTerrain()
+        else:         
+            w = 20; h = 10; row = 35
+            for col in range(300, self.finishLine, w):
+                self.createBox(col, row, w, h, self.imaginationColor, None)
+                self.createBox(col, row+self.imaginaryWorldYOffset, w, h, self.imaginationColor, None) 
+                row = row + 8           
     
     def createSpheresTerrain(self):
-        numSpheres = 50; minSize = 5; maxSize = 20
-        minX = 200; maxX = self.finishLine
-        yPosition = 40
-        for _ in range(numSpheres):
-            xPos = random.randint(minX, maxX)
-            sphereSize = random.randint(minSize, maxSize)
-            self.createSphere(xPos, yPosition, sphereSize)
-            self.createSphere(xPos, self.imaginaryWorldYOffset+yPosition, sphereSize)                                                         
+        if self.trialNumber:
+            self.loadOrCreateTerrain()
+        else:        
+            numSpheres = 50; minSize = 5; maxSize = 20
+            minX = 200; maxX = self.finishLine
+            yPosition = 40
+            for _ in range(numSpheres):
+                xPos = random.randint(minX, maxX)
+                sphereSize = random.randint(minSize, maxSize)
+                self.createSphere(xPos, yPosition, sphereSize)
+                self.createSphere(xPos, self.imaginaryWorldYOffset+yPosition, sphereSize)                                                         
     
     def createBox(self, x, y, wd, ht, colour, fil):
         body = pymunk.Body(body_type = pymunk.Body.KINEMATIC)
