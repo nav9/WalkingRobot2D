@@ -39,7 +39,7 @@ class Terrains:
     FLAT_GROUND = 'FLAT_GROUND' 
     RANDOM_BOXES_LOW_DENSE = 'RANDOM_BOXES_LOW_DENSE'
     RANDOM_SPHERES_LOW_DENSE = 'RANDOM_SPHERES_LOW_DENSE'
-    STAIRCASE_SINGLE_RIGHTWARD = 'STAIRCASE_SINGLE_RIGHTWARD'
+    STAIRCASE_UP_DOWN = 'STAIRCASE_UP_DOWN'
     ALTERNATOR = 'ALTERNATOR'
     
 class Worlds(object):
@@ -358,7 +358,7 @@ class ImaginationTwin(Worlds):#inherits
         if self.runWhichTerrain == Terrains.FLAT_GROUND: pass #no need to create any obstacles
         if self.runWhichTerrain == Terrains.RANDOM_BOXES_LOW_DENSE: self.createTerrainRandomBoxesLowDense()
         if self.runWhichTerrain == Terrains.RANDOM_SPHERES_LOW_DENSE: self.createSpheresTerrain()
-        if self.runWhichTerrain == Terrains.STAIRCASE_SINGLE_RIGHTWARD: self.createStaircaseTerrain()
+        if self.runWhichTerrain == Terrains.STAIRCASE_UP_DOWN: self.createStaircaseUpDownTerrain()
         if self.runWhichTerrain == Terrains.ALTERNATOR: self.createAlternatorTerrain()
 
         #self.replicateDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)       
@@ -462,7 +462,7 @@ class ImaginationTwin(Worlds):#inherits
             terrainObjects, filename, fileExists = self.loadOrCreateTerrain()
         if terrainObjects == None or self.trialNumber == None: #then create fresh randomized objects
             terrainObjects = {ShapeTypes.RECTANGLE: []}
-            numObjects = 100; debrisStartCol = 200; debrisMaxHt = 50; boxMinSz = 5; boxMaxSz = 30
+            numObjects = 80; debrisStartCol = 200; debrisMaxHt = 90; boxMinSz = 5; boxMaxSz = 40
             for _ in range(numObjects):
                 col = random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness)
                 row = random.randint(self.debrisElevFromBottomWall+2*self.wallThickness, self.debrisElevFromBottomWall+debrisMaxHt)
@@ -485,12 +485,15 @@ class ImaginationTwin(Worlds):#inherits
             self.createBox(col, self.imaginaryWorldYOffset+r, w, h, self.imaginationColor, None)
             alternate = False if alternate else True  
     
-    def createStaircaseTerrain(self):
-        w = 20; h = 10; row = 35
-        for col in range(300, self.worldWidth-150, w):
+    def createStaircaseUpDownTerrain(self):
+        w = 45; h = 35; row = 45; rowIncr = h
+        downward = False
+        for col in range(220, self.worldWidth-200, w):
             self.createBox(col, row, w, h, self.imaginationColor, None)
-            self.createBox(col, row+self.imaginaryWorldYOffset, w, h, self.imaginationColor, None) 
-            row = row + 8           
+            self.createBox(col, row+self.imaginaryWorldYOffset, w, h, self.imaginationColor, None)
+            if col > self.worldWidth-500: downward = True  
+            if downward: row = row - rowIncr
+            else: row = row + rowIncr
     
     def createSpheresTerrain(self):
         terrainObjects = None; fileExists = False
