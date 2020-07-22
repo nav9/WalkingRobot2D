@@ -311,7 +311,7 @@ class ImaginationTwin(Worlds):#inherits
         self.finishLine = self.worldWidth - MainProgramParameters.FINISH_LINE_POSITION_FROM_END
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
-        self.numImaginaryRobots = 4 #min 4 robots required for ComputationalIntelligence
+        self.numImaginaryRobots = MainProgramParameters.NUM_IMAGINARY_ROBOTS #min 4 robots required for DE's ComputationalIntelligence
         self.imaginaryRobots = []
         self.debrisElevFromBottomWall = 0
         self.groundThickness = 10
@@ -358,7 +358,7 @@ class ImaginationTwin(Worlds):#inherits
         abortRun = False
         while simulating:
             for event in pygame.event.get():
-                if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
+                if event.type == QUIT:# or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
                     #sys.exit(0)
                     simulating = False
                 if event.type == KEYDOWN:
