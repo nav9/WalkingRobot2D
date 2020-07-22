@@ -40,7 +40,7 @@ class Terrains:
     RANDOM_BOXES_LOW_DENSE = 'RANDOM_BOXES_LOW_DENSE'
     RANDOM_SPHERES_LOW_DENSE = 'RANDOM_SPHERES_LOW_DENSE'
     STAIRCASE_SINGLE_RIGHTWARD = 'STAIRCASE_SINGLE_RIGHTWARD'
-    STEEPLE_CHASE = 'STEEPLE_CHASE'
+    ALTERNATOR = 'ALTERNATOR'
     
 class Worlds(object):
     def __init__(self):
@@ -333,7 +333,7 @@ class ImaginationTwin(Worlds):#inherits
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 900 #overriding
         self.worldHeight = 300
-        self.finishLine = self.worldWidth - 700 
+        self.finishLine = self.worldWidth - 100 
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
         self.numImaginaryRobots = 4 #min 4 robots required for ComputationalIntelligence
@@ -359,7 +359,7 @@ class ImaginationTwin(Worlds):#inherits
         if self.runWhichTerrain == Terrains.RANDOM_BOXES_LOW_DENSE: self.createTerrainRandomBoxesLowDense()
         if self.runWhichTerrain == Terrains.RANDOM_SPHERES_LOW_DENSE: self.createSpheresTerrain()
         if self.runWhichTerrain == Terrains.STAIRCASE_SINGLE_RIGHTWARD: self.createStaircaseTerrain()
-        if self.runWhichTerrain == Terrains.STEEPLE_CHASE: self.createTerrainBoxesInRowWithSpaces()
+        if self.runWhichTerrain == Terrains.ALTERNATOR: self.createAlternatorTerrain()
 
         #self.replicateDebrisToImaginary(self.imaginaryWorldYOffset, self.imaginationColor)       
         self.createGround(0, self.debrisElevFromBottomWall, self.groundColor)
@@ -475,11 +475,15 @@ class ImaginationTwin(Worlds):#inherits
         if not fileExists and not self.trialNumber == None:#write to file only if it's one of the trials
             self.fileOps.savePickleFile(self.fileOps.dir.terrainObjectsFolder, filename, terrainObjects)
             
-    def createTerrainBoxesInRowWithSpaces(self):  
-        w = 20; h = 45
-        for col in range(200, self.worldWidth-150, w*3):
-            self.createBox(col, h, w, h, self.imaginationColor, None)
-            self.createBox(col, self.imaginaryWorldYOffset+h, w, h, self.imaginationColor, None)  
+    def createAlternatorTerrain(self):  
+        w = 20; h1 = 60; h2 = 150; r1 = 55; r2 = 130
+        alternate = True
+        for col in range(200, self.worldWidth-100, w*3):            
+            r = r1 if alternate else r2
+            h = h1 if alternate else h2
+            self.createBox(col, r, w, h, self.imaginationColor, None)
+            self.createBox(col, self.imaginaryWorldYOffset+r, w, h, self.imaginationColor, None)
+            alternate = False if alternate else True  
     
     def createStaircaseTerrain(self):
         w = 20; h = 10; row = 35
