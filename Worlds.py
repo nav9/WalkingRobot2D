@@ -37,9 +37,9 @@ class RunCI:
     
 class Terrains:
     FLAT_GROUND = 'FLAT_GROUND' 
-    RANDOM_BOXES_LOW_DENSE = 'RANDOM_BOXES_LOW_DENSE'
-    RANDOM_SPHERES_LOW_DENSE = 'RANDOM_SPHERES_LOW_DENSE'
-    STAIRCASE_UP_DOWN = 'STAIRCASE_UP_DOWN'
+    RANDOM_BOXES_LOW_DENSE = 'RANDOM_BOXES'
+    RANDOM_SPHERES_LOW_DENSE = 'RANDOM_SPHERE'
+    STAIRCASE_UP_DOWN = 'STAIRCASE'
     ALTERNATOR = 'ALTERNATOR'
     
 class Worlds(object):
@@ -269,7 +269,7 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         self.currGen = 0
         if not self.isMainRobot:
             if self.world.runWhichCI == RunCI.RANDOM: self.CI = RandomBest(self.robots)
-            if self.world.runWhichCI == RunCI.DE: self.CI = SimpleDE(self.robots, self.maxGens)
+            if self.world.runWhichCI == RunCI.DE: self.CI = SimpleDE(self.robots)
             if self.world.runWhichCI == RunCI.PSO: self.CI = SimplePSO(self.robots)
 
     def run(self):        
@@ -425,8 +425,8 @@ class ImaginationTwin(Worlds):#inherits
     #------------------------------------ helper functions --------------------------------------
     #--------------------------------------------------------------------------------------------
     def generateInfoString(self):     
-        elapsedTime = str(time.time() - self.startTime)
-        self.infoString = self.genStateImagined.getInfoString() + ("" if self.trialNumber==None else ", trial: "+str(self.trialNumber+1)) +  ", terrain: " + self.runWhichTerrain.lower() + ', t:' + elapsedTime + 's'
+        elapsedTime = ', time: '+str(int(time.time() - self.startTime))+'s'
+        self.infoString = self.genStateImagined.getInfoString() + ("" if self.trialNumber==None else ", trial: "+str(self.trialNumber+1)) +  ", terrain: " + self.runWhichTerrain.lower() + elapsedTime
             
     def moveCameraBy(self, dist):
         self.cameraXY += Vec2d(dist, 0)
