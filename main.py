@@ -10,20 +10,15 @@
 # >>> pip3 install numpy
 # >>> pip3 install scipy
 # >>> pip3 install matplotlib
+# sudo apt install speech-dispatcher #if not already installed by default on Ubuntu (this is for speech notifications, and not really necessary)
 # Now simply run using: 
 # >>> python3 main.py
 
-#import time
-from Worlds import RunCI, Terrains
+import os
+import logging, traceback
 from Analytics import ProgramAnalytics
+from Enums import RunCI, Terrains, Run, MainProgramParameters
 from Worlds import ImaginationTwin, ActualImagination, Heaven, TestWorld
-
-class Run:
-    IMAGINATION_TWIN = 0
-    IMAGINATION_TWIN_TRIAL_MULTI_RUNS = 1
-    ACTUAL_IMAGINATION = 2
-    HEAVEN = 3
-    MOVEMENT_ACCURACY_CHECKER = 4
     
 class MainSimulator(object):
     def __init__(self, legs, simulationToRun):
@@ -42,7 +37,7 @@ class MainSimulator(object):
         #--------------------- LONG RUNS ------------------------
         #--------------------------------------------------------        
         if simulationToRun == Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS:
-            trialRange = range(0, 10)
+            trialRange = range(0, 2)
             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, trialNum));
             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.FLAT_GROUND, trialNum))
             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.FLAT_GROUND, trialNum))
@@ -87,15 +82,20 @@ class MainSimulator(object):
 #-----------------------------------------------
 if __name__ == '__main__':
     # - Single leg part, -- Two leg parts, # Chassis
-    legs = '--#--'    
+    legs = MainProgramParameters.LEGS
     #sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
     sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
     #sim = MainSimulator(legs, Run.ACTUAL_IMAGINATION)
     #sim = MainSimulator(legs, Run.HEAVEN)
     #sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)
     
-    while sim.nextWorld():
-        pass
+    try:
+        while sim.nextWorld():
+            pass
+    except BaseException as e:
+        print(e)
+        print(e); os.system('spd-say '+"oh_no_the_program_crashed")
+        logging.error(traceback.format_exc(None, True))
     
     results = ProgramAnalytics()
     results.loadProgramRunData()    

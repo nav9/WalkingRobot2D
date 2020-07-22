@@ -9,20 +9,7 @@ import logging
 import traceback
 import numpy as np
 import matplotlib.pyplot as plt
-
-class Directories:
-    PICKLE_EXTN = '.pickle' #file extension
-    terrainObjectsFolder = 'terrainObjects/'
-    programMetricsFolder = 'runMetrics/'
-    
-class ProgramMetrics:
-    timeToCrossFinishLine = 'timeToCrossFinishLine'
-    runWhichCI = 'runWhichCI'
-    runWhichTerrain = 'runWhichTerrain'
-    trialNumber = 'trialNumber'
-    numImaginaryRobots = 'numImaginaryRobots'
-    numGens = 'numGens'
-    
+from Enums import Directories, ProgramMetrics
     
 class FileOperations:
     def __init__(self):

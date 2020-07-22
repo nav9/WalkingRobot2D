@@ -8,15 +8,9 @@ import math
 import pymunk
 import random
 import numpy as np
-from ComputationalIntelligence import Constants
-from pymunk import Vec2d
-
-class Directions:
-    def __init__(self):
-        self.dirn = {'UP':1, 'DOWN':2, 'LEFT':3, 'RIGHT':4, #'TOPRIGHT':5, 'TOPLEFT':6, 'BOTTOMRIGHT':7, 'BOTTOMLEFT':8
-                     }
-    def getDirn(self): 
-        return self.dirn        
+from pymunk import Vec2d    
+from Enums import Directions
+from ComputationalIntelligence import Constants  
 
 class LegPart:#This is one leg part. Could be part A that's connected to the chassis or part B that's connected to part A
     def __init__(self, pymunkSpace, ownBodyShapeFilter, prevBody, prevBodyWidth, leftOrRight, limbOrder):

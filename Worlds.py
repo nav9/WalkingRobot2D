@@ -2,6 +2,7 @@
 # Created: April 2019
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
+import os
 import sys
 import time
 import math
@@ -23,25 +24,8 @@ from LearningRobot import LearningRobot
 from pymunk.shape_filter import ShapeFilter
 from ComputationalIntelligence import SimpleDE, RunCode, RandomBest, SimplePSO
 from Analytics import TestAnalyticsForMovementAccuracy, FileOperations, ProgramAnalytics
+from Enums import RunStep, RunCI, Terrains, ShapeTypes, ShapeProperties, MainProgramParameters
 
-class RunStep:
-    IMAGINARY_MOTOR_EXEC = 0
-    IMAGINARY_GENERATION = 1
-    REAL_MOTOR_EXEC = 2
-    REAL_GENERATION = 3   
-    
-class RunCI:
-    RANDOM = 'RANDOM'
-    DE = 'DE'
-    PSO = 'PSO'
-    
-class Terrains:
-    FLAT_GROUND = 'FLAT_GROUND' 
-    RANDOM_BOXES_LOW_DENSE = 'RANDOM_BOXES'
-    RANDOM_SPHERES_LOW_DENSE = 'RANDOM_SPHERE'
-    STAIRCASE_UP_DOWN = 'STAIRCASE'
-    ALTERNATOR = 'ALTERNATOR'
-    
 class Worlds(object):
     def __init__(self):
         #self.focusRobotXY = Vec2d(0, 0)#will be overridden below        
@@ -265,7 +249,7 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         self.isMainRobot = (len(self.robots) == 1)
         self.world = parent  
         if self.isMainRobot: self.maxGens = 1 
-        else: self.maxGens = 5
+        else: self.maxGens = MainProgramParameters.MAX_GENS
         self.currGen = 0
         if not self.isMainRobot:
             if self.world.runWhichCI == RunCI.RANDOM: self.CI = RandomBest(self.robots)
@@ -311,15 +295,6 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
     def getFittestRobot(self):
         return self.CI.getFittestRobot()
 
-class ShapeTypes:
-    RECTANGLE = 1
-    CIRCLE = 2
-    
-class ShapeProperties:
-    COL = 'COL'
-    ROW = 'ROW'
-    WIDTH = 'WIDTH' #Also used as radius of circle
-    HEIGHT = 'HEIGHT'
         
 #The world that has twins above which represent the imagination and run ComputationalIntelligence for a while before the 
 #original robot takes the best motor rates and runs them
@@ -333,7 +308,7 @@ class ImaginationTwin(Worlds):#inherits
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 900 #overriding
         self.worldHeight = 300
-        self.finishLine = self.worldWidth - 100 
+        self.finishLine = self.worldWidth - MainProgramParameters.FINISH_LINE_POSITION_FROM_END
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
         self.numImaginaryRobots = 4 #min 4 robots required for ComputationalIntelligence
@@ -411,8 +386,10 @@ class ImaginationTwin(Worlds):#inherits
             
             #---if robot reaches goal, stop
             if abortRun or self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.finishLine:#reached end of world
-                totalTimeTaken = time.time() - self.startTime 
-                print(('Aborted run ' if abortRun else 'Crossed finish line'),'in',totalTimeTaken, ': seconds for trial',self.trialNumber,', CI:', self.runWhichCI, ', Terrain:', self.runWhichTerrain)
+                totalTimeTaken = str(int(time.time() - self.startTime))
+                finishMessage = 'Aborted_run_' if abortRun else 'Crossed_finish_line_'  + '_in_'+str(totalTimeTaken)+ '_seconds_for_trial_'+str(self.trialNumber)+'_CI_'+ self.runWhichCI+'_Terrain_'+self.runWhichTerrain
+                print(finishMessage)
+                os.system('spd-say '+finishMessage)
                 if not self.trialNumber == None: 
                     self.analytics.saveFinishingTime(self.genStateImagined.maxGens, self.runWhichCI, self.runWhichTerrain, self.trialNumber, self.numImaginaryRobots, totalTimeTaken)                    
                 break
