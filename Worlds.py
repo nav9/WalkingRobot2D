@@ -454,7 +454,7 @@ class ImaginationTwin(Worlds):#inherits
                     self.createSphere(o[ShapeProperties.COL], self.imaginaryWorldYOffset+o[ShapeProperties.ROW], o[ShapeProperties.WIDTH])
     
     def loadOrCreateTerrain(self):        
-        filename = self.fileOps.getUniqueNameForTerrainTrials(self.runWhichTerrain, self.trialNumber, self.numImaginaryRobots)
+        filename = self.fileOps.getUniqueNameForTerrainTrials(self.runWhichTerrain, self.trialNumber)#, self.numImaginaryRobots)
         self.fileOps.createDirectoryIfNotExisting(self.fileOps.dir.terrainObjectsFolder)
         fileExists = self.fileOps.checkIfFileExists(self.fileOps.dir.terrainObjectsFolder, filename) #check if a terrain is already generated for a trial number
         if fileExists: terrainObjects = self.fileOps.loadPickleFile(self.fileOps.dir.terrainObjectsFolder, filename)

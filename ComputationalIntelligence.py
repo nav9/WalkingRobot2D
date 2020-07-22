@@ -67,7 +67,6 @@ class RandomBest:#Use randomness instead of a CI algorithm
 class SimpleDE:#Use randomness instead of a CI algorithm  
     def __init__(self, roboList):
         self.robots = roboList
-        self.maxGen = maxGen
         self.infoString = ""
         self.const = Constants()
         self.motorRatesOfFittest = []

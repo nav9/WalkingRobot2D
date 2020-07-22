@@ -56,8 +56,8 @@ class FileOperations:
     def checkIfFileExists(self, directory, filename):
         return os.path.isfile(os.path.join(directory, filename))
     
-    def getUniqueNameForTerrainTrials(self, terrainName, trialNumber, numImaginaryRobots):
-        return terrainName + str(trialNumber) + '_' + str(numImaginaryRobots) + self.dir.PICKLE_EXTN
+    def getUniqueNameForTerrainTrials(self, terrainName, trialNumber):#, numImaginaryRobots):
+        return terrainName + '_tr' + str(trialNumber) + self.dir.PICKLE_EXTN
 
     def getUniqueNameForFinishingTime(self, numGens, nameOfCI, terrainName, trialNumber, numImaginaryRobots):
         return str(numGens) + 'Gen_' + nameOfCI +  '_' + terrainName + str(trialNumber) + '_' + str(numImaginaryRobots) + self.dir.PICKLE_EXTN    
