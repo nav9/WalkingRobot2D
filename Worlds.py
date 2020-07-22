@@ -333,7 +333,7 @@ class ImaginationTwin(Worlds):#inherits
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 900 #overriding
         self.worldHeight = 300
-        self.finishLine = self.worldWidth - 100 
+        self.finishLine = 200#self.worldWidth - 100 
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
         self.numImaginaryRobots = 4 #min 4 robots required for ComputationalIntelligence
@@ -412,7 +412,7 @@ class ImaginationTwin(Worlds):#inherits
                 totalTimeTaken = time.time() - startTime
                 print('Crossed finish line in ',totalTimeTaken, ' seconds')
                 if not self.trialNumber == None: 
-                    self.analytics.saveFinishingTime(self.runWhichCI, self.runWhichTerrain, self.trialNumber, self.numImaginaryRobots, totalTimeTaken)                    
+                    self.analytics.saveFinishingTime(self.genStateImagined.maxGens, self.runWhichCI, self.runWhichTerrain, self.trialNumber, self.numImaginaryRobots, totalTimeTaken)                    
                 break
             
             #---draw all objects            

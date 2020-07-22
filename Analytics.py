@@ -5,6 +5,8 @@
 import os
 import glob
 import pickle
+import logging
+import traceback
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -19,6 +21,7 @@ class ProgramMetrics:
     runWhichTerrain = 'runWhichTerrain'
     trialNumber = 'trialNumber'
     numImaginaryRobots = 'numImaginaryRobots'
+    numGens = 'numGens'
     
     
 class FileOperations:
@@ -56,8 +59,8 @@ class FileOperations:
     def getUniqueNameForTerrainTrials(self, terrainName, trialNumber, numImaginaryRobots):
         return terrainName + str(trialNumber) + '_' + str(numImaginaryRobots) + self.dir.PICKLE_EXTN
 
-    def getUniqueNameForFinishingTime(self, nameOfCI, terrainName, trialNumber, numImaginaryRobots):
-        return nameOfCI +  '_' + terrainName + str(trialNumber) + '_' + str(numImaginaryRobots) + self.dir.PICKLE_EXTN    
+    def getUniqueNameForFinishingTime(self, numGens, nameOfCI, terrainName, trialNumber, numImaginaryRobots):
+        return str(numGens) + 'Gen_' + nameOfCI +  '_' + terrainName + str(trialNumber) + '_' + str(numImaginaryRobots) + self.dir.PICKLE_EXTN    
     
     def loadAllPickleFilesFromDirectory(self, directory):
         return glob.glob(directory+'*'+self.dir.PICKLE_EXTN)
@@ -67,9 +70,10 @@ class ProgramAnalytics:
         self.metricNames = ProgramMetrics()
         self.fileOps = FileOperations()
         
-    def saveFinishingTime(self, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots, totalTimeTaken):
-        filename = self.fileOps.getUniqueNameForFinishingTime(runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots)
+    def saveFinishingTime(self, numGens, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots, totalTimeTaken):
+        filename = self.fileOps.getUniqueNameForFinishingTime(numGens, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots)
         programMetrics = {
+            self.metricNames.numGens: numGens,
             self.metricNames.timeToCrossFinishLine: totalTimeTaken,
             self.metricNames.runWhichCI: runWhichCI,
             self.metricNames.runWhichTerrain: runWhichTerrain,
@@ -82,20 +86,24 @@ class ProgramAnalytics:
         data = []
         fileList = self.fileOps.loadAllPickleFilesFromDirectory(self.fileOps.dir.programMetricsFolder)
         #---go through all filenames and load dicts
-        trialNums = set(); robotNums = set();
+        trialNums = set(); robotNums = set(); genNums = set()
         for filename in fileList:
             d = self.fileOps.loadPickleFile(None, filename)
-            print('data:',d)
+            genNums.add(d[self.metricNames.numGens])
             trialNums.add(d[self.metricNames.trialNumber])
             robotNums.add(d[self.metricNames.numImaginaryRobots]) 
             data.append(d)
-        print('\n----------------- Results of ',len(trialNums),' trials and ', robotNums, ' robots:')#The +1 is because trials start with 0
+        print('\n----------------- Results of ',len(genNums),' gens, ',len(trialNums),' trials and ', robotNums, ' robots:')#The +1 is because trials start with 0
         print('Trial, numRobots, CI, Terrain, Time (s)')
         for t in trialNums:
-            for r in robotNums:
-                for d in data:
-                    if d[self.metricNames.trialNumber] == t and d[self.metricNames.numImaginaryRobots] == r:
-                        print(str(t)+", "+str(r)+", "+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(d[self.metricNames.timeToCrossFinishLine]))
+            for g in genNums:
+                for r in robotNums:
+                    for d in data:
+                        try:
+                            if d[self.metricNames.trialNumber] == t and d[self.metricNames.numImaginaryRobots] == r and d[self.metricNames.numGens] == g:
+                                print(str(t)+", "+str(r)+", "+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(d[self.metricNames.timeToCrossFinishLine]))
+                        except Exception as _:
+                            logging.error(traceback.format_exc(None, True))
     
 class FitnessAnalytics:    
     def __init__(self):
