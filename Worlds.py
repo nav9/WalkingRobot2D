@@ -360,6 +360,7 @@ class ImaginationTwin(Worlds):#inherits
             for event in pygame.event.get():
                 if event.type == QUIT:# or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
                     #sys.exit(0)
+                    print('Command to quit registered')
                     simulating = False
                 if event.type == KEYDOWN:
                     #if event.key == K_UP: self.cameraXY += Vec2d(0, -self.cameraMoveDist[1])

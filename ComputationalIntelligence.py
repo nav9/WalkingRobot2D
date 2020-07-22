@@ -60,6 +60,7 @@ class SimpleDE:#Use randomness instead of a CI algorithm
         self.masterBeta = 2.0 #beta is real number belongs to [0 -> 2]
         self.vBetaReductionFactor = 1/40
         self.crProba = 0.3 #crossover probability range [0 -> 1]  
+        self.randomReinitializationProba = 0.1 #probability range [0 -> 1]
         self.vBeta = self.masterBeta  
         minRate, maxRate = self.robots[0].getMinMaxLegRates()
         self.minLegMotorRate = minRate
@@ -91,20 +92,23 @@ class SimpleDE:#Use randomness instead of a CI algorithm
                 r1 = self.robots[r1].getLegMotorRates()
                 r2 = self.robots[r2].getLegMotorRates()
                 r3 = self.robots[r3].getLegMotorRates()
-                r = self.robots[i].getLegMotorRates() #current robot being iterated
-                mutantMotorRates = []; hadMutated = False
-                for ii in range(0, len(r1)):
-                    mutatedRateForOneMotor = r[ii] #the original motor rate for the robot being considered
-                    #print('mutated rate for one:', mutatedRateForOneMotor)
-                    if uniform(0,1) <= self.crProba: #if crossover required
-                        #print('mutations value:',r1[ii],self.vBeta,r2[ii], r3[ii])
-                        mutatedRateForOneMotor = r1[ii] + round(self.vBeta * (r2[ii] - r3[ii])) #mutate
-                    if mutatedRateForOneMotor < self.minLegMotorRate or mutatedRateForOneMotor > self.maxLegMotorRate: #bounds check
-                        mutantMotorRates.append(r[ii]) #no change to motor rate instead of clamping or re-initializing
-                    else:
-                        mutantMotorRates.append(mutatedRateForOneMotor); hadMutated = True
-                if hadMutated:
-                    self.robots[i].setLegMotorRates(mutantMotorRates)
+                r = self.robots[i].getLegMotorRates() #current robot being iterated                
+                if uniform(0,1) > self.randomReinitializationProba:#ensuring that 10% of robots are re-initialized randomly 
+                    mutantMotorRates = []; hadMutated = False
+                    for ii in range(0, len(r1)):
+                        mutatedRateForOneMotor = r[ii] #the original motor rate for the robot being considered
+                        #print('mutated rate for one:', mutatedRateForOneMotor)
+                        if uniform(0,1) <= self.crProba: #if crossover required
+                            #print('mutations value:',r1[ii],self.vBeta,r2[ii], r3[ii])
+                            mutatedRateForOneMotor = r1[ii] + round(self.vBeta * (r2[ii] - r3[ii])) #mutate
+                        if mutatedRateForOneMotor < self.minLegMotorRate or mutatedRateForOneMotor > self.maxLegMotorRate: #bounds check
+                            mutantMotorRates.append(r[ii]) #no change to motor rate instead of clamping or re-initializing
+                        else:
+                            mutantMotorRates.append(mutatedRateForOneMotor); hadMutated = True
+                    if hadMutated:
+                        self.robots[i].setLegMotorRates(mutantMotorRates)                            
+                else:#reinitialize randomly
+                    self.robots[i].setRandomLegMotorRates()
         #---beta is reduced to encourage exploitation and reduce exploration
         if self.vBeta > self.vBetaReductionFactor: 
             self.vBeta = self.vBeta - self.vBetaReductionFactor    
