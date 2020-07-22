@@ -3,13 +3,27 @@
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
 import os
+import glob
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
+class Directories:
+    PICKLE_EXTN = '.pickle' #file extension
+    terrainObjectsFolder = 'terrainObjects/'
+    programMetricsFolder = 'runMetrics/'
+    
+class ProgramMetrics:
+    timeToCrossFinishLine = 'timeToCrossFinishLine'
+    runWhichCI = 'runWhichCI'
+    runWhichTerrain = 'runWhichTerrain'
+    trialNumber = 'trialNumber'
+    numImaginaryRobots = 'numImaginaryRobots'
+    
+    
 class FileOperations:
     def __init__(self):
-        pass
+        self.dir = Directories()
     
     def savePickleFile(self, directory, filename, data):
         self.createDirectoryIfNotExisting(directory)
@@ -20,23 +34,69 @@ class FileOperations:
     def loadPickleFile(self, directory, filename):
         data = None #data will be loaded in exactly the same format it was stored in
         try:
-            self.createDirectoryIfNotExisting(directory) 
-            with open(os.path.join(directory, filename), 'rb') as handle:
-                data = pickle.load(handle)
-                print('Loaded ',directory, filename)
+            if directory == None: 
+                with open(filename, 'rb') as handle: data = pickle.load(handle)
+            else:
+                self.createDirectoryIfNotExisting(directory) 
+                with open(os.path.join(directory, filename), 'rb') as handle: data = pickle.load(handle)
+            print('Loaded ',directory, filename)
         except FileNotFoundError:
             print("File not found: ", directory, filename)
         return data      
     
-    def createDirectoryIfNotExisting(self, folder):
-        if not os.path.exists(folder): 
-            try: os.makedirs(folder)
+    def createDirectoryIfNotExisting(self, directory):
+        if not os.path.exists(directory): 
+            try: os.makedirs(directory)
             except FileExistsError:#in case there's a race condition where some other process creates the directory before makedirs is called
                 pass  
             
     def checkIfFileExists(self, directory, filename):
         return os.path.isfile(os.path.join(directory, filename))
+    
+    def getUniqueNameForTerrainTrials(self, terrainName, trialNumber, numImaginaryRobots):
+        return terrainName + str(trialNumber) + '_' + str(numImaginaryRobots) + self.dir.PICKLE_EXTN
 
+    def getUniqueNameForFinishingTime(self, nameOfCI, terrainName, trialNumber, numImaginaryRobots):
+        return nameOfCI +  '_' + terrainName + str(trialNumber) + '_' + str(numImaginaryRobots) + self.dir.PICKLE_EXTN    
+    
+    def loadAllPickleFilesFromDirectory(self, directory):
+        return glob.glob(directory+'*'+self.dir.PICKLE_EXTN)
+
+class ProgramAnalytics:
+    def __init__(self):
+        self.metricNames = ProgramMetrics()
+        self.fileOps = FileOperations()
+        
+    def saveFinishingTime(self, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots, totalTimeTaken):
+        filename = self.fileOps.getUniqueNameForFinishingTime(runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots)
+        programMetrics = {
+            self.metricNames.timeToCrossFinishLine: totalTimeTaken,
+            self.metricNames.runWhichCI: runWhichCI,
+            self.metricNames.runWhichTerrain: runWhichTerrain,
+            self.metricNames.trialNumber: trialNumber,
+            self.metricNames.numImaginaryRobots: numImaginaryRobots
+        }
+        self.fileOps.savePickleFile(self.fileOps.dir.programMetricsFolder, filename, programMetrics)
+        
+    def loadProgramRunData(self):
+        data = []
+        fileList = self.fileOps.loadAllPickleFilesFromDirectory(self.fileOps.dir.programMetricsFolder)
+        #---go through all filenames and load dicts
+        trialNums = set(); robotNums = set();
+        for filename in fileList:
+            d = self.fileOps.loadPickleFile(None, filename)
+            print('data:',d)
+            trialNums.add(d[self.metricNames.trialNumber])
+            robotNums.add(d[self.metricNames.numImaginaryRobots]) 
+            data.append(d)
+        print('\n----------------- Results of ',len(trialNums),' trials and ', robotNums, ' robots:')#The +1 is because trials start with 0
+        print('Trial, numRobots, CI, Terrain, Time (s)')
+        for t in trialNums:
+            for r in robotNums:
+                for d in data:
+                    if d[self.metricNames.trialNumber] == t and d[self.metricNames.numImaginaryRobots] == r:
+                        print(str(t)+", "+str(r)+", "+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(d[self.metricNames.timeToCrossFinishLine]))
+    
 class FitnessAnalytics:    
     def __init__(self):
         self.file = FileOperations()

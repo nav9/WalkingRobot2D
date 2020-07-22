@@ -2,8 +2,6 @@
 # Created: April 2019
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
-import math
-import random
 from WalkingRobot import *
 from random import uniform
 
@@ -15,7 +13,6 @@ class RunCode:
     IMAGINE = 4
     EXPERIENCE = 5
     PAUSE_AND_SWITCH_TO_IMAGINATION = 6
-         
 
 class Constants:
     UNDETERMINED = -1
@@ -23,7 +20,6 @@ class Constants:
     xID = 0
     yID = 1
     mainRobotID = 0
-    terrainObjectsFolder = 'terrainObjects/'
 
 # IMPORTANT NOTE: A motor rate that produced a certain kind of motion in one execution may not always
 # produce the same kind of motion again, due to the unreliability of the friction, joint movements and

@@ -21,8 +21,8 @@ from WalkingRobot import RobotBody
 from WalkingRobot import Constants
 from LearningRobot import LearningRobot
 from pymunk.shape_filter import ShapeFilter
-from Analytics import TestAnalyticsForMovementAccuracy, FileOperations
 from ComputationalIntelligence import SimpleDE, RunCode, RandomBest, SimplePSO
+from Analytics import TestAnalyticsForMovementAccuracy, FileOperations, ProgramAnalytics
 
 class RunStep:
     IMAGINARY_MOTOR_EXEC = 0
@@ -351,6 +351,7 @@ class ImaginationTwin(Worlds):#inherits
         self.cons = Constants()
         self.trialNumber = trialNum #Used when multi-trials are being run. If "None", the trial uses a randomized terrain. If it has a value, the trial either loads a previously stored terrain from a file or if none exists, it creates a terrain for that trial
         self.fileOps = FileOperations()
+        self.analytics = ProgramAnalytics()
         
     def initialize(self):
         super(ImaginationTwin, self).initialize()
@@ -377,7 +378,7 @@ class ImaginationTwin(Worlds):#inherits
     def runWorld(self):
         clock = pygame.time.Clock()
         simulating = True        
-        #prevTime = time.time()
+        startTime = time.time()
         
         while simulating:
             for event in pygame.event.get():
@@ -408,7 +409,10 @@ class ImaginationTwin(Worlds):#inherits
             
             #---if robot reaches goal, stop
             if self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.finishLine:#reached end of world
-                print('Crossed finish line. Congratulations!')
+                totalTimeTaken = time.time() - startTime
+                print('Crossed finish line in ',totalTimeTaken, ' seconds')
+                if not self.trialNumber == None: 
+                    self.analytics.saveFinishingTime(self.runWhichCI, self.runWhichTerrain, self.trialNumber, self.numImaginaryRobots, totalTimeTaken)                    
                 break
             
             #---draw all objects            
@@ -444,14 +448,11 @@ class ImaginationTwin(Worlds):#inherits
                     self.createSphere(o[ShapeProperties.COL], o[ShapeProperties.ROW], o[ShapeProperties.WIDTH])
                     self.createSphere(o[ShapeProperties.COL], self.imaginaryWorldYOffset+o[ShapeProperties.ROW], o[ShapeProperties.WIDTH])
     
-    def getUniqueNameForTerrainTrials(self):
-        return self.runWhichTerrain + str(self.trialNumber) + '_' + str(self.numImaginaryRobots) + '.pickle'
-    
     def loadOrCreateTerrain(self):        
-        filename = self.getUniqueNameForTerrainTrials()
-        self.fileOps.createDirectoryIfNotExisting(self.cons.terrainObjectsFolder)
-        fileExists = self.fileOps.checkIfFileExists(self.cons.terrainObjectsFolder, filename) #check if a terrain is already generated for a trial number
-        if fileExists: terrainObjects = self.fileOps.loadPickleFile(self.cons.terrainObjectsFolder, filename)
+        filename = self.fileOps.getUniqueNameForTerrainTrials(self.runWhichTerrain, self.trialNumber, self.numImaginaryRobots)
+        self.fileOps.createDirectoryIfNotExisting(self.fileOps.dir.terrainObjectsFolder)
+        fileExists = self.fileOps.checkIfFileExists(self.fileOps.dir.terrainObjectsFolder, filename) #check if a terrain is already generated for a trial number
+        if fileExists: terrainObjects = self.fileOps.loadPickleFile(self.fileOps.dir.terrainObjectsFolder, filename)
         else: terrainObjects = None
         return terrainObjects, filename, fileExists
         
@@ -472,7 +473,7 @@ class ImaginationTwin(Worlds):#inherits
         self.createTerrainObjects(terrainObjects)
         #---write
         if not fileExists and not self.trialNumber == None:#write to file only if it's one of the trials
-            self.fileOps.savePickleFile(self.cons.terrainObjectsFolder, filename, terrainObjects)
+            self.fileOps.savePickleFile(self.fileOps.dir.terrainObjectsFolder, filename, terrainObjects)
             
     def createTerrainBoxesInRowWithSpaces(self):  
         w = 20; h = 45
@@ -503,7 +504,7 @@ class ImaginationTwin(Worlds):#inherits
         self.createTerrainObjects(terrainObjects)
         #---write
         if not fileExists and not self.trialNumber == None:#write to file only if it's one of the trials
-            self.fileOps.savePickleFile(self.cons.terrainObjectsFolder, filename, terrainObjects)
+            self.fileOps.savePickleFile(self.fileOps.dir.terrainObjectsFolder, filename, terrainObjects)
                                                        
     def createBox(self, x, y, wd, ht, colour, fil):
         body = pymunk.Body(body_type = pymunk.Body.KINEMATIC)
