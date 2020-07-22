@@ -269,7 +269,7 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         self.currGen = 0
         if not self.isMainRobot:
             if self.world.runWhichCI == RunCI.RANDOM: self.CI = RandomBest(self.robots)
-            if self.world.runWhichCI == RunCI.DE: self.CI = SimpleDE(self.robots)
+            if self.world.runWhichCI == RunCI.DE: self.CI = SimpleDE(self.robots, self.maxGens)
             if self.world.runWhichCI == RunCI.PSO: self.CI = SimplePSO(self.robots)
 
     def run(self):        

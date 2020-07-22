@@ -42,7 +42,7 @@ class MainSimulator(object):
         #--------------------- LONG RUNS ------------------------
         #--------------------------------------------------------        
         if simulationToRun == Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS:
-            numTrials = 2
+            numTrials = 10
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, trialNum));
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.FLAT_GROUND, trialNum))
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.FLAT_GROUND, trialNum))
@@ -88,8 +88,8 @@ class MainSimulator(object):
 if __name__ == '__main__':
     # - Single leg part, -- Two leg parts, # Chassis
     legs = '--#--'    
-    sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
-    #sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
+    #sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
+    sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
     #sim = MainSimulator(legs, Run.ACTUAL_IMAGINATION)
     #sim = MainSimulator(legs, Run.HEAVEN)
     #sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)

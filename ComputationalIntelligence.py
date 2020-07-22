@@ -65,14 +65,15 @@ class RandomBest:#Use randomness instead of a CI algorithm
 
 # Note: At least 4 robots are required for Differential Evolution to work
 class SimpleDE:#Use randomness instead of a CI algorithm  
-    def __init__(self, roboList):
+    def __init__(self, roboList, maxGen):
         self.robots = roboList
+        self.maxGen = maxGen
         self.infoString = ""
         self.const = Constants()
         self.motorRatesOfFittest = []
         #---Differential Evolution parameters
         self.masterBeta = 2.0 #beta is real number belongs to [0 -> 2]
-        self.vBetaReductionFactor = 1/20
+        self.vBetaReductionFactor = 1/self.maxGen
         self.crProba = 0.3 #crossover probability range [0 -> 1]  
         self.vBeta = self.masterBeta  
         minRate, maxRate = self.robots[0].getMinMaxLegRates()
