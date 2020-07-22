@@ -444,7 +444,7 @@ class ImaginationTwin(Worlds):#inherits
             terrainObjects, filename, fileExists = self.loadOrCreateTerrain()
         if terrainObjects == None or self.trialNumber == None: #then create fresh randomized objects
             terrainObjects = {ShapeTypes.RECTANGLE: []}
-            numObjects = 90; debrisStartCol = 200; debrisMaxHt = 90; boxMinSz = 5; boxMaxSz = 40
+            numObjects = 100; debrisStartCol = 200; debrisMaxHt = 80; boxMinSz = 5; boxMaxSz = 30
             for _ in range(numObjects):
                 col = random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness)
                 row = random.randint(self.debrisElevFromBottomWall+2*self.wallThickness, self.debrisElevFromBottomWall+debrisMaxHt)

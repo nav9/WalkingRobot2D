@@ -89,7 +89,7 @@ class RobotBody:
         self.legs = []
         self.limbMotorRates = []
         self.motorMovementDuration = 50 #set according to the frames per second, but will be changed by CI classes
-        self.motorMovementDurationRange = np.linspace(0, maxMotorMovementDuration, maxMotorMovementDuration/5)
+        self.motorMovementDurationRange = np.linspace(0, maxMotorMovementDuration, int(maxMotorMovementDuration/5))
         #print('motorMovementDurationRange: ',str(self.motorMovementDurationRange), 'len:', len(self.motorMovementDurationRange))
         self.direction = self.ori['RIGHT'] #direction the robot needs to go in
         #self.currentActionNode = []#node on the action network        
