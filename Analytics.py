@@ -103,6 +103,7 @@ class ProgramAnalytics:
                             if d[self.metricNames.trialNumber] == t and d[self.metricNames.numImaginaryRobots] == r and d[self.metricNames.numGens] == g:
                                 print(str(t)+", "+str(r)+", "+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(d[self.metricNames.timeToCrossFinishLine]))
                         except Exception as _:
+                            print('exception caught for trial ', t, ' gen ', g, ' numRobot ', r)
                             logging.error(traceback.format_exc(None, True))
     
 class FitnessAnalytics:    

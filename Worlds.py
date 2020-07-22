@@ -333,7 +333,7 @@ class ImaginationTwin(Worlds):#inherits
         self.screenHeight = 620 #keep at at least 350        
         self.worldWidth = 900 #overriding
         self.worldHeight = 300
-        self.finishLine = 200#self.worldWidth - 100 
+        self.finishLine = self.worldWidth - 100 
         self.imaginaryWorldYOffset = self.worldHeight 
         self.numRobots = 1        
         self.numImaginaryRobots = 4 #min 4 robots required for ComputationalIntelligence
@@ -462,7 +462,7 @@ class ImaginationTwin(Worlds):#inherits
             terrainObjects, filename, fileExists = self.loadOrCreateTerrain()
         if terrainObjects == None or self.trialNumber == None: #then create fresh randomized objects
             terrainObjects = {ShapeTypes.RECTANGLE: []}
-            numObjects = 80; debrisStartCol = 200; debrisMaxHt = 90; boxMinSz = 5; boxMaxSz = 40
+            numObjects = 90; debrisStartCol = 200; debrisMaxHt = 90; boxMinSz = 5; boxMaxSz = 40
             for _ in range(numObjects):
                 col = random.randint(debrisStartCol, self.worldWidth-2*self.wallThickness)
                 row = random.randint(self.debrisElevFromBottomWall+2*self.wallThickness, self.debrisElevFromBottomWall+debrisMaxHt)

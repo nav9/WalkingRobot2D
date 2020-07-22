@@ -43,22 +43,22 @@ class MainSimulator(object):
         #--------------------------------------------------------        
         if simulationToRun == Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS:
             numTrials = 2
-            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, trialNum));
-            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.FLAT_GROUND, trialNum))
-            for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.FLAT_GROUND, trialNum))
+#             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, trialNum));
+#             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.FLAT_GROUND, trialNum))
+#             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.FLAT_GROUND, trialNum))
             
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
-             
+              
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
-             
+              
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STAIRCASE_UP_DOWN, trialNum))
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.STAIRCASE_UP_DOWN, trialNum))
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.STAIRCASE_UP_DOWN, trialNum))
-             
+              
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.ALTERNATOR, trialNum))
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.ALTERNATOR, trialNum))
             for trialNum in range(numTrials): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.ALTERNATOR, trialNum))   
