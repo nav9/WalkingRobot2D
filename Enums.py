@@ -3,7 +3,7 @@
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
 class MainProgramParameters:
-    FINISH_LINE_POSITION_FROM_END = 850 #800 or 100
+    FINISH_LINE_POSITION_FROM_END = 100 #800 for near or 100 for far
     LEGS = '--#--'  
     MAX_GENS = 5
     
