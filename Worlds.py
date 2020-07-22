@@ -352,6 +352,7 @@ class ImaginationTwin(Worlds):#inherits
         self.trialNumber = trialNum #Used when multi-trials are being run. If "None", the trial uses a randomized terrain. If it has a value, the trial either loads a previously stored terrain from a file or if none exists, it creates a terrain for that trial
         self.fileOps = FileOperations()
         self.analytics = ProgramAnalytics()
+        self.startTime = None
         
     def initialize(self):
         super(ImaginationTwin, self).initialize()
@@ -378,8 +379,8 @@ class ImaginationTwin(Worlds):#inherits
     def runWorld(self):
         clock = pygame.time.Clock()
         simulating = True        
-        startTime = time.time()
-        
+        self.startTime = time.time()
+        abortRun = False
         while simulating:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
@@ -390,6 +391,7 @@ class ImaginationTwin(Worlds):#inherits
                     #if event.key == K_DOWN: self.cameraXY += Vec2d(0, self.cameraMoveDist[1])
                     if event.key == K_LEFT: self.moveCameraBy(self.cameraMoveDist[0])
                     if event.key == K_RIGHT: self.moveCameraBy(-self.cameraMoveDist[0])
+                    if event.key == K_a: abortRun = True
             if not simulating: break #coz break within event for loop won't exit while
             #---camera follow robot
             #self.__makeCameraFollowRobot__()
@@ -408,9 +410,9 @@ class ImaginationTwin(Worlds):#inherits
             self.generateInfoString()
             
             #---if robot reaches goal, stop
-            if self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.finishLine:#reached end of world
-                totalTimeTaken = time.time() - startTime
-                print('Crossed finish line in ',totalTimeTaken, ' seconds')
+            if abortRun or self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.finishLine:#reached end of world
+                totalTimeTaken = time.time() - self.startTime 
+                print(('Aborted run ' if abortRun else 'Crossed finish line'),'in',totalTimeTaken, ': seconds for trial',self.trialNumber,', CI:', self.runWhichCI, ', Terrain:', self.runWhichTerrain)
                 if not self.trialNumber == None: 
                     self.analytics.saveFinishingTime(self.genStateImagined.maxGens, self.runWhichCI, self.runWhichTerrain, self.trialNumber, self.numImaginaryRobots, totalTimeTaken)                    
                 break
@@ -422,7 +424,10 @@ class ImaginationTwin(Worlds):#inherits
     #--------------------------------------------------------------------------------------------
     #------------------------------------ helper functions --------------------------------------
     #--------------------------------------------------------------------------------------------
-    
+    def generateInfoString(self):     
+        elapsedTime = str(time.time() - self.startTime)
+        self.infoString = self.genStateImagined.getInfoString() + ("" if self.trialNumber==None else ", trial: "+str(self.trialNumber+1)) +  ", terrain: " + self.runWhichTerrain.lower() + ', t:' + elapsedTime + 's'
+            
     def moveCameraBy(self, dist):
         self.cameraXY += Vec2d(dist, 0)
         self.prevRobotPos = self.robots[0].getPosition()
@@ -549,10 +554,7 @@ class ImaginationTwin(Worlds):#inherits
             p = pos[:]; a = angles[:] #copying values instead of references
             robo.setBodyPositionAndAngles(p, a, Vec2d(0, self.imaginaryWorldYOffset))
             robo.saveGenStartPos()
-            robo.stopMotion()
-        
-    def generateInfoString(self):     
-        self.infoString = self.genStateImagined.getInfoString() + ("" if self.trialNumber==None else ", trial: "+str(self.trialNumber+1)) +  ", terrain: " + self.runWhichTerrain.lower()
+            robo.stopMotion()        
                 
     def delete(self):
         super(ImaginationTwin, self).delete()   
