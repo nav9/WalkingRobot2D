@@ -1,0 +1,7 @@
+First, a DE variable beta based on 1/maxGen was tried, but it was converging too fast for 5 gens, that it made all robots move in the same direction, so it was shifted back to 1/40, and a 0.1 probability of randomly re-initializing values was introduced.
+Results were obtained for 5 maxGen's with 5 imaginary robots.
+Next run was with 30 gens and 5 imaginary robots. No particular improvement observed, so planning to try for 5 or 10 imaginary robots and 5 gens, because experiments showed that even if the best robot was chosen, there's no guarantee it'd move forward.
+The problem is with too few robots, so if some tend to go backward, many others do too. The other problem is with a lack of variety in movements, so uniform rand would work better. There's no need of convergence in this case.
+So more robots (30) and fewer generations (10) may work better.
+
+

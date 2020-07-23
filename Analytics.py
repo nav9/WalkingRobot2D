@@ -9,7 +9,7 @@ import logging
 import traceback
 import numpy as np
 import matplotlib.pyplot as plt
-from Enums import Directories, ProgramMetrics
+from Enums import Directories, ProgramMetrics, MainProgramParameters
     
 class FileOperations:
     def __init__(self):
@@ -81,15 +81,16 @@ class ProgramAnalytics:
             robotNums.add(d[self.metricNames.numImaginaryRobots]) 
             data.append(d)
         print('\n----------------- Results of ',len(genNums),' gens, ',len(trialNums),' trials and ', robotNums, ' robots:')#The +1 is because trials start with 0
-        print('Trial, numRobots, CI, Terrain, Time (s)')
+        print('Trial, numRobots, CI, Terrain, Real robot\'s Time (s)')
         for t in trialNums:
             for g in genNums:
                 for r in robotNums:
                     for d in data:
                         try:
                             if d[self.metricNames.trialNumber] == t and d[self.metricNames.numImaginaryRobots] == r and d[self.metricNames.numGens] == g:
-                                print(str(t)+", "+str(r)+", "+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(d[self.metricNames.timeToCrossFinishLine]))
-                        except Exception as _:
+                                print(str(t)+", "+str(r)+", "+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(d[self.metricNames.timeToCrossFinishLine]/MainProgramParameters.MAX_GENS))
+                        except Exception as e:
+                            print(e)
                             print('exception caught for trial ', t, ' gen ', g, ' numRobot ', r)
                             logging.error(traceback.format_exc(None, True))
     
