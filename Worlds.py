@@ -355,6 +355,10 @@ class ImaginationTwin(Worlds):#inherits
         clock = pygame.time.Clock()
         simulating = True        
         self.startTime = time.time()
+#         deletemeStartTime = time.time() 
+#         deletemeRunStateTracker = self.runState 
+#         deletemeImaginaryRunTimeSum = 0
+#         deletemeRealRunTimeSum = 0
         abortRun = False
         while simulating:
             for event in pygame.event.get():
@@ -379,17 +383,48 @@ class ImaginationTwin(Worlds):#inherits
             self.updatePosition()
             self.updateColor()
             
-            if self.runState == RunStep.IMAGINARY_GENERATION: self.genStateImagined.run()
-            if self.runState == RunStep.IMAGINARY_MOTOR_EXEC: self.moveMotorsStateImagined.run()                    
-            if self.runState == RunStep.REAL_MOTOR_EXEC: self.moveMotorsStateReal.run()
-            if self.runState == RunStep.REAL_GENERATION: self.genStateReal.run()
+            if self.runState == RunStep.IMAGINARY_GENERATION:
+#                 deletemeTime = time.time() - deletemeStartTime
+#                 if deletemeRunStateTracker==RunStep.IMAGINARY_MOTOR_EXEC and self.runState==RunStep.IMAGINARY_GENERATION:
+#                     deletemeImaginaryRunTimeSum += deletemeTime                
+#                 if deletemeRunStateTracker==RunStep.REAL_GENERATION and self.runState==RunStep.IMAGINARY_GENERATION:
+#                     deletemeImaginaryRunTimeSum += deletemeTime                    
+#                 if self.runState != deletemeRunStateTracker:#means there was a state change
+#                     print('Time elapsed between ', deletemeRunStateTracker, ' and ', self.runState, ' is: ', time.time() - deletemeStartTime); deletemeRunStateTracker = self.runState; deletemeStartTime = time.time()
+                self.genStateImagined.run()
+            if self.runState == RunStep.IMAGINARY_MOTOR_EXEC:
+#                 deletemeTime = time.time() - deletemeStartTime
+#                 if deletemeRunStateTracker==RunStep.IMAGINARY_GENERATION and self.runState==RunStep.IMAGINARY_MOTOR_EXEC:
+#                     deletemeImaginaryRunTimeSum += deletemeTime                                    
+#                 if self.runState != deletemeRunStateTracker:#means there was a state change
+#                     print('Time elapsed between ', deletemeRunStateTracker, ' and ', self.runState, ' is: ', time.time() - deletemeStartTime); deletemeRunStateTracker = self.runState; deletemeStartTime = time.time()                 
+                self.moveMotorsStateImagined.run()                    
+            if self.runState == RunStep.REAL_MOTOR_EXEC:
+#                 deletemeTime = time.time() - deletemeStartTime
+#                 if deletemeRunStateTracker==RunStep.IMAGINARY_GENERATION and self.runState==RunStep.REAL_GENERATION: 
+#                     deletemeRealRunTimeSum += deletemeTime                 
+#                 if self.runState != deletemeRunStateTracker:#means there was a state change
+#                     print('Time elapsed between ', deletemeRunStateTracker, ' and ', self.runState, ' is: ', time.time() - deletemeStartTime); deletemeRunStateTracker = self.runState; deletemeStartTime = time.time()                 
+                self.moveMotorsStateReal.run()
+            if self.runState == RunStep.REAL_GENERATION:
+#                 deletemeTime = time.time() - deletemeStartTime
+#                 if self.runState != deletemeRunStateTracker:#means there was a state change
+#                     if deletemeRunStateTracker==RunStep.IMAGINARY_GENERATION and self.runState==RunStep.REAL_GENERATION: 
+#                         deletemeRealRunTimeSum = deletemeRealRunTimeSum + deletemeTime 
+#                         print('Imaginary time took: ', deletemeImaginaryRunTimeSum); deletemeImaginaryRunTimeSum = 0                   
+#                     if deletemeRunStateTracker==RunStep.REAL_MOTOR_EXEC and self.runState==RunStep.REAL_GENERATION: 
+#                         deletemeRealRunTimeSum += deletemeTime
+#                         print('Time for real run: ', deletemeRealRunTimeSum); deletemeRealRunTimeSum = 0 #print and reset
+#                     #print('Time elapsed between ', deletemeRunStateTracker, ' and ', self.runState, ' is: ', ; deletemeRunStateTracker = self.runState; deletemeStartTime = deletemeTime                 
+                self.genStateReal.run()
             self.generateInfoString()
             
             #---if robot reaches goal, stop
             if abortRun or self.robots[self.cons.mainRobotID].getPosition()[self.cons.xID] - self.cumulativePosUpdateBy[0] > self.finishLine:#reached end of world
-                totalTimeTaken = str(int(time.time() - self.startTime))
+                totalTimeTaken = int(time.time() - self.startTime)
                 finishMessage = 'Aborted_run_' if abortRun else 'Crossed_finish_line_'  + '_in_'+str(totalTimeTaken)+ '_seconds_for_trial_'+str(self.trialNumber)+'_CI_'+ self.runWhichCI+'_Terrain_'+self.runWhichTerrain
                 print(finishMessage)
+                print('Real robot would have been active for: ', str(totalTimeTaken * 1/MainProgramParameters.MAX_GENS),'s')
                 os.system('spd-say '+finishMessage)
                 if not self.trialNumber == None: 
                     self.analytics.saveFinishingTime(self.genStateImagined.maxGens, self.runWhichCI, self.runWhichTerrain, self.trialNumber, self.numImaginaryRobots, totalTimeTaken)                    
