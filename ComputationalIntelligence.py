@@ -133,7 +133,8 @@ class SimplePSO:#Use randomness instead of a CI algorithm
         self.numLegs = len(self.robots[0].legs)
         #---PSO parameters
         self.c1 = 1 #cognitive coefficient
-        self.c2 = 2 #social coefficient        
+        self.c2 = 2 #social coefficient
+        self.randomReinitializationProba = 0.1 #ensuring that 10% of robots are re-initialized randomly         
         self.reinitialize() 
         minRate, maxRate = self.robots[0].getMinMaxLegRates()
         self.minLegMotorRate = minRate
@@ -159,24 +160,27 @@ class SimplePSO:#Use randomness instead of a CI algorithm
         for i in range(len(self.robots)):
             if self.fittestRobot == i: continue #don't change the motor rates for fittest
             else:
-                currentRates = self.robots[i].getLegMotorRates()
-                currentFitness = self.robots[i].getFitness()
-                if currentFitness > self.pastFitnesses[i]:
-                    self.pastFitnesses[i] = currentFitness
-                    self.personalBestRates[i] = currentRates
-                for ii in range(self.numLegs):
-                    cognitive = self.c1 * random.random() * (self.personalBestRates[i][ii] - currentRates[ii])
-                    social = self.c2 * random.random() * (self.motorRatesOfFittest[ii] - currentRates[ii])                    
-                    self.velocitiesPSO[i][ii] = self.velocitiesPSO[i][ii] + cognitive + social
-                    #---velocity clamping
-                    if self.velocitiesPSO[i][ii] > self.maxLegMotorRate / 2: self.velocitiesPSO[i][ii] = self.maxLegMotorRate / 2
-                    if self.velocitiesPSO[i][ii] < self.minLegMotorRate / 2: self.velocitiesPSO[i][ii] = self.minLegMotorRate / 2
-                    #---rate update 
-                    currentRates[ii] = currentRates[ii] + self.velocitiesPSO[i][ii]
-                    #---rate clamping
-                    if currentRates[ii] > self.maxLegMotorRate: currentRates[ii] = self.maxLegMotorRate
-                    if currentRates[ii] < self.minLegMotorRate: currentRates[ii] = self.minLegMotorRate
-                self.robots[i].setLegMotorRates(currentRates)
+                if uniform(0,1) > self.randomReinitializationProba:#ensuring that 10% of robots are re-initialized randomly
+                    self.robots[i].setRandomLegMotorRates()
+                else: #do PSO
+                    currentRates = self.robots[i].getLegMotorRates()
+                    currentFitness = self.robots[i].getFitness()
+                    if currentFitness > self.pastFitnesses[i]:
+                        self.pastFitnesses[i] = currentFitness
+                        self.personalBestRates[i] = currentRates
+                    for ii in range(self.numLegs):
+                        cognitive = self.c1 * random.random() * (self.personalBestRates[i][ii] - currentRates[ii])
+                        social = self.c2 * random.random() * (self.motorRatesOfFittest[ii] - currentRates[ii])                    
+                        self.velocitiesPSO[i][ii] = self.velocitiesPSO[i][ii] + cognitive + social
+                        #---velocity clamping
+                        if self.velocitiesPSO[i][ii] > self.maxLegMotorRate / 2: self.velocitiesPSO[i][ii] = self.maxLegMotorRate / 2
+                        if self.velocitiesPSO[i][ii] < self.minLegMotorRate / 2: self.velocitiesPSO[i][ii] = self.minLegMotorRate / 2
+                        #---rate update 
+                        currentRates[ii] = currentRates[ii] + self.velocitiesPSO[i][ii]
+                        #---rate clamping
+                        if currentRates[ii] > self.maxLegMotorRate: currentRates[ii] = self.maxLegMotorRate
+                        if currentRates[ii] < self.minLegMotorRate: currentRates[ii] = self.minLegMotorRate
+                    self.robots[i].setLegMotorRates(currentRates)
 
         fittestRobotString = "fittest robot: "+ ('-' if self.fittestRobot == self.const.UNDETERMINED else str(self.fittestRobot))
         fitnessString = ",  fitness: "+str(self.robots[self.fittestRobot].getFitness())
