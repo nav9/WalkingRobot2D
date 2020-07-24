@@ -3,11 +3,13 @@
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
 
 class MainProgramParameters:
-    MAX_TRIALS_TO_RUN = 10
-    FINISH_LINE_POSITION_FROM_END = 700 #800 for near or 100 for far
+    MAX_TRIALS_TO_RUN = 5
+    FINISH_LINE_POSITION_FROM_END = 100 #800 for near or 100 for far
     LEGS = '--#--'  
-    MAX_GENS = 5
+    MAX_GENS = 2
     NUM_IMAGINARY_ROBOTS = 30 #population
+    MAX_GENS_FOR_STUCK_CHECK = 10 #if stuck at same positions for more than 10 tries of main robot movement, then activate unstuck mode
+    DISTANCE_FOR_ASSUMING_STUCK = 20 #pixels
     
 class Run:
     IMAGINATION_TWIN = 0

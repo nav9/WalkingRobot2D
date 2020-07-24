@@ -192,6 +192,7 @@ class RobotBody:
     
     def setFocusRobotColor(self): self.chassis_shape.color = (45, 160, 185)
     def setNormalRobotColor(self): self.chassis_shape.color = (231, 30, 30)
+    def setStuckRobotColor(self): self.chassis_shape.color = (230, 175 , 90)
     
     def setImaginaryRobotColor(self):
         self.chassis_shape.color = (110, 110, 110)  

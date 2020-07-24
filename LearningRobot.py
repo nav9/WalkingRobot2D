@@ -224,7 +224,7 @@ class LearningRobot:#Used in the actual imagination world
         for leg in self.legs: leg.motor.rate = 0
                         
     def setFocusRobotColor(self): self.chassis_shape.color = (190, 0, 0)
-    def setNormalRobotColor(self): self.chassis_shape.color = (170, 170, 170)
+    def setNormalRobotColor(self): self.chassis_shape.color = (170, 170, 170)    
                 
     def setImaginaryRobotColor(self):
         self.chassis_shape.color = (110, 110, 110)  

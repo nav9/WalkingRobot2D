@@ -11,6 +11,7 @@ import random
 import pymunk
 import statistics
 import numpy as np
+import collections
 from pymunk import Vec2d
 import pymunk.pygame_util
 from pygame.color import *
@@ -248,8 +249,12 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         self.robots = listOfRobots
         self.isMainRobot = (len(self.robots) == 1)
         self.world = parent  
-        if self.isMainRobot: self.maxGens = 1 
-        else: self.maxGens = MainProgramParameters.MAX_GENS
+        if self.isMainRobot: 
+            self.stuckForTooLong = False
+            self.maxGens = 1            
+            self.samePosCheck = collections.deque() #Stores 10 Vec2D's which are the robot's x,y positions for 10 se 
+        else: 
+            self.maxGens = MainProgramParameters.MAX_GENS
         self.currGen = 0
         if not self.isMainRobot:
             if self.world.runWhichCI == RunCI.RANDOM: self.CI = RandomBest(self.robots)
@@ -278,8 +283,10 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
             self.start()
             #---state switching etc
             if self.isMainRobot:
+                self.checkIfStuck()
                 for robo in self.robots:
-                    robo.setLegMotorRates(self.world.genStateImagined.CI.motorRatesOfFittest)
+                    if self.stuckForTooLong:robo.setRandomLegMotorRates() #to help it get out of stuck position
+                    else: robo.setLegMotorRates(self.world.genStateImagined.CI.motorRatesOfFittest)
                 self.world.runState = RunStep.REAL_MOTOR_EXEC
             else: 
                 self.world.runState = RunStep.IMAGINARY_MOTOR_EXEC
@@ -294,7 +301,24 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         return "Gen: " + whichGen + self.CI.getInfoString()
     def getFittestRobot(self):
         return self.CI.getFittestRobot()
-
+    def checkIfStuck(self):#runs only for main robot
+        position = None; self.stuckForTooLong = False #first assume false 
+        for robo in self.robots:
+            position = robo.getPosition()
+        self.samePosCheck.append(position)#append to the right
+        if len(self.samePosCheck) > MainProgramParameters.MAX_GENS_FOR_STUCK_CHECK: #if at least these many data points are available
+            self.samePosCheck.popleft()#pop from the left
+            prev = None; numStuckGens = 0; deleteme = []
+            for p in self.samePosCheck:
+                if prev == None: 
+                    prev = p
+                    continue
+                else:#---check if stuck
+                    dis = prev.get_distance(p); deleteme.append(dis)
+                    if dis < MainProgramParameters.DISTANCE_FOR_ASSUMING_STUCK: numStuckGens = numStuckGens + 1
+            if numStuckGens >= len(self.samePosCheck)-1: self.stuckForTooLong = True #the -1 accounts for the continue statement above
+    def isMainRobotStuck(self):
+        return self.stuckForTooLong
         
 #The world that has twins above which represent the imagination and run ComputationalIntelligence for a while before the 
 #original robot takes the best motor rates and runs them
@@ -327,7 +351,7 @@ class ImaginationTwin(Worlds):#inherits
         self.trialNumber = trialNum #Used when multi-trials are being run. If "None", the trial uses a randomized terrain. If it has a value, the trial either loads a previously stored terrain from a file or if none exists, it creates a terrain for that trial
         self.fileOps = FileOperations()
         self.analytics = ProgramAnalytics()
-        self.startTime = None
+        self.startTime = None        
         
     def initialize(self):
         super(ImaginationTwin, self).initialize()
@@ -556,7 +580,8 @@ class ImaginationTwin(Worlds):#inherits
     
     def updateColor(self):
         for robo in self.robots:#for the main robot
-            robo.setNormalRobotColor()
+            if self.genStateReal.isMainRobotStuck(): robo.setStuckRobotColor()
+            else: robo.setNormalRobotColor()
         fittestRobotID = self.genStateImagined.getFittestRobot()
         fittestRobotID = fittestRobotID if fittestRobotID else -1
         for i in range(0, len(self.imaginaryRobots)):
