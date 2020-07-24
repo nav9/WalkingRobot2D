@@ -10,6 +10,7 @@ class MainProgramParameters:
     NUM_IMAGINARY_ROBOTS = 30 #population
     MAX_GENS_FOR_STUCK_CHECK = 10 #if stuck at same positions for more than 10 tries of main robot movement, then activate unstuck mode
     DISTANCE_FOR_ASSUMING_STUCK = 20 #pixels
+    GENERATIONS_TO_PERSIST_STUCK = 5
     
 class Run:
     IMAGINATION_TWIN = 0

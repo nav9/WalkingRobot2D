@@ -251,6 +251,7 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         self.world = parent  
         if self.isMainRobot: 
             self.stuckForTooLong = False
+            self.persistStuckState = False
             self.maxGens = 1            
             self.samePosCheck = collections.deque() #Stores 10 Vec2D's which are the robot's x,y positions for 10 se 
         else: 
@@ -272,7 +273,7 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
             self.stop()
             for robo in self.robots:
                 robo.makeRobotStatic()            
-            if self.isMainRobot: 
+            if self.isMainRobot and not self.stuckForTooLong:#if it is stuck it has to continue in real generation coz there's no point doing the imaginary generations if the robot is going to move randomly anyway 
                 self.world.runState = RunStep.IMAGINARY_GENERATION 
             else: 
                 self.world.runState = RunStep.REAL_GENERATION
@@ -301,22 +302,28 @@ class Generation:#to run MoveMotors for g generations where each g = n*dT
         return "Gen: " + whichGen + self.CI.getInfoString()
     def getFittestRobot(self):
         return self.CI.getFittestRobot()
-    def checkIfStuck(self):#runs only for main robot
-        position = None; self.stuckForTooLong = False #first assume false 
-        for robo in self.robots:
-            position = robo.getPosition()
-        self.samePosCheck.append(position)#append to the right
-        if len(self.samePosCheck) > MainProgramParameters.MAX_GENS_FOR_STUCK_CHECK: #if at least these many data points are available
-            self.samePosCheck.popleft()#pop from the left
-            prev = None; numStuckGens = 0; deleteme = []
-            for p in self.samePosCheck:
-                if prev == None: 
-                    prev = p
-                    continue
-                else:#---check if stuck
-                    dis = prev.get_distance(p); deleteme.append(dis)
-                    if dis < MainProgramParameters.DISTANCE_FOR_ASSUMING_STUCK: numStuckGens = numStuckGens + 1
-            if numStuckGens >= len(self.samePosCheck)-1: self.stuckForTooLong = True #the -1 accounts for the continue statement above
+    def checkIfStuck(self):#runs only for main robot        
+        if self.stuckForTooLong:
+            if self.persistStuckState == 0: self.stuckForTooLong = False
+            else: self.persistStuckState -= 1
+        if not self.stuckForTooLong: #not kept as part of else of previous if, deliberately       
+            position = None  
+            for robo in self.robots:
+                position = robo.getPosition()
+            self.samePosCheck.append(position)#append to the right
+            if len(self.samePosCheck) > MainProgramParameters.MAX_GENS_FOR_STUCK_CHECK: #if at least these many data points are available
+                self.samePosCheck.popleft()#pop from the left
+                prev = None; numStuckGens = 0; deleteme = []
+                for p in self.samePosCheck:
+                    if prev == None: 
+                        prev = p
+                        continue
+                    else:#---check if stuck
+                        dis = prev.get_distance(p); deleteme.append(dis)
+                        if dis < MainProgramParameters.DISTANCE_FOR_ASSUMING_STUCK: numStuckGens = numStuckGens + 1
+                if numStuckGens >= len(self.samePosCheck)-1: 
+                    self.stuckForTooLong = True #the -1 accounts for the continue statement above
+                    self.persistStuckState = MainProgramParameters.GENERATIONS_TO_PERSIST_STUCK
     def isMainRobotStuck(self):
         return self.stuckForTooLong
         
