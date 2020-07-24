@@ -6,8 +6,8 @@ class MainProgramParameters:
     MAX_TRIALS_TO_RUN = 10
     FINISH_LINE_POSITION_FROM_END = 700 #800 for near or 100 for far
     LEGS = '--#--'  
-    MAX_GENS = 10
-    NUM_IMAGINARY_ROBOTS = 5 #30 #population
+    MAX_GENS = 5
+    NUM_IMAGINARY_ROBOTS = 30 #population
     
 class Run:
     IMAGINATION_TWIN = 0

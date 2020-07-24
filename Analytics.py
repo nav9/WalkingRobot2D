@@ -80,7 +80,7 @@ class ProgramAnalytics:
             trialNums.add(d[self.metricNames.trialNumber])
             robotNums.add(d[self.metricNames.numImaginaryRobots]) 
             data.append(d)
-        print('\n----------------- Results of ',len(genNums),' gens, ',len(trialNums),' trials and ', robotNums, ' robots:')#The +1 is because trials start with 0
+        print('\n----------------- Results of ',len(genNums),' maxGen types, ',len(trialNums),' trials and ', robotNums, ' robots:')#The +1 is because trials start with 0
         print('Trial, numRobots, CI, Terrain, Real robot\'s Time (s)')
         for t in trialNums:
             for g in genNums:
@@ -88,7 +88,7 @@ class ProgramAnalytics:
                     for d in data:
                         try:
                             if d[self.metricNames.trialNumber] == t and d[self.metricNames.numImaginaryRobots] == r and d[self.metricNames.numGens] == g:
-                                print(str(t)+", "+str(r)+", "+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(d[self.metricNames.timeToCrossFinishLine]/MainProgramParameters.MAX_GENS))
+                                print(str(t)+", "+str(r)+", "+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(float(d[self.metricNames.timeToCrossFinishLine])/MainProgramParameters.MAX_GENS))
                         except Exception as e:
                             print(e)
                             print('exception caught for trial ', t, ' gen ', g, ' numRobot ', r)

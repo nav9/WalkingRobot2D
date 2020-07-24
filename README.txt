@@ -22,3 +22,6 @@ from the main.py file.
 The test simulator is for the programmer to try out a feature before programming it
 onto a robot.
 
+For the 30 generations trials, only the first two trials are being considered.
+The staircase terrain is not being considered for any trial.
+

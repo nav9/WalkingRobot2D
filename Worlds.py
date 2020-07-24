@@ -383,40 +383,10 @@ class ImaginationTwin(Worlds):#inherits
             self.updatePosition()
             self.updateColor()
             
-            if self.runState == RunStep.IMAGINARY_GENERATION:
-#                 deletemeTime = time.time() - deletemeStartTime
-#                 if deletemeRunStateTracker==RunStep.IMAGINARY_MOTOR_EXEC and self.runState==RunStep.IMAGINARY_GENERATION:
-#                     deletemeImaginaryRunTimeSum += deletemeTime                
-#                 if deletemeRunStateTracker==RunStep.REAL_GENERATION and self.runState==RunStep.IMAGINARY_GENERATION:
-#                     deletemeImaginaryRunTimeSum += deletemeTime                    
-#                 if self.runState != deletemeRunStateTracker:#means there was a state change
-#                     print('Time elapsed between ', deletemeRunStateTracker, ' and ', self.runState, ' is: ', time.time() - deletemeStartTime); deletemeRunStateTracker = self.runState; deletemeStartTime = time.time()
-                self.genStateImagined.run()
-            if self.runState == RunStep.IMAGINARY_MOTOR_EXEC:
-#                 deletemeTime = time.time() - deletemeStartTime
-#                 if deletemeRunStateTracker==RunStep.IMAGINARY_GENERATION and self.runState==RunStep.IMAGINARY_MOTOR_EXEC:
-#                     deletemeImaginaryRunTimeSum += deletemeTime                                    
-#                 if self.runState != deletemeRunStateTracker:#means there was a state change
-#                     print('Time elapsed between ', deletemeRunStateTracker, ' and ', self.runState, ' is: ', time.time() - deletemeStartTime); deletemeRunStateTracker = self.runState; deletemeStartTime = time.time()                 
-                self.moveMotorsStateImagined.run()                    
-            if self.runState == RunStep.REAL_MOTOR_EXEC:
-#                 deletemeTime = time.time() - deletemeStartTime
-#                 if deletemeRunStateTracker==RunStep.IMAGINARY_GENERATION and self.runState==RunStep.REAL_GENERATION: 
-#                     deletemeRealRunTimeSum += deletemeTime                 
-#                 if self.runState != deletemeRunStateTracker:#means there was a state change
-#                     print('Time elapsed between ', deletemeRunStateTracker, ' and ', self.runState, ' is: ', time.time() - deletemeStartTime); deletemeRunStateTracker = self.runState; deletemeStartTime = time.time()                 
-                self.moveMotorsStateReal.run()
-            if self.runState == RunStep.REAL_GENERATION:
-#                 deletemeTime = time.time() - deletemeStartTime
-#                 if self.runState != deletemeRunStateTracker:#means there was a state change
-#                     if deletemeRunStateTracker==RunStep.IMAGINARY_GENERATION and self.runState==RunStep.REAL_GENERATION: 
-#                         deletemeRealRunTimeSum = deletemeRealRunTimeSum + deletemeTime 
-#                         print('Imaginary time took: ', deletemeImaginaryRunTimeSum); deletemeImaginaryRunTimeSum = 0                   
-#                     if deletemeRunStateTracker==RunStep.REAL_MOTOR_EXEC and self.runState==RunStep.REAL_GENERATION: 
-#                         deletemeRealRunTimeSum += deletemeTime
-#                         print('Time for real run: ', deletemeRealRunTimeSum); deletemeRealRunTimeSum = 0 #print and reset
-#                     #print('Time elapsed between ', deletemeRunStateTracker, ' and ', self.runState, ' is: ', ; deletemeRunStateTracker = self.runState; deletemeStartTime = deletemeTime                 
-                self.genStateReal.run()
+            if self.runState == RunStep.IMAGINARY_GENERATION: self.genStateImagined.run()
+            if self.runState == RunStep.IMAGINARY_MOTOR_EXEC: self.moveMotorsStateImagined.run()                    
+            if self.runState == RunStep.REAL_MOTOR_EXEC: self.moveMotorsStateReal.run()
+            if self.runState == RunStep.REAL_GENERATION: self.genStateReal.run()
             self.generateInfoString()
             
             #---if robot reaches goal, stop

@@ -3,5 +3,7 @@ Results were obtained for 5 maxGen's with 5 imaginary robots.
 Next run was with 30 gens and 5 imaginary robots. No particular improvement observed, so planning to try for 5 or 10 imaginary robots and 5 gens, because experiments showed that even if the best robot was chosen, there's no guarantee it'd move forward.
 The problem is with too few robots, so if some tend to go backward, many others do too. The other problem is with a lack of variety in movements, so uniform rand would work better. There's no need of convergence in this case.
 So more robots (30) and fewer generations (10) may work better.
+Staircase is being skipped from the results and future runs because it doesn't really prove anything extra and wastes a lot of time when the robot falls backward repeatedly.
+
 
 

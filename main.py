@@ -50,9 +50,9 @@ class MainSimulator(object):
             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
                
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STAIRCASE_UP_DOWN, trialNum))
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.STAIRCASE_UP_DOWN, trialNum))
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.STAIRCASE_UP_DOWN, trialNum))
+#             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STAIRCASE_UP_DOWN, trialNum))
+#             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.STAIRCASE_UP_DOWN, trialNum))
+#             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.STAIRCASE_UP_DOWN, trialNum))
                
             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.ALTERNATOR, trialNum))
             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.ALTERNATOR, trialNum))
@@ -101,9 +101,6 @@ if __name__ == '__main__':
     results = ProgramAnalytics()
     results.loadProgramRunData()    
     print('\n\n... Program complete ...')
-    if noErrors:
-        os.system('spd-say "Program_completed_successfully"')
-    else:
-        os.system('spd-say "Exiting_with_errors"')
+    if noErrors: os.system('spd-say "Program_completed_successfully"')
+    else: os.system('spd-say "Exiting_with_errors"')
     
-
