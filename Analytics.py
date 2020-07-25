@@ -155,7 +155,7 @@ class TestAnalyticsForMovementAccuracy:
                 plt.plot(x, sim)
             plt.xlabel('chassis angle'); plt.ylabel('frames'); plt.title('Trial'+str(t+1)+'. '+str(len(angles[t]))+' simulations', loc='center', pad=None)
             plt.savefig(directory+'chassisAngles_trial'+str(t)+'.png')
-            plt.show(block=False)  
+            #plt.show(block=False)  
             #break          
     
     def groupedBarsMotorRates(self, directory, rates):
@@ -186,7 +186,7 @@ class TestAnalyticsForMovementAccuracy:
 #                             xytext=(0, 0),  # 3 points vertical offset
 #                             textcoords="offset points",
 #                             ha='center', va='bottom')
-        ax.set_ylabel('abs(motor rate)')
+        ax.set_ylabel('abs(motor rate)'); ax.set_xlabel('Trials')
         #ax.set_title('Avg. best fitness in 2500 gen.')
         ax.set_xticks(x)
         ax.set_xticklabels(labels)
@@ -195,7 +195,7 @@ class TestAnalyticsForMovementAccuracy:
         #autolabel(rects1); autolabel(rects2); autolabel(rects3); autolabel(rects4)    
         fig.tight_layout()
         plt.savefig(directory+'motorRatesForXYAccuracies.png')
-        plt.show(block=False)     
+        #plt.show(block=False)     
         
     def groupedBarsSurfaceTouch(self, directory, surfaceTouch):
         print(surfaceTouch)
@@ -225,7 +225,7 @@ class TestAnalyticsForMovementAccuracy:
 #                             xytext=(0, 0),  # 3 points vertical offset
 #                             textcoords="offset points",
 #                             ha='center', va='bottom')
-        ax.set_ylabel('limb contact')
+        ax.set_ylabel('limb contact'); ax.set_xlabel('Trials')
         #ax.set_title('Avg. best fitness in 2500 gen.')
         ax.set_xticks(x)
         ax.set_xticklabels(labels)
@@ -234,7 +234,7 @@ class TestAnalyticsForMovementAccuracy:
         #autolabel(rects1); autolabel(rects2); autolabel(rects3); autolabel(rects4)    
         fig.tight_layout()
         plt.savefig(directory+'surfaceTouchesForXYAccuracies.png')
-        plt.show(block=False)         
+        #plt.show(block=False)         
     
     def boxPlots(self, directory, xPositions, yPositions):
         ticks = []
@@ -249,14 +249,14 @@ class TestAnalyticsForMovementAccuracy:
         red = '#D7191C'; black = '#000000'; #blue = '#2C7BB6' #http://colorbrewer2.org/ 
         self.changeBoxColor(bpLeft, red)
         self.changeBoxColor(bpRight, black)
-        
+        plt.xlabel('Trials'); plt.ylabel('pixels')
         plt.plot([], c=red, label='dx'); plt.plot([], c=black, label='dy') #temporary lines for legend
         plt.legend()
         
         plt.xticks(rangeAndOffsetsForLeftBox , ticks)
         plt.tight_layout()
         plt.savefig(directory+'xyAccuracies.png')
-        plt.show(block=False) 
+        #plt.show(block=False) 
         
     def changeBoxColor(self, boxPlot, c):
         plt.setp(boxPlot['boxes'], color=c)
