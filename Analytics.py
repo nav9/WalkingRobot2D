@@ -88,7 +88,7 @@ class ProgramAnalytics:
                     for d in data:
                         try:
                             if d[self.metricNames.trialNumber] == t and d[self.metricNames.numImaginaryRobots] == r and d[self.metricNames.numGens] == g:
-                                print(str(t)+", "+str(r)+", "+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(float(d[self.metricNames.timeToCrossFinishLine])/MainProgramParameters.MAX_GENS))
+                                print(str(t+1)+", "+str(r)+", "+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(float(d[self.metricNames.timeToCrossFinishLine])/MainProgramParameters.MAX_GENS))
                         except Exception as e:
                             print(e)
                             print('exception caught for trial ', t, ' gen ', g, ' numRobot ', r)
@@ -129,7 +129,7 @@ class TestAnalyticsForMovementAccuracy:
     def loadSurfaceTouchDataFromDisk(self, directory, filename):
         return self.file.loadPickleFile(directory, filename) #returns [numTouch1, numTouch2,...4]     
 
-    def loadChassisAngleDataFromDisk(self, directory, filename):
+    def loadRobotAnglesDataFromDisk(self, directory, filename):
         return self.file.loadPickleFile(directory, filename) #[[angle1, angle2...angleNumFrames], [],...]    
     
     def generateRatesPositionFilename(self, trial):
@@ -138,21 +138,24 @@ class TestAnalyticsForMovementAccuracy:
     def generateSurfaceTouchFilename(self, trial):
         return "SurfaceTouch_trial"+str(trial)
         
-    def generateChassisAngleFilename(self, trial):
+    def generateRobotAnglesFilename(self, trial):
         return "ChassisAngle_trial"+str(trial)    
 
-    def plot(self, directory, xPositions, yPositions, rates, surfaceTouch, chassisAngles):#arrays will be in the form xPositions = [[1,2,5], [5,7,2,2,5], [7,2,5]...]. Same for yPositions
+    def plot(self, directory, xPositions, yPositions, rates, surfaceTouch, robotAngles):#arrays will be in the form xPositions = [[1,2,5], [5,7,2,2,5], [7,2,5]...]. Same for yPositions
         self.boxPlots(directory,xPositions, yPositions)
         self.groupedBarsMotorRates(directory,rates)
         self.groupedBarsSurfaceTouch(directory,surfaceTouch)        
-        self.multipleLines(directory,chassisAngles)     
+        self.multipleLines(directory,robotAngles) #robotAngles = [[chAng, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]     
         
-    def multipleLines(self, directory, angles):#[[[a1,a2,...aNumFrames], [], []], []]. angles[0] gives all simulation run's for first trial = [[a1,a2,...aNumFrames], [], []], []]        
+    def multipleLines(self, directory, angles):#[[[[chA1,lA1,lA2,lA3,lA4],[],...aNumFrames], [], []], []]. angles[0] gives all simulation run's for first trial = [[chA1,lA1,lA2,lA3,lA4], [], []], []]        
         x = np.arange(len(angles[0][0]))#range from 0 to numFrames
-        for t in range(len(angles)):#number of trials
+        for t in range(len(angles)):#for each trial
             plt.figure()
-            for sim in angles[t]:#number of frames in each simulation
-                plt.plot(x, sim)
+            chassisAngles = []
+            for sim in angles[t]:#number of frames in each simulation. Each sim = [[chA1,lA1,lA2,lA3,lA4], [], []...numFrames]
+                print(sim)
+                chassisAngles.append(sim[0][0])
+            plt.plot(x, chassisAngles)
             plt.xlabel('chassis angle'); plt.ylabel('frames'); plt.title('Trial'+str(t+1)+'. '+str(len(angles[t]))+' simulations', loc='center', pad=None)
             plt.savefig(directory+'chassisAngles_trial'+str(t)+'.png')
             #plt.show(block=False)  

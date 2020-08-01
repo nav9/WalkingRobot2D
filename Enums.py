@@ -11,7 +11,15 @@ class MainProgramParameters:
     MAX_GENS_FOR_STUCK_CHECK = 10 #if stuck at same positions for more than 10 tries of main robot movement, then activate unstuck mode
     DISTANCE_FOR_ASSUMING_STUCK = 20 #pixels
     GENERATIONS_TO_PERSIST_STUCK = 5
+    TEST_MODE_RUN_STATE = TestRunMode.VIEWING_RESULTS
     
+#------------------------------------------------------------------
+#------------------------------------------------------------------
+#------------------------------------------------------------------
+class TestRunMode:
+    CREATING_RESULTS = 1
+    VIEWING_RESULTS = 2
+        
 class Run:
     IMAGINATION_TWIN = 0
     IMAGINATION_TWIN_TRIAL_MULTI_RUNS = 1

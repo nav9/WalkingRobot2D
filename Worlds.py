@@ -802,10 +802,7 @@ class ActualImagination(Worlds):#inherits
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
-class TestRunMode:
-    CREATING_RESULTS = 1
-    VIEWING_RESULTS = 2
-    
+ 
 class TestWorld(Worlds):#inherits
     def __init__(self, legCode):    #def __init__(self, legCode, actionNet):        
         super(TestWorld, self).__init__()
@@ -831,12 +828,8 @@ class TestWorld(Worlds):#inherits
         self.imaginationGroundColor = 100,150,100
         self.cons = Constants()   
         self.numberOfTimesLegsTouchSurface = None
-        self.chassisAngle = None #[[angle1, angle2...angleNumFrames], [],...]
-        #------------------------------------------
-        #--- run mode
-        #------------------------------------------  
-        #self.runMode = TestRunMode.CREATING_RESULTS
-        self.runMode = TestRunMode.VIEWING_RESULTS
+        self.robotAngles = None #[[angle1, angle2...angleNumFrames], [],...]  
+        self.runMode = MainProgramParameters.TEST_MODE_RUN_STATE
         
     def initialize(self):
         super(TestWorld, self).initialize()       
@@ -860,48 +853,48 @@ class TestWorld(Worlds):#inherits
         durationToRun = 50
         if self.runMode == TestRunMode.CREATING_RESULTS:#run the trials
             for trial in range(numTrials):            
-                self.chassisAngle = []       
+                self.robotAngles = []       
                 rates = self.robots[0].setRandomLegMotorRates()                
-                print('Trial ', trial, "----------. Motor rates:", rates)
+                print('Trial ', trial+1, "----------. Motor rates:", rates)
                 ratesAndPositions = []
                 ratesAndPositions.append(rates)
                 filename1 = analytics.generateRatesPositionFilename(trial)
                 filename2 = analytics.generateSurfaceTouchFilename(trial)
-                filename3 = analytics.generateChassisAngleFilename(trial)
+                filename3 = analytics.generateRobotAnglesFilename(trial)
                 for sim in range(numSimulations):                     
                     self.robots[0].setLegMotorRates(rates)   
                     self.runSimulation(durationToRun)
                     position = self.robots[0].getPosition()
                     ratesAndPositions.append([position[0], position[1]])
                     self.resetRobotToOriginalPosition(originalPosition, originalAngles)
-                    self.infoString = "Trial:" + str(trial) + "/" + str(numTrials) + ", RateRep: " + str(sim) + "/" + str(numSimulations) + ", MotorRates: " + str([round(x, 2) for x in rates])
+                    self.infoString = "Trial:" + str(trial+1) + "/" + str(numTrials) + ", RateRep: " + str(sim) + "/" + str(numSimulations) + ", MotorRates: " + str([round(x, 2) for x in rates])
                 analytics.saveDataToDisk(folderToStoreResults, filename1, ratesAndPositions)
                 analytics.saveDataToDisk(folderToStoreResults, filename2, self.numberOfTimesLegsTouchSurface)
-                analytics.saveDataToDisk(folderToStoreResults, filename3, self.chassisAngle)
+                analytics.saveDataToDisk(folderToStoreResults, filename3, self.robotAngles)
         
         if self.runMode == TestRunMode.VIEWING_RESULTS:#view analytics of saved results 
-            xPositions = []; yPositions = []; rates = []; surfaceTouches = []; chassisAngles = []
+            xPositions = []; yPositions = []; rates = []; surfaceTouches = []; robotAngles = []
             for trial in range(numTrials):   
                 filename1 = analytics.generateRatesPositionFilename(trial)
                 filename2 = analytics.generateSurfaceTouchFilename(trial)
-                filename3 = analytics.generateChassisAngleFilename(trial)
+                filename3 = analytics.generateRobotAnglesFilename(trial)
                 dx = []; dy = []
                 rate, positions = analytics.loadRatesPositionDataFromDisk(folderToStoreResults, filename1)
                 surfaceTouch = analytics.loadSurfaceTouchDataFromDisk(folderToStoreResults, filename2)
-                chAng = analytics.loadChassisAngleDataFromDisk(folderToStoreResults, filename3)
+                robotAngs = analytics.loadRobotAnglesDataFromDisk(folderToStoreResults, filename3)
                 for pos in positions:
                     dx.append(pos[0]); dy.append(pos[1])
-                rates.append(rate); surfaceTouches.append(surfaceTouch); chassisAngles.append(chAng)
+                rates.append(rate); surfaceTouches.append(surfaceTouch); robotAngles.append(robotAngs)
                 print('Rate: ', rate, ' surfaceTouch:', surfaceTouch)                
                 print('dx: mean=', statistics.mean(dx), ", variance=", statistics.variance(dx), "std deviation=", statistics.stdev(dx))
                 xPositions.append(dx); yPositions.append(dy)
-            analytics.plot(folderToStoreResults, xPositions, yPositions, rates, surfaceTouches, chassisAngles)
+            analytics.plot(folderToStoreResults, xPositions, yPositions, rates, surfaceTouches, robotAngles)
     
     def runSimulation(self, durationToRun):
         clock = pygame.time.Clock()
         simulating = True
         self.robots[0].startMotion()    
-        self.numberOfTimesLegsTouchSurface = [0] * len(self.robots[0].legs) 
+        self.numberOfTimesLegsTouchSurface = [0] * len(self.robots[0].legs) #each leg [totalNumTimesLeg1TouchesSurface, totalNumTimesLeg2TouchesSurface, ...]
         chAngle = []
         counter = 0
         while simulating:
@@ -920,15 +913,18 @@ class TestWorld(Worlds):#inherits
             tactileInputPerLeg = self.robots[0].getNumContactPointsForEachLeg()
             for i in range(len(tactileInputPerLeg)):
                 self.numberOfTimesLegsTouchSurface[i] = self.numberOfTimesLegsTouchSurface[i] + tactileInputPerLeg[i]  
-            #---get angle
-            chAngle.append(self.robots[0].getBodyAngle())
+            #---get angles
+            angs = [self.robots[0].getBodyAngle()]
+            for leg in self.robots[0].legs:
+                angs.append(leg.getLegAngle())
+            chAngle.append(angs)
             #---draw all objects
             self.draw()            
             clock.tick(self.fps)
             counter = counter + 1
             if counter >= durationToRun: break
         #---actions to do after simulation  
-        self.chassisAngle.append(chAngle)
+        self.robotAngles.append(chAngle) #[[chAngle, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]
     
     def initializeRobots(self):#overriding  
         widthSep = 100; heightSep = 100; counter = 0
