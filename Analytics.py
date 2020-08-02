@@ -148,15 +148,19 @@ class TestAnalyticsForMovementAccuracy:
         self.multipleLines(directory,robotAngles) #robotAngles = [[chAng, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]     
         
     def multipleLines(self, directory, angles):#[[[[chA1,lA1,lA2,lA3,lA4],[],...aNumFrames], [], []], []]. angles[0] gives all simulation run's for first trial = [[chA1,lA1,lA2,lA3,lA4], [], []], []]        
+        #angles is numTrials=20 long.
+        #angles[0] is numSimulations=100. [[[360, 6, 3, 355, 358], [359, 12, 6, 349, 356], ...
+        #angles[0][0] is numFrames=50. [[360, 6, 3, 355, 358], [359, 12, 6, 349, 356], ...
         x = np.arange(len(angles[0][0]))#range from 0 to numFrames
         for t in range(len(angles)):#for each trial
-            plt.figure()
-            chassisAngles = []
-            for sim in angles[t]:#number of frames in each simulation. Each sim = [[chA1,lA1,lA2,lA3,lA4], [], []...numFrames]
-                print(sim)
-                chassisAngles.append(sim[0][0])
-            plt.plot(x, chassisAngles)
-            plt.xlabel('chassis angle'); plt.ylabel('frames'); plt.title('Trial'+str(t+1)+'. '+str(len(angles[t]))+' simulations', loc='center', pad=None)
+            plt.figure()            
+            for sim in angles[t]:#for each simulation. Each sim = [[chA1,lA1,lA2,lA3,lA4], [], []...numFrames]
+                chassisAngles = []
+                for frame in sim:#for each frame
+                    chassisAngles.append(frame[0])#taking the first angle, which is the chassis angle
+                print('chassisAngles: ',chassisAngles)
+                plt.plot(x, chassisAngles)
+            plt.xlabel('frames'); plt.ylabel('chassis angle'); plt.title('Trial'+str(t+1)+'. '+str(len(angles[t]))+' simulations', loc='center', pad=None)
             plt.savefig(directory+'chassisAngles_trial'+str(t)+'.png')
             #plt.show(block=False)  
             #break          

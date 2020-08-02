@@ -25,7 +25,7 @@ from LearningRobot import LearningRobot
 from pymunk.shape_filter import ShapeFilter
 from ComputationalIntelligence import SimpleDE, RunCode, RandomBest, SimplePSO
 from Analytics import TestAnalyticsForMovementAccuracy, FileOperations, ProgramAnalytics
-from Enums import RunStep, RunCI, Terrains, ShapeTypes, ShapeProperties, MainProgramParameters
+from Enums import RunStep, RunCI, Terrains, ShapeTypes, ShapeProperties, MainProgramParameters, TestRunMode
 
 class Worlds(object):
     def __init__(self):

@@ -1,7 +1,10 @@
 # Author: Navin Ipe
 # Created: July 2020
 # License: Proprietary. No part of this code may be copied or used in any form without the permission of the author
-
+class TestRunMode:
+    CREATING_RESULTS = 1
+    VIEWING_RESULTS = 2
+    
 class MainProgramParameters:
     MAX_TRIALS_TO_RUN = 5
     FINISH_LINE_POSITION_FROM_END = 100 #800 for near or 100 for far
@@ -11,14 +14,11 @@ class MainProgramParameters:
     MAX_GENS_FOR_STUCK_CHECK = 10 #if stuck at same positions for more than 10 tries of main robot movement, then activate unstuck mode
     DISTANCE_FOR_ASSUMING_STUCK = 20 #pixels
     GENERATIONS_TO_PERSIST_STUCK = 5
-    TEST_MODE_RUN_STATE = TestRunMode.VIEWING_RESULTS
+    TEST_MODE_RUN_STATE = TestRunMode.VIEWING_RESULTS #TestRunMode.CREATING_RESULTS or TestRunMode.VIEWING_RESULTS
     
 #------------------------------------------------------------------
 #------------------------------------------------------------------
 #------------------------------------------------------------------
-class TestRunMode:
-    CREATING_RESULTS = 1
-    VIEWING_RESULTS = 2
         
 class Run:
     IMAGINATION_TWIN = 0
