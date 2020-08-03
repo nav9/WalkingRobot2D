@@ -145,9 +145,9 @@ class TestAnalyticsForMovementAccuracy:
         self.boxPlots(directory,xPositions, yPositions)
         self.groupedBarsMotorRates(directory,rates)
         self.groupedBarsSurfaceTouch(directory,surfaceTouch)        
-        self.multipleLines(directory,robotAngles) #robotAngles = [[chAng, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]     
+        self.multipleAngles(directory,robotAngles) #robotAngles = [[chAng, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]     
         
-    def multipleLines(self, directory, angles):#[[[[chA1,lA1,lA2,lA3,lA4],[],...aNumFrames], [], []], []]. angles[0] gives all simulation run's for first trial = [[chA1,lA1,lA2,lA3,lA4], [], []], []]        
+    def multipleAngles(self, directory, angles):#[[[[chA1,lA1,lA2,lA3,lA4],[],...aNumFrames], [], []], []]. angles[0] gives all simulation run's for first trial = [[chA1,lA1,lA2,lA3,lA4], [], []], []]        
         #angles is numTrials=20 long.
         #angles[0] is numSimulations=100. [[[360, 6, 3, 355, 358], [359, 12, 6, 349, 356], ...
         #angles[0][0] is numFrames=50. [[360, 6, 3, 355, 358], [359, 12, 6, 349, 356], ...

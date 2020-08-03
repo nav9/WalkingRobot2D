@@ -823,7 +823,7 @@ class TestWorld(Worlds):#inherits
         self.imaginaryRobots = []
         self.debrisElevFromBottomWall = 0
         self.groundThickness = 10
-        self.robotInitPos = Vec2d(self.screenWidth/2, 50) 
+        #self.robotInitPos = Vec2d(self.screenWidth/2, 100) #position is set in initializeRobots() function below
         self.imaginationColor = 100,100,100
         self.imaginationGroundColor = 100,150,100
         self.cons = Constants()   
@@ -927,11 +927,11 @@ class TestWorld(Worlds):#inherits
         self.robotAngles.append(chAngle) #[[chAngle, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]
     
     def initializeRobots(self):#overriding  
-        widthSep = 100; heightSep = 100; counter = 0
+        widthSep = 100; heightSep = 100; counter = 0; startRow = 40; startCol = 200
         motorMovtDuration = 50
-        for i in range(50, self.worldHeight, heightSep):
+        for i in range(startRow, self.worldHeight, heightSep):#i is the robot pos in row
             if counter >= self.numRobots: break
-            for j in range(200, self.worldWidth, widthSep):
+            for j in range(startCol, self.worldWidth, widthSep):#j is the robot pos in col
                 self.robots.append(RobotBody(self.space, Vec2d(j, i), self.legsCode, motorMovtDuration)) #self.robots.append(LearningRobot(self, Vec2d(j, i), self.legsCode, self.actions))
                 counter += 1 
                 if counter >= self.numRobots: break
