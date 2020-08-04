@@ -151,10 +151,18 @@ class TestAnalyticsForMovementAccuracy:
         #angles is numTrials=20 long.
         #angles[0] is numSimulations=100. [[[360, 6, 3, 355, 358], [359, 12, 6, 349, 356], ...
         #angles[0][0] is numFrames=50. [[360, 6, 3, 355, 358], [359, 12, 6, 349, 356], ...
+        SMALL_SIZE = 8
+        plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+        plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+        plt.rc('axes', labelsize=SMALL_SIZE)    # fontsize of the x and y labels
+        plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+        plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+        plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+        plt.rc('figure', titlesize=SMALL_SIZE)  # fontsize of the figure title        
         x = np.arange(len(angles[0][0]))#range from 0 to numFrames
         subplotNumRows = 3; subplotNumCols = 3
         for t in range(len(angles)):#for each trial
-            fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) = plt.subplots(subplotNumRows, subplotNumCols)
+            fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) = plt.subplots(subplotNumRows, subplotNumCols, sharex=True, constrained_layout=True)
             fig.suptitle('Trial'+str(t+1)+'. '+str(len(angles[t]))+' sims')
             #---leg and chassis angles
             for sim in angles[t]:#for each simulation. Each sim = [[chA1,lA1,lA2,lA3,lA4], [], []...numFrames]
@@ -163,30 +171,31 @@ class TestAnalyticsForMovementAccuracy:
                     chassisAngles.append(frame[0])#taking the first angle, which is the chassis angle
                     leg1Angles.append(frame[1]); leg2Angles.append(frame[2])
                     leg3Angles.append(frame[3]); leg4Angles.append(frame[4])                
-                ax1.plot(x, leg1Angles); ax1.set_title('Leg1 Angle')
-                ax3.plot(x, leg2Angles); ax3.set_title('Leg2 Angle')
-                ax5.plot(x, leg3Angles); ax5.set_title('Leg3 Angle')
-                ax7.plot(x, leg4Angles); ax7.set_title('Leg4 Angle')
-                ax9.plot(x, chassisAngles); ax9.set_title("Chassis Angle")
-            #---touch points               
+                ax1.plot(x, leg1Angles, '.'); ax1.set_title('Leg1 Angle', loc='center'); ax1.set(ylabel='Angle')
+                ax3.plot(x, leg2Angles, '.'); ax3.set_title('Leg2 Angle', loc='center'); ax3.set(ylabel='Angle')
+                ax5.plot(x, leg3Angles, '.'); ax5.set_title('Leg3 Angle', loc='center'); ax5.set(ylabel='Angle')
+                ax7.plot(x, leg4Angles, '.'); ax7.set_title('Leg4 Angle', loc='center'); ax7.set(ylabel='Angle')
+                ax9.plot(x, chassisAngles, '.'); ax9.set_title("Chassis Angle", loc='left', fontsize=8); ax9.set(ylabel='Angle')
+            #---touch points
             for eachSim in surfaceTouch[t]:#for each simulation in trial
                 touches1=[]; touches2=[]; touches3=[]; touches4=[]
                 for eachFrame in eachSim:#eachFrame=[l1,l2,l3,l4]
                     touches1.append(eachFrame[0]); touches2.append(eachFrame[1])
                     touches3.append(eachFrame[2]); touches4.append(eachFrame[3])              
-                ax2.plot(x, touches1); ax2.set_title('Leg1 Touch')
-                ax4.plot(x, touches2); ax4.set_title('Leg2 Touch')
-                ax6.plot(x, touches3); ax6.set_title('Leg3 Touch')
-                ax8.plot(x, touches4); ax8.set_title('Leg4 Touch')
+                ax2.plot(x, touches1, '.'); ax2.set_title('Leg1 Touch', loc='center'); ax2.set(ylabel='Touch')
+                ax4.plot(x, touches2, '.'); ax4.set_title('Leg2 Touch', loc='center'); ax4.set(ylabel='Touch')
+                ax6.plot(x, touches3, '.'); ax6.set_title('Leg3 Touch', loc='center'); ax6.set(ylabel='Touch')
+                ax8.plot(x, touches4, '.'); ax8.set_title('Leg4 Touch', loc='center'); ax8.set(ylabel='Touch')
             
             #---motor rates
-            #ax10.plot(x, chassisAngles); ax10.set_title("Motor rates")  
-            for ax in fig.get_axes():
-                ax.set(xlabel='frames', ylabel='angle')
+#             for ax in fig.get_axes():
+#                 ax.set(xlabel='frames', ylabel='angle')
                 #ax.label_outer()                              
             #plt.xlabel('frames'); plt.ylabel('chassis angle'); plt.title('Trial'+str(t+1)+'. '+str(len(angles[t]))+' simulations', loc='center', pad=None)
-            plt.savefig(directory+' Angles_Trial'+str(t)+'.png')
+            plt.savefig(directory+' AnglesTouches_Trial'+str(t)+'.png')
             fig.tight_layout()
+            plt.subplots_adjust(wspace=0.5, hspace=0.3)#height and width spacing between subplots
+            plt.xlabel('Frames', horizontalalignment='center', multialignment='center')
             plt.show(block=True) #plt.show(block=False)  
             #break          
 

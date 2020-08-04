@@ -11,7 +11,7 @@ from Enums import RunCode, Constants
 # produce the same kind of motion again, due to the unreliability of the friction, joint movements and
 # the physics in general. Therefore, the fitness values will vary unpredictably. This is normal for 
 # the PyMunk physics environment, so don't be surprised when you see unpredictable motion.
-        
+
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
