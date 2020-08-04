@@ -144,30 +144,43 @@ class TestAnalyticsForMovementAccuracy:
     def plot(self, directory, xPositions, yPositions, rates, surfaceTouch, robotAngles):#arrays will be in the form xPositions = [[1,2,5], [5,7,2,2,5], [7,2,5]...]. Same for yPositions
         #self.boxPlots(directory, xPositions, yPositions)
         #self.groupedBarsMotorRates(directory, rates)
-        self.groupedBarsSurfaceTouch(directory, surfaceTouch)        
-        #self.multipleAngles(directory, robotAngles) #robotAngles = [[chAng, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]     
+        #self.groupedBarsSurfaceTouch(directory, surfaceTouch)        
+        self.multipleParameters(directory, robotAngles, surfaceTouch) #robotAngles = [[chAng, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]     
         
-    def multipleAngles(self, directory, angles):#[[[[chA1,lA1,lA2,lA3,lA4],[],...aNumFrames], [], []], []]. angles[0] gives all simulation run's for first trial = [[chA1,lA1,lA2,lA3,lA4], [], []], []]        
+    def multipleParameters(self, directory, angles, surfaceTouch):#[[[[chA1,lA1,lA2,lA3,lA4],[],...aNumFrames], [], []], []]. angles[0] gives all simulation run's for first trial = [[chA1,lA1,lA2,lA3,lA4], [], []], []]        
         #angles is numTrials=20 long.
         #angles[0] is numSimulations=100. [[[360, 6, 3, 355, 358], [359, 12, 6, 349, 356], ...
         #angles[0][0] is numFrames=50. [[360, 6, 3, 355, 358], [359, 12, 6, 349, 356], ...
         x = np.arange(len(angles[0][0]))#range from 0 to numFrames
-        subplotNumRows = 3; subplotNumCols = 2
+        subplotNumRows = 3; subplotNumCols = 3
         for t in range(len(angles)):#for each trial
-            fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(subplotNumRows, subplotNumCols)
+            fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) = plt.subplots(subplotNumRows, subplotNumCols)
             fig.suptitle('Trial'+str(t+1)+'. '+str(len(angles[t]))+' sims')
+            #---leg and chassis angles
             for sim in angles[t]:#for each simulation. Each sim = [[chA1,lA1,lA2,lA3,lA4], [], []...numFrames]
                 chassisAngles = []; leg1Angles = []; leg2Angles = []; leg3Angles = []; leg4Angles = [];  
                 for frame in sim:#for each frame = [chA1,lA1,lA2,lA3,lA4]
                     chassisAngles.append(frame[0])#taking the first angle, which is the chassis angle
                     leg1Angles.append(frame[1]); leg2Angles.append(frame[2])
-                    leg3Angles.append(frame[3]); leg4Angles.append(frame[4])
-                
-                ax1.plot(x, chassisAngles); ax1.set_title("Chassis Angle")
-                ax2.plot(x, leg1Angles); ax2.set_title('Leg1 Angle')
+                    leg3Angles.append(frame[3]); leg4Angles.append(frame[4])                
+                ax1.plot(x, leg1Angles); ax1.set_title('Leg1 Angle')
                 ax3.plot(x, leg2Angles); ax3.set_title('Leg2 Angle')
-                ax4.plot(x, leg3Angles); ax4.set_title('Leg3 Angle')
-                ax5.plot(x, leg4Angles); ax5.set_title('Leg4 Angle')  
+                ax5.plot(x, leg3Angles); ax5.set_title('Leg3 Angle')
+                ax7.plot(x, leg4Angles); ax7.set_title('Leg4 Angle')
+                ax9.plot(x, chassisAngles); ax9.set_title("Chassis Angle")
+            #---touch points               
+            for eachSim in surfaceTouch[t]:#for each simulation in trial
+                touches1=[]; touches2=[]; touches3=[]; touches4=[]
+                for eachFrame in eachSim:#eachFrame=[l1,l2,l3,l4]
+                    touches1.append(eachFrame[0]); touches2.append(eachFrame[1])
+                    touches3.append(eachFrame[2]); touches4.append(eachFrame[3])              
+                ax2.plot(x, touches1); ax2.set_title('Leg1 Touch')
+                ax4.plot(x, touches2); ax4.set_title('Leg2 Touch')
+                ax6.plot(x, touches3); ax6.set_title('Leg3 Touch')
+                ax8.plot(x, touches4); ax8.set_title('Leg4 Touch')
+            
+            #---motor rates
+            #ax10.plot(x, chassisAngles); ax10.set_title("Motor rates")  
             for ax in fig.get_axes():
                 ax.set(xlabel='frames', ylabel='angle')
                 #ax.label_outer()                              
@@ -221,26 +234,6 @@ class TestAnalyticsForMovementAccuracy:
         trialNum = 1
         labels = []#the groups
         leg1=[]; leg2=[]; leg3=[]; leg4=[] #each will have numTrials length   
-#         numTrials = 0;
-#         for trial in surfaceTouch:
-#             numTrials+=1
-#             simNum = 0
-#             sl1=0;sl2=0;sl3=0;sl4=0
-#             numSimulations =0;            
-#             for sim in trial:
-#                 numSimulations+=1
-#                 l1=0;l2=0;l3=0;l4=0
-#                 numFrames=0
-#                 for frame in sim:
-#                     numFrames+=1
-#                     l1+=frame[0]; l2+=frame[1]; l3+=frame[2]; l4+=frame[3]
-#                     sl1+=frame[0]; sl2+=frame[1]; sl3+=frame[2]; sl4+=frame[3]
-#                 print(l1,l2,l3,l4)
-#                 print('numFrames',numFrames)
-#             print('numSimulations:',numSimulations)
-#             print('s------',sl1,sl2,sl3,sl4)
-#         print('NumTrials=',numTrials)
-
         for trial in surfaceTouch:
             totalL1 = 0; totalL2 = 0; totalL3 = 0; totalL4 = 0;
             for eachSim in trial:
@@ -250,10 +243,7 @@ class TestAnalyticsForMovementAccuracy:
              
             leg1.append(totalL1); leg2.append(totalL2)
             leg3.append(totalL3); leg4.append(totalL4)
-            labels.append(str(trialNum)); trialNum = trialNum + 1
-            #print(totalL1,totalL2,totalL3,totalL4)
-            #print('New trial:::::::::::')
-            #print('Leg1:',leg1);print('Leg2:',leg2);print('Leg3:',leg3);print('Leg4:',leg4)
+            labels.append(str(trialNum)); trialNum += 1
         x = np.arange(len(labels)) #label locations
         width = 0.08 #bar width
         fig, ax = plt.subplots()
@@ -279,8 +269,8 @@ class TestAnalyticsForMovementAccuracy:
         ax.legend(bbox_to_anchor=(0.,1.02,1.,.102),loc='lower left', mode="expand", ncol=4)    
         #autolabel(rects1); autolabel(rects2); autolabel(rects3); autolabel(rects4)    
         fig.tight_layout()
-        #plt.savefig(directory+'surfaceTouchesForXYAccuracies.png')
-        plt.show(block=True)#plt.show(block=False)         
+        plt.savefig(directory+'surfaceTouchesForXYAccuracies.png')
+        plt.show(block=False)         
     
     def boxPlots(self, directory, xPositions, yPositions):
         ticks = []
