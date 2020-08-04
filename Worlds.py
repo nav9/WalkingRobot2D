@@ -827,7 +827,7 @@ class TestWorld(Worlds):#inherits
         self.imaginationColor = 100,100,100
         self.imaginationGroundColor = 100,150,100
         self.cons = Constants()   
-        self.numberOfTimesLegsTouchSurface = None
+        self.legsTouchSurface = [] #[ [ [l1,l2,l3,l4], [], ...numFrames ], [], [], ... numSims ]
         self.robotAngles = None #[[angle1, angle2...angleNumFrames], [],...]  
         self.runMode = MainProgramParameters.TEST_MODE_RUN_STATE
         
@@ -853,7 +853,8 @@ class TestWorld(Worlds):#inherits
         durationToRun = 50
         if self.runMode == TestRunMode.CREATING_RESULTS:#run the trials
             for trial in range(numTrials):            
-                self.robotAngles = []       
+                self.robotAngles = []  
+                self.legsTouchSurface = []     
                 rates = self.robots[0].setRandomLegMotorRates()                
                 print('Trial ', trial+1, "----------. Motor rates:", rates)
                 ratesAndPositions = []
@@ -869,7 +870,7 @@ class TestWorld(Worlds):#inherits
                     self.resetRobotToOriginalPosition(originalPosition, originalAngles)
                     self.infoString = "Trial:" + str(trial+1) + "/" + str(numTrials) + ", RateRep: " + str(sim) + "/" + str(numSimulations) + ", MotorRates: " + str([round(x, 2) for x in rates])
                 analytics.saveDataToDisk(folderToStoreResults, filename1, ratesAndPositions)
-                analytics.saveDataToDisk(folderToStoreResults, filename2, self.numberOfTimesLegsTouchSurface)
+                analytics.saveDataToDisk(folderToStoreResults, filename2, self.legsTouchSurface)
                 analytics.saveDataToDisk(folderToStoreResults, filename3, self.robotAngles)
         
         if self.runMode == TestRunMode.VIEWING_RESULTS:#view analytics of saved results 
@@ -885,7 +886,7 @@ class TestWorld(Worlds):#inherits
                 for pos in positions:
                     dx.append(pos[0]); dy.append(pos[1])
                 rates.append(rate); surfaceTouches.append(surfaceTouch); robotAngles.append(robotAngs)
-                print('Rate: ', rate, ' surfaceTouch:', surfaceTouch)                
+                #print('Rate: ', rate, ' surfaceTouch:', surfaceTouch)                
                 print('dx: mean=', statistics.mean(dx), ", variance=", statistics.variance(dx), "std deviation=", statistics.stdev(dx))
                 xPositions.append(dx); yPositions.append(dy)
             analytics.plot(folderToStoreResults, xPositions, yPositions, rates, surfaceTouches, robotAngles)
@@ -894,8 +895,8 @@ class TestWorld(Worlds):#inherits
         clock = pygame.time.Clock()
         simulating = True
         self.robots[0].startMotion()    
-        self.numberOfTimesLegsTouchSurface = [0] * len(self.robots[0].legs) #each leg [totalNumTimesLeg1TouchesSurface, totalNumTimesLeg2TouchesSurface, ...]
-        chAngle = []
+        legsContact = [] #[[l1,l2,l3,l4], [] ...] 
+        chAngle = []        
         counter = 0
         while simulating:
             for event in pygame.event.get():
@@ -910,9 +911,8 @@ class TestWorld(Worlds):#inherits
             #---Update world based on player focus
             self.updatePosition()
             #---get tactile info
-            tactileInputPerLeg = self.robots[0].getNumContactPointsForEachLeg()
-            for i in range(len(tactileInputPerLeg)):
-                self.numberOfTimesLegsTouchSurface[i] = self.numberOfTimesLegsTouchSurface[i] + tactileInputPerLeg[i]  
+            tactileInputPerLeg = self.robots[0].getNumContactPointsForEachLeg() #[numTouchLeg1, numTouchleg2, ...4]
+            legsContact.append(tactileInputPerLeg)  
             #---get angles
             angs = [self.robots[0].getBodyAngle()]
             for leg in self.robots[0].legs:
@@ -925,6 +925,7 @@ class TestWorld(Worlds):#inherits
             if counter >= durationToRun: break
         #---actions to do after simulation  
         self.robotAngles.append(chAngle) #[[chAngle, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]
+        self.legsTouchSurface.append(legsContact)#[ [ [l1,l2,l3,l4], [], ...frames ], [], [], ... sims ]
     
     def initializeRobots(self):#overriding  
         widthSep = 100; heightSep = 100; counter = 0; startRow = 40; startCol = 200
