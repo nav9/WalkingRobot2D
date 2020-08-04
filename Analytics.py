@@ -142,9 +142,9 @@ class TestAnalyticsForMovementAccuracy:
         return "ChassisAngle_trial"+str(trial)    
 
     def plot(self, directory, xPositions, yPositions, rates, surfaceTouch, robotAngles):#arrays will be in the form xPositions = [[1,2,5], [5,7,2,2,5], [7,2,5]...]. Same for yPositions
-        #self.boxPlots(directory, xPositions, yPositions)
-        #self.groupedBarsMotorRates(directory, rates)
-        #self.groupedBarsSurfaceTouch(directory, surfaceTouch)        
+        self.boxPlots(directory, xPositions, yPositions)
+        self.groupedBarsMotorRates(directory, rates)
+        self.groupedBarsSurfaceTouch(directory, surfaceTouch)        
         self.multipleParameters(directory, robotAngles, surfaceTouch) #robotAngles = [[chAng, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]     
         
     def multipleParameters(self, directory, angles, surfaceTouch):#[[[[chA1,lA1,lA2,lA3,lA4],[],...aNumFrames], [], []], []]. angles[0] gives all simulation run's for first trial = [[chA1,lA1,lA2,lA3,lA4], [], []], []]        
@@ -171,21 +171,21 @@ class TestAnalyticsForMovementAccuracy:
                     chassisAngles.append(frame[0])#taking the first angle, which is the chassis angle
                     leg1Angles.append(frame[1]); leg2Angles.append(frame[2])
                     leg3Angles.append(frame[3]); leg4Angles.append(frame[4])                
-                ax1.plot(x, leg1Angles, '.'); ax1.set_title('Leg1 Angle', loc='center'); ax1.set(ylabel='Angle')
-                ax3.plot(x, leg2Angles, '.'); ax3.set_title('Leg2 Angle', loc='center'); ax3.set(ylabel='Angle')
-                ax5.plot(x, leg3Angles, '.'); ax5.set_title('Leg3 Angle', loc='center'); ax5.set(ylabel='Angle')
-                ax7.plot(x, leg4Angles, '.'); ax7.set_title('Leg4 Angle', loc='center'); ax7.set(ylabel='Angle')
-                ax9.plot(x, chassisAngles, '.'); ax9.set_title("Chassis Angle", loc='left', fontsize=8); ax9.set(ylabel='Angle')
+                ax1.plot(x, leg1Angles, '.'); ax1.set_title('Leg1 Angle'); ax1.set(ylabel='Angle')
+                ax3.plot(x, leg2Angles, '.'); ax3.set_title('Leg2 Angle'); ax3.set(ylabel='Angle')
+                ax5.plot(x, leg3Angles, '.'); ax5.set_title('Leg3 Angle'); ax5.set(ylabel='Angle')
+                ax7.plot(x, leg4Angles, '.'); ax7.set_title('Leg4 Angle'); ax7.set(ylabel='Angle')
+                ax9.plot(x, chassisAngles, '.'); ax9.set_title("Chassis Angle", fontsize=8); ax9.set(ylabel='Angle')
             #---touch points
             for eachSim in surfaceTouch[t]:#for each simulation in trial
                 touches1=[]; touches2=[]; touches3=[]; touches4=[]
                 for eachFrame in eachSim:#eachFrame=[l1,l2,l3,l4]
                     touches1.append(eachFrame[0]); touches2.append(eachFrame[1])
                     touches3.append(eachFrame[2]); touches4.append(eachFrame[3])              
-                ax2.plot(x, touches1, '.'); ax2.set_title('Leg1 Touch', loc='center'); ax2.set(ylabel='Touch')
-                ax4.plot(x, touches2, '.'); ax4.set_title('Leg2 Touch', loc='center'); ax4.set(ylabel='Touch')
-                ax6.plot(x, touches3, '.'); ax6.set_title('Leg3 Touch', loc='center'); ax6.set(ylabel='Touch')
-                ax8.plot(x, touches4, '.'); ax8.set_title('Leg4 Touch', loc='center'); ax8.set(ylabel='Touch')
+                ax2.plot(x, touches1, '.'); ax2.set_title('Leg1 Touch'); ax2.set(ylabel='Touch')
+                ax4.plot(x, touches2, '.'); ax4.set_title('Leg2 Touch'); ax4.set(ylabel='Touch')
+                ax6.plot(x, touches3, '.'); ax6.set_title('Leg3 Touch'); ax6.set(ylabel='Touch')
+                ax8.plot(x, touches4, '.'); ax8.set_title('Leg4 Touch'); ax8.set(ylabel='Touch')
             
             #---motor rates
 #             for ax in fig.get_axes():
@@ -195,8 +195,8 @@ class TestAnalyticsForMovementAccuracy:
             plt.savefig(directory+' AnglesTouches_Trial'+str(t)+'.png')
             fig.tight_layout()
             plt.subplots_adjust(wspace=0.5, hspace=0.3)#height and width spacing between subplots
-            plt.xlabel('Frames', horizontalalignment='center', multialignment='center')
-            plt.show(block=True) #plt.show(block=False)  
+            plt.xlabel('Frames')
+            #plt.show(block=False)  
             #break          
 
     def groupedBarsMotorRates(self, directory, rates):
