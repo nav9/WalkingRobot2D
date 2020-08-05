@@ -829,6 +829,7 @@ class TestWorld(Worlds):#inherits
         self.cons = Constants()   
         self.legsTouchSurface = [] #[ [ [l1,l2,l3,l4], [], ...numFrames ], [], [], ... numSims ]
         self.robotAngles = None #[[angle1, angle2...angleNumFrames], [],...]  
+        self.simInfoString = ""
         self.runMode = MainProgramParameters.TEST_MODE_RUN_STATE
         
     def initialize(self):
@@ -864,11 +865,11 @@ class TestWorld(Worlds):#inherits
                 filename3 = analytics.generateRobotAnglesFilename(trial)
                 for sim in range(numSimulations):                     
                     self.robots[0].setLegMotorRates(rates)   
+                    self.simInfoString = "Trial:" + str(trial+1) + "/" + str(numTrials) + ", RateRep: " + str(sim) + "/" + str(numSimulations) + ", MotorRates: " + str([round(x, 2) for x in rates])
                     self.runSimulation(durationToRun)
                     position = self.robots[0].getPosition()
                     ratesAndPositions.append([position[0], position[1]])
-                    self.resetRobotToOriginalPosition(originalPosition, originalAngles)
-                    self.infoString = "Trial:" + str(trial+1) + "/" + str(numTrials) + ", RateRep: " + str(sim) + "/" + str(numSimulations) + ", MotorRates: " + str([round(x, 2) for x in rates])
+                    self.resetRobotToOriginalPosition(originalPosition, originalAngles)                    
                 analytics.saveDataToDisk(folderToStoreResults, filename1, ratesAndPositions)
                 analytics.saveDataToDisk(folderToStoreResults, filename2, self.legsTouchSurface)
                 analytics.saveDataToDisk(folderToStoreResults, filename3, self.robotAngles)
@@ -918,6 +919,7 @@ class TestWorld(Worlds):#inherits
             for leg in self.robots[0].legs:
                 angs.append(leg.getLegAngle())
             chAngle.append(angs)
+            self.infoString = self.simInfoString + ', Frame: ' + str(counter) 
             #---draw all objects
             self.draw()            
             clock.tick(self.fps)

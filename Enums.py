@@ -6,7 +6,7 @@ class TestRunMode:
     VIEWING_RESULTS = 2
     
 class MainProgramParameters:
-    MAX_TRIALS_TO_RUN = 5
+    MAX_TRIALS_TO_RUN = 10
     FINISH_LINE_POSITION_FROM_END = 100 #800 for near or 100 for far
     LEGS = '--#--'  
     MAX_GENS = 2
