@@ -171,10 +171,10 @@ class TestAnalyticsForMovementAccuracy:
                     chassisAngles.append(frame[0])#taking the first angle, which is the chassis angle
                     leg1Angles.append(frame[1]); leg2Angles.append(frame[2])
                     leg3Angles.append(frame[3]); leg4Angles.append(frame[4])                
-                ax1.plot(x, leg1Angles, '.'); ax1.set_title('Leg1 Angle'); ax1.set(ylabel='Angle')
-                ax3.plot(x, leg2Angles, '.'); ax3.set_title('Leg2 Angle'); ax3.set(ylabel='Angle')
-                ax5.plot(x, leg3Angles, '.'); ax5.set_title('Leg3 Angle'); ax5.set(ylabel='Angle')
-                ax7.plot(x, leg4Angles, '.'); ax7.set_title('Leg4 Angle'); ax7.set(ylabel='Angle')
+                ax1.plot(x, leg1Angles, '.'); ax1.set_title('Limb1 Angle'); ax1.set(ylabel='Angle')
+                ax3.plot(x, leg2Angles, '.'); ax3.set_title('Limb2 Angle'); ax3.set(ylabel='Angle')
+                ax5.plot(x, leg3Angles, '.'); ax5.set_title('Limb3 Angle'); ax5.set(ylabel='Angle')
+                ax7.plot(x, leg4Angles, '.'); ax7.set_title('Limb4 Angle'); ax7.set(ylabel='Angle')
                 ax9.plot(x, chassisAngles, '.'); ax9.set_title("Chassis Angle", fontsize=8); ax9.set(ylabel='Angle')
             #---touch points
             for eachSim in surfaceTouch[t]:#for each simulation in trial
@@ -182,10 +182,10 @@ class TestAnalyticsForMovementAccuracy:
                 for eachFrame in eachSim:#eachFrame=[l1,l2,l3,l4]
                     touches1.append(eachFrame[0]); touches2.append(eachFrame[1])
                     touches3.append(eachFrame[2]); touches4.append(eachFrame[3])              
-                ax2.plot(x, touches1, '.'); ax2.set_title('Leg1 Touch'); ax2.set(ylabel='Touch')
-                ax4.plot(x, touches2, '.'); ax4.set_title('Leg2 Touch'); ax4.set(ylabel='Touch')
-                ax6.plot(x, touches3, '.'); ax6.set_title('Leg3 Touch'); ax6.set(ylabel='Touch')
-                ax8.plot(x, touches4, '.'); ax8.set_title('Leg4 Touch'); ax8.set(ylabel='Touch')
+                ax2.plot(x, touches1, '.'); ax2.set_title('Limb1 Touch'); ax2.set(ylabel='Touch')
+                ax4.plot(x, touches2, '.'); ax4.set_title('Limb2 Touch'); ax4.set(ylabel='Touch')
+                ax6.plot(x, touches3, '.'); ax6.set_title('Limb3 Touch'); ax6.set(ylabel='Touch')
+                ax8.plot(x, touches4, '.'); ax8.set_title('Limb4 Touch'); ax8.set(ylabel='Touch')
             
             #---motor rates
 #             for ax in fig.get_axes():
