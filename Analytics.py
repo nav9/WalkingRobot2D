@@ -57,6 +57,7 @@ class ProgramAnalytics:
     def __init__(self):
         self.metricNames = ProgramMetrics()
         self.fileOps = FileOperations()
+        self.roundingAccuracy = 2 #digits after decimal
         
     def saveFinishingTime(self, numGens, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots, totalTimeTaken):
         filename = self.fileOps.getUniqueNameForFinishingTime(numGens, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots)
@@ -90,7 +91,8 @@ class ProgramAnalytics:
                     for d in data:
                         try:
                             if d[self.metricNames.trialNumber] == t and d[self.metricNames.numImaginaryRobots] == r and d[self.metricNames.numGens] == g:
-                                totalTimeTakenByRealRobot = float(d[self.metricNames.timeToCrossFinishLine])/g 
+                                totalTimeTaken = d[self.metricNames.timeToCrossFinishLine]
+                                totalTimeTakenByRealRobot = round(float(totalTimeTaken)/(g+1), self.roundingAccuracy)                                 
                                 print(str(t+1)+', '+str(g)+', '+str(r)+', '+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(totalTimeTakenByRealRobot))
                                 averagerKey = str(g)+'Gen_'+str(r)+'Popu_'+d[self.metricNames.runWhichCI]+'_'+d[self.metricNames.runWhichTerrain]
                                 if averagerKey in averager:
@@ -103,7 +105,7 @@ class ProgramAnalytics:
                             logging.error(traceback.format_exc(None, True))
         print('\n\n--- Displaying averages across trials')
         for a in averager:
-            print('Avg: ', round(statistics.mean(averager[a]), 2), "    ", a, averager[a])
+            print('Avg: ', round(statistics.mean(averager[a]), self.roundingAccuracy), "  numTrials:",len(averager[a]), a, averager[a])
     
 class FitnessAnalytics:
     def __init__(self):
