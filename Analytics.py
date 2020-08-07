@@ -6,6 +6,7 @@ import os
 import glob
 import pickle
 import logging
+import statistics
 import traceback
 import numpy as np
 import matplotlib.pyplot as plt
@@ -81,20 +82,30 @@ class ProgramAnalytics:
             robotNums.add(d[self.metricNames.numImaginaryRobots]) 
             data.append(d)
         print('\n----------------- Results of ',len(genNums),' maxGen types, ',len(trialNums),' trials and ', robotNums, ' robots:')#The +1 is because trials start with 0
-        print('Trial, numRobots, CI, Terrain, Real robot\'s Time (s)')
+        print('Trial, numGens, numRobots, CI, Terrain, Real robot\'s Time (s)')
+        averager = {} #takes average of finishing time of all trials for specific combos of types of trials 
         for t in trialNums:
             for g in genNums:
                 for r in robotNums:
                     for d in data:
                         try:
                             if d[self.metricNames.trialNumber] == t and d[self.metricNames.numImaginaryRobots] == r and d[self.metricNames.numGens] == g:
-                                print(str(t+1)+", "+str(r)+", "+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(float(d[self.metricNames.timeToCrossFinishLine])/MainProgramParameters.MAX_GENS))
+                                totalTimeTakenByRealRobot = float(d[self.metricNames.timeToCrossFinishLine])/g 
+                                print(str(t+1)+', '+str(g)+', '+str(r)+', '+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(totalTimeTakenByRealRobot))
+                                averagerKey = str(g)+'Gen_'+str(r)+'Popu_'+d[self.metricNames.runWhichCI]+'_'+d[self.metricNames.runWhichTerrain]
+                                if averagerKey in averager:
+                                    averager[averagerKey].append(totalTimeTakenByRealRobot)
+                                else:
+                                    averager[averagerKey] = [totalTimeTakenByRealRobot]
                         except Exception as e:
                             print(e)
                             print('exception caught for trial ', t, ' gen ', g, ' numRobot ', r)
                             logging.error(traceback.format_exc(None, True))
+        print('\n\n--- Displaying averages across trials')
+        for a in averager:
+            print('Avg: ', round(statistics.mean(averager[a]), 2), "    ", a, averager[a])
     
-class FitnessAnalytics:    
+class FitnessAnalytics:
     def __init__(self):
         self.file = FileOperations()
         self.bestFitness = [] #appended to at the end of each epoch

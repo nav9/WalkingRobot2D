@@ -88,15 +88,15 @@ if __name__ == '__main__':
     #sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
     #sim = MainSimulator(legs, Run.ACTUAL_IMAGINATION)
     #sim = MainSimulator(legs, Run.HEAVEN)
-    sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)
+    #sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)
     
-    try:
-        while sim.nextWorld():
-            pass
-    except BaseException as e:
-        noErrors = False
-        print(e); os.system('spd-say '+"oh_no_the_program_crashed")
-        logging.error(traceback.format_exc(None, True))        
+#     try:
+#         while sim.nextWorld():
+#             pass
+#     except BaseException as e:
+#         noErrors = False
+#         print(e); os.system('spd-say '+"oh_no_the_program_crashed")
+#         logging.error(traceback.format_exc(None, True))        
     
     results = ProgramAnalytics()
     results.loadProgramRunData()    
