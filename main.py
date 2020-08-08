@@ -37,7 +37,8 @@ class MainSimulator(object):
         #--------------------- LONG RUNS ------------------------
         #--------------------------------------------------------        
         if simulationToRun == Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS:
-            trialRange = range(5, MainProgramParameters.MAX_TRIALS_TO_RUN)
+            startTrialNum = 0
+            trialRange = range(startTrialNum, MainProgramParameters.MAX_TRIALS_TO_RUN)
             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, trialNum));
             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.FLAT_GROUND, trialNum))
             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.FLAT_GROUND, trialNum))
@@ -85,18 +86,18 @@ if __name__ == '__main__':
     # - Single leg part, -- Two leg parts, # Chassis
     legs = MainProgramParameters.LEGS
     #sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
-    #sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
+    sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
     #sim = MainSimulator(legs, Run.ACTUAL_IMAGINATION)
     #sim = MainSimulator(legs, Run.HEAVEN)
     #sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)
     
-#     try:
-#         while sim.nextWorld():
-#             pass
-#     except BaseException as e:
-#         noErrors = False
-#         print(e); os.system('spd-say '+"oh_no_the_program_crashed")
-#         logging.error(traceback.format_exc(None, True))        
+    try:
+        while sim.nextWorld():
+            pass
+    except BaseException as e:
+        noErrors = False
+        print(e); os.system('spd-say '+"oh_no_the_program_crashed")
+        logging.error(traceback.format_exc(None, True))        
     
     results = ProgramAnalytics()
     results.loadProgramRunData()    

@@ -9,7 +9,7 @@ class MainProgramParameters:
     MAX_TRIALS_TO_RUN = 10
     FINISH_LINE_POSITION_FROM_END = 100 #800 for near or 100 for far
     LEGS = '--#--'  
-    MAX_GENS = 2
+    MAX_GENS = 30
     NUM_IMAGINARY_ROBOTS = 30 #population
     MAX_GENS_FOR_STUCK_CHECK = 10 #if stuck at same positions for more than 10 tries of main robot movement, then activate unstuck mode
     DISTANCE_FOR_ASSUMING_STUCK = 20 #pixels
