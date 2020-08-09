@@ -876,6 +876,7 @@ class MovementAccuracyTestWorld(Worlds):#inherits
         
         if self.runMode == TestRunMode.VIEWING_RESULTS:#view analytics of saved results 
             xPositions = []; yPositions = []; rates = []; surfaceTouches = []; robotAngles = []
+            variances = []
             for trial in range(numTrials):   
                 filename1 = analytics.generateRatesPositionFilename(trial)
                 filename2 = analytics.generateSurfaceTouchFilename(trial)
@@ -887,14 +888,16 @@ class MovementAccuracyTestWorld(Worlds):#inherits
                 for pos in positions:#positions are the x and y position of the robot at the end of each simulation (repetition)
                     dx.append(pos[0]); dy.append(pos[1])
                 rates.append(rate); surfaceTouches.append(surfaceTouch); robotAngles.append(robotAngs)
-                #print('Rate: ', rate, ' surfaceTouch:', surfaceTouch)                
-                print('dx: mean=', statistics.mean(dx), ", variance=", statistics.variance(dx), "std deviation=", statistics.stdev(dx))
+                #print('Rate: ', rate, ' surfaceTouch:', surfaceTouch)     
+                vari = statistics.variance(dx)       
+                variances.append(vari)    
+                print('dx: mean=', statistics.mean(dx), ", variance=", vari, "std deviation=", statistics.stdev(dx))
                 xPositions.append(dx); yPositions.append(dy)
             #---------------------------------------------
             #-------------plot results and other analytics
             #---------------------------------------------
             #analytics.plot(folderToStoreResults, xPositions, yPositions, rates, surfaceTouches, robotAngles)
-            analytics.backwardForwardPercentages(originalPosition[0][0], xPositions)
+            analytics.backwardForwardPercentages(originalPosition[0][0], xPositions, variances)
     
     def runSimulation(self, durationToRun):
         clock = pygame.time.Clock()

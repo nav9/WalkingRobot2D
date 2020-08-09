@@ -158,9 +158,13 @@ class TestAnalyticsForMovementAccuracy:
     def generateRobotAnglesFilename(self, trial):
         return "ChassisAngle_trial"+str(trial)   
     
-    def backwardForwardPercentages(self, startX, xPositions):
+    def backwardForwardPercentages(self, startX, xPositions, variances):
+        print('variance len=', len(variances), 'variances:', variances)
         print('trials len(xPositions)=',len(xPositions), ', sims len(xPositions[0])=', len(xPositions[0]))
-        fwdBkwRatio = []; worstRatio = 100; poorRatios = 0; goodRatios = 0;
+        fwdBkwRatio = []; worstRatio = 100; poorReliability = 0; goodReliability = 0;
+        ratioAcceptablePercentage = 90
+        badRatioThreshold = ratioAcceptablePercentage / (100-ratioAcceptablePercentage)
+        i = 0
         for trial in xPositions:#20 trials
             fwd = 0; bkw = 0; totalSims = len(trial)
             for x in trial:#100 sims of each trial
@@ -174,21 +178,22 @@ class TestAnalyticsForMovementAccuracy:
                 denominator = fwd if numerator == bkw else bkw                
                 ratio = numerator / denominator
             if ratio < worstRatio: worstRatio = ratio
-            if ratio < 2.33:#70:30 scenario
-                poorRatios += 1
+            if ratio < badRatioThreshold and variances[i] > 200:#variance had to be taken into account since ratio alone was a poor indicator
+                poorReliability += 1
             else: 
-                goodRatios += 1 
+                goodReliability += 1 
             print('ratio:',ratio,'numerator', numerator, 'denominator', denominator, 'fwd:',fwd,'bkw:',bkw)
+            i += 1
         print('Forward:Backward', fwdBkwRatio)
         print('Worst ratio = ', worstRatio)
-        print('Poor ratios:', poorRatios, ', Good ratios:', goodRatios)
-        print('Physics errors are tolerable by this percentage: ', (goodRatios-poorRatios)*100/len(xPositions))
+        print('Poor reliability of moving in an x direction:', poorReliability, ', Good reliability:', goodReliability)
+        print('Physics errors are tolerable by this percentage: ', (goodReliability-poorReliability)*100/len(xPositions))
                 
     def plot(self, directory, xPositions, yPositions, rates, surfaceTouch, robotAngles):#arrays will be in the form xPositions = [[1,2,5], [5,7,2,2,5], [7,2,5]...]. Same for yPositions
         self.boxPlots(directory, xPositions, yPositions)
         self.groupedBarsMotorRates(directory, rates)
         self.groupedBarsSurfaceTouch(directory, surfaceTouch)        
-        self.multipleParameters(directory, robotAngles, surfaceTouch) #robotAngles = [[chAng, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]     
+        self.multipleParameters(directory, robotAngles, surfaceTouch) #robotAngles = [[chAng, leg1Ang, leg2Ang, leg3Ang, leg4Ang], [], ...]  
         
     def multipleParameters(self, directory, angles, surfaceTouch):#[[[[chA1,lA1,lA2,lA3,lA4],[],...aNumFrames], [], []], []]. angles[0] gives all simulation run's for first trial = [[chA1,lA1,lA2,lA3,lA4], [], []], []]        
         #angles is numTrials=20 long.
