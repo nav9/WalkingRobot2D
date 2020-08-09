@@ -18,7 +18,7 @@ import os
 import logging, traceback
 from Analytics import ProgramAnalytics
 from Enums import RunCI, Terrains, Run, MainProgramParameters
-from Worlds import ImaginationTwin, ActualImagination, Heaven, TestWorld
+from Worlds import ImaginationTwin, ActualImagination, Heaven, MovementAccuracyTestWorld
     
 class MainSimulator(object):
     def __init__(self, legs, simulationToRun):
@@ -28,8 +28,8 @@ class MainSimulator(object):
         #--------------------------------------------------------
         #-------------------- SINGLE RUNS -----------------------
         #--------------------------------------------------------
-        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, None))
-        if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_BOXES_LOW_DENSE, None))
+        if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, None))
+        #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_BOXES_LOW_DENSE, None))
         #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE, None))
         #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STAIRCASE_UP_DOWN, None))
         #if simulationToRun == Run.IMAGINATION_TWIN: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.ALTERNATOR, None))
@@ -64,7 +64,7 @@ class MainSimulator(object):
         #--------------------------------------------------------            
         if simulationToRun == Run.ACTUAL_IMAGINATION: self.worlds.append(Heaven(legs))
         if simulationToRun == Run.HEAVEN: self.worlds.append(ActualImagination(legs))  
-        if simulationToRun == Run.MOVEMENT_ACCURACY_CHECKER: self.worlds.append(TestWorld(legs))           
+        if simulationToRun == Run.MOVEMENT_ACCURACY_CHECKER: self.worlds.append(MovementAccuracyTestWorld(legs))           
     
     def nextWorld(self):
         self.worldOrdinal += 1
@@ -86,10 +86,10 @@ if __name__ == '__main__':
     # - Single leg part, -- Two leg parts, # Chassis
     legs = MainProgramParameters.LEGS
     #sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
-    sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
+    #sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
     #sim = MainSimulator(legs, Run.ACTUAL_IMAGINATION)
     #sim = MainSimulator(legs, Run.HEAVEN)
-    #sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)
+    sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)
     
     try:
         while sim.nextWorld():
@@ -99,8 +99,8 @@ if __name__ == '__main__':
         print(e); os.system('spd-say '+"oh_no_the_program_crashed")
         logging.error(traceback.format_exc(None, True))        
     
-    results = ProgramAnalytics()
-    results.loadProgramRunData()    
+#     results = ProgramAnalytics()
+#     results.loadProgramRunData()    
     print('\n\n... Program complete ...')
     if noErrors: os.system('spd-say "Program_completed_successfully"')
     else: os.system('spd-say "Exiting_with_errors"')

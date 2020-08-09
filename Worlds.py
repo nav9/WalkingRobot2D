@@ -803,9 +803,9 @@ class ActualImagination(Worlds):#inherits
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
  
-class TestWorld(Worlds):#inherits
+class MovementAccuracyTestWorld(Worlds):#inherits
     def __init__(self, legCode):    #def __init__(self, legCode, actionNet):        
-        super(TestWorld, self).__init__()
+        super(MovementAccuracyTestWorld, self).__init__()
         self.legsCode = legCode      
         self.screenWidth = 900
         self.screenHeight = 620 #keep at at least 350        
@@ -833,7 +833,7 @@ class TestWorld(Worlds):#inherits
         self.runMode = MainProgramParameters.TEST_MODE_RUN_STATE
         
     def initialize(self):
-        super(TestWorld, self).initialize()       
+        super(MovementAccuracyTestWorld, self).initialize()       
         self.createGround(0, self.debrisElevFromBottomWall, self.groundColor)
         self.createWorldBoundary(0, self.imaginaryWorldYOffset, self.imaginationColor)
         #self.createFewObjects()       
@@ -867,7 +867,7 @@ class TestWorld(Worlds):#inherits
                     self.robots[0].setLegMotorRates(rates)   
                     self.simInfoString = "Trial:" + str(trial+1) + "/" + str(numTrials) + ", RateRep: " + str(sim) + "/" + str(numSimulations) + ", MotorRates: " + str([round(x, 2) for x in rates])
                     self.runSimulation(durationToRun)
-                    position = self.robots[0].getPosition()
+                    position = self.robots[0].getPosition()#end positions
                     ratesAndPositions.append([position[0], position[1]])
                     self.resetRobotToOriginalPosition(originalPosition, originalAngles)                    
                 analytics.saveDataToDisk(folderToStoreResults, filename1, ratesAndPositions)
@@ -884,13 +884,17 @@ class TestWorld(Worlds):#inherits
                 rate, positions = analytics.loadRatesPositionDataFromDisk(folderToStoreResults, filename1)
                 surfaceTouch = analytics.loadSurfaceTouchDataFromDisk(folderToStoreResults, filename2)
                 robotAngs = analytics.loadRobotAnglesDataFromDisk(folderToStoreResults, filename3)
-                for pos in positions:
+                for pos in positions:#positions are the x and y position of the robot at the end of each simulation (repetition)
                     dx.append(pos[0]); dy.append(pos[1])
                 rates.append(rate); surfaceTouches.append(surfaceTouch); robotAngles.append(robotAngs)
                 #print('Rate: ', rate, ' surfaceTouch:', surfaceTouch)                
                 print('dx: mean=', statistics.mean(dx), ", variance=", statistics.variance(dx), "std deviation=", statistics.stdev(dx))
                 xPositions.append(dx); yPositions.append(dy)
-            analytics.plot(folderToStoreResults, xPositions, yPositions, rates, surfaceTouches, robotAngles)
+            #---------------------------------------------
+            #-------------plot results and other analytics
+            #---------------------------------------------
+            #analytics.plot(folderToStoreResults, xPositions, yPositions, rates, surfaceTouches, robotAngles)
+            analytics.backwardForwardPercentages(originalPosition[0][0], xPositions)
     
     def runSimulation(self, durationToRun):
         clock = pygame.time.Clock()
@@ -954,13 +958,13 @@ class TestWorld(Worlds):#inherits
         self.boundaryObjects[:] = []#clear the list
                          
     def delete(self):
-        super(TestWorld, self).delete()   
+        super(MovementAccuracyTestWorld, self).delete()   
         for ob in self.worldObjects:
             self.space.remove(ob)
         self.worldObjects[:] = []  
      
     def updatePosition(self):  
-        updateBy = super(TestWorld, self).updatePosition()    
+        updateBy = super(MovementAccuracyTestWorld, self).updatePosition()    
         if updateBy != (0, 0):
             for ob in self.worldObjects:
                 ob.body.position += updateBy     

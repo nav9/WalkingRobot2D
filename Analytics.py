@@ -84,7 +84,7 @@ class ProgramAnalytics:
             data.append(d)
         print('\n----------------- Results of ',len(genNums),' maxGen types, ',len(trialNums),' trials and ', robotNums, ' robots:')#The +1 is because trials start with 0
         print('Trial, numGens, numRobots, CI, Terrain, Real robot\'s Time (s)')
-        averager = {} #takes average of finishing time of all trials for specific combos of types of trials 
+        self.allData = {} #takes average of finishing time of all trials for specific combos of types of trials 
         for t in trialNums:
             for g in genNums:
                 for r in robotNums:
@@ -95,17 +95,21 @@ class ProgramAnalytics:
                                 totalTimeTakenByRealRobot = round(float(totalTimeTaken)/(g+1), self.roundingAccuracy)                                 
                                 print(str(t+1)+', '+str(g)+', '+str(r)+', '+d[self.metricNames.runWhichCI]+', '+d[self.metricNames.runWhichTerrain]+', '+str(totalTimeTakenByRealRobot))
                                 averagerKey = str(g)+'Gen_'+str(r)+'Popu_'+d[self.metricNames.runWhichCI]+'_'+d[self.metricNames.runWhichTerrain]
-                                if averagerKey in averager:
-                                    averager[averagerKey].append(totalTimeTakenByRealRobot)
+                                if averagerKey in self.allData:
+                                    self.allData[averagerKey].append(totalTimeTakenByRealRobot)
                                 else:
-                                    averager[averagerKey] = [totalTimeTakenByRealRobot]
+                                    self.allData[averagerKey] = [totalTimeTakenByRealRobot]
                         except Exception as e:
                             print(e)
                             print('exception caught for trial ', t, ' gen ', g, ' numRobot ', r)
                             logging.error(traceback.format_exc(None, True))
         print('\n\n--- Displaying averages across trials')
-        for a in averager:
-            print('Avg: ', round(statistics.mean(averager[a]), self.roundingAccuracy), "  numTrials:",len(averager[a]), a, averager[a])
+        for a in self.allData:
+            print('Avg: ', round(statistics.mean(self.allData[a]), self.roundingAccuracy), "  numTrials:",len(self.allData[a]), a, self.allData[a])
+        self.performHypothesisTesting()
+    
+    def performHypothesisTesting(self):
+        pass
     
 class FitnessAnalytics:
     def __init__(self):
@@ -152,8 +156,34 @@ class TestAnalyticsForMovementAccuracy:
         return "SurfaceTouch_trial"+str(trial)
         
     def generateRobotAnglesFilename(self, trial):
-        return "ChassisAngle_trial"+str(trial)    
-
+        return "ChassisAngle_trial"+str(trial)   
+    
+    def backwardForwardPercentages(self, startX, xPositions):
+        print('trials len(xPositions)=',len(xPositions), ', sims len(xPositions[0])=', len(xPositions[0]))
+        fwdBkwRatio = []; worstRatio = 100; poorRatios = 0; goodRatios = 0;
+        for trial in xPositions:#20 trials
+            fwd = 0; bkw = 0; totalSims = len(trial)
+            for x in trial:#100 sims of each trial
+                if x-startX >= 0: fwd += 1
+                else: bkw += 1
+            fwdBkwRatio.append((fwd, bkw))
+            if fwd==0 or bkw==0: 
+                ratio = 100
+            else:
+                numerator = fwd if fwd > bkw else bkw
+                denominator = fwd if numerator == bkw else bkw                
+                ratio = numerator / denominator
+            if ratio < worstRatio: worstRatio = ratio
+            if ratio < 2.33:#70:30 scenario
+                poorRatios += 1
+            else: 
+                goodRatios += 1 
+            print('ratio:',ratio,'numerator', numerator, 'denominator', denominator, 'fwd:',fwd,'bkw:',bkw)
+        print('Forward:Backward', fwdBkwRatio)
+        print('Worst ratio = ', worstRatio)
+        print('Poor ratios:', poorRatios, ', Good ratios:', goodRatios)
+        print('Physics errors are tolerable by this percentage: ', (goodRatios-poorRatios)*100/len(xPositions))
+                
     def plot(self, directory, xPositions, yPositions, rates, surfaceTouch, robotAngles):#arrays will be in the form xPositions = [[1,2,5], [5,7,2,2,5], [7,2,5]...]. Same for yPositions
         self.boxPlots(directory, xPositions, yPositions)
         self.groupedBarsMotorRates(directory, rates)
@@ -167,12 +197,12 @@ class TestAnalyticsForMovementAccuracy:
         SMALL_SIZE = 8
         plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
         plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-        plt.rc('axes', labelsize=SMALL_SIZE)    # fontsize of the x and y labels
+        plt.rc('axes', labelsize=SMALL_SIZE)     # fontsize of the x and y labels
         plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
         plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
         plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-        plt.rc('figure', titlesize=SMALL_SIZE)  # fontsize of the figure title        
-        x = np.arange(len(angles[0][0]))#range from 0 to numFrames
+        plt.rc('figure', titlesize=SMALL_SIZE)   # fontsize of the figure title        
+        x = np.arange(len(angles[0][0]))         # range from 0 to numFrames
         subplotNumRows = 3; subplotNumCols = 3
         for t in range(len(angles)):#for each trial
             fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) = plt.subplots(subplotNumRows, subplotNumCols, sharex=True, constrained_layout=True)
