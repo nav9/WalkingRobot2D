@@ -58,6 +58,7 @@ class ProgramAnalytics:
         self.metricNames = ProgramMetrics()
         self.fileOps = FileOperations()
         self.roundingAccuracy = 2 #digits after decimal
+        self.loadProgramRunData()
         
     def saveFinishingTime(self, numGens, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots, totalTimeTaken):
         filename = self.fileOps.getUniqueNameForFinishingTime(numGens, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots)
@@ -159,10 +160,14 @@ class TestAnalyticsForMovementAccuracy:
         return "ChassisAngle_trial"+str(trial)   
     
     def backwardForwardPercentages(self, startX, xPositions, variances):
+        """ This function checks if the robot's movements are consistent during the 100 simulations. So each time if it moves
+        forward or backward consistently and there's not much variation in the position it ends up in, it's consistent.
+        This is not really a good way to measure consistency.
+        """
         print('variance len=', len(variances), 'variances:', variances)
         print('trials len(xPositions)=',len(xPositions), ', sims len(xPositions[0])=', len(xPositions[0]))
         fwdBkwRatio = []; worstRatio = 100; poorReliability = 0; goodReliability = 0;
-        ratioAcceptablePercentage = 90
+        ratioAcceptablePercentage = 90; chaasisWidth = 30
         badRatioThreshold = ratioAcceptablePercentage / (100-ratioAcceptablePercentage)
         i = 0
         for trial in xPositions:#20 trials
@@ -178,7 +183,7 @@ class TestAnalyticsForMovementAccuracy:
                 denominator = fwd if numerator == bkw else bkw                
                 ratio = numerator / denominator
             if ratio < worstRatio: worstRatio = ratio
-            if ratio < badRatioThreshold and variances[i] > 200:#variance had to be taken into account since ratio alone was a poor indicator
+            if ratio < badRatioThreshold and variances[i] > chaasisWidth:#variance had to be taken into account since ratio alone was a poor indicator
                 poorReliability += 1
             else: 
                 goodReliability += 1 
