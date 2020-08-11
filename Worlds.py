@@ -603,7 +603,7 @@ class ImaginationTwin(Worlds):#inherits
         for r in self.imaginaryRobots:
             r.delete()
         self.imaginaryRobots[:] = []    
-             
+
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
@@ -893,9 +893,9 @@ class MovementAccuracyTestWorld(Worlds):#inherits
                 variances.append(vari)    
                 print('dx: mean=', statistics.mean(dx), ", variance=", vari, "std deviation=", statistics.stdev(dx))
                 xPositions.append(dx); yPositions.append(dy)
-            #---------------------------------------------
-            #-------------plot results and other analytics
-            #---------------------------------------------
+            #-------------------------------------------------------------
+            # ------------- plot results and other analytics -------------
+            #-------------------------------------------------------------
             #analytics.plot(folderToStoreResults, xPositions, yPositions, rates, surfaceTouches, robotAngles)
             analytics.backwardForwardPercentages(originalPosition[0][0], xPositions, variances)
     

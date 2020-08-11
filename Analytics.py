@@ -9,7 +9,9 @@ import logging
 import statistics
 import traceback
 import numpy as np
+import scipy.stats as stats
 import matplotlib.pyplot as plt
+from scipy.stats import f_oneway
 from Enums import Directories, ProgramMetrics, MainProgramParameters
     
 class FileOperations:
@@ -58,8 +60,9 @@ class ProgramAnalytics:
         self.metricNames = ProgramMetrics()
         self.fileOps = FileOperations()
         self.roundingAccuracy = 2 #digits after decimal
-        self.loadProgramRunData()
-        
+        self.data = []
+        self.loadProgramRunData()        
+    
     def saveFinishingTime(self, numGens, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots, totalTimeTaken):
         filename = self.fileOps.getUniqueNameForFinishingTime(numGens, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots)
         programMetrics = {
@@ -73,23 +76,23 @@ class ProgramAnalytics:
         self.fileOps.savePickleFile(self.fileOps.dir.programMetricsFolder, filename, programMetrics)
         
     def loadProgramRunData(self):
-        data = []
         fileList = self.fileOps.loadAllPickleFilesFromDirectory(self.fileOps.dir.programMetricsFolder)
         #---go through all filenames and load dicts
-        trialNums = set(); robotNums = set(); genNums = set()
+        trialNums = set(); robotNums = set(); genNums = set(); ciNames = set();
         for filename in fileList:
-            d = self.fileOps.loadPickleFile(None, filename)
+            d = self.fileOps.loadPickleFile(None, filename) #d is: {'numGens': 30, 'timeToCrossFinishLine': 991, 'runWhichCI': 'PSO', 'runWhichTerrain': 'RANDOM_SPHERE', 'trialNumber': 8, 'numImaginaryRobots': 30}
             genNums.add(d[self.metricNames.numGens])
             trialNums.add(d[self.metricNames.trialNumber])
             robotNums.add(d[self.metricNames.numImaginaryRobots]) 
-            data.append(d)
+            ciNames.add(d[self.metricNames.runWhichCI])
+            self.data.append(d)
         print('\n----------------- Results of ',len(genNums),' maxGen types, ',len(trialNums),' trials and ', robotNums, ' robots:')#The +1 is because trials start with 0
         print('Trial, numGens, numRobots, CI, Terrain, Real robot\'s Time (s)')
         self.allData = {} #takes average of finishing time of all trials for specific combos of types of trials 
         for t in trialNums:
             for g in genNums:
                 for r in robotNums:
-                    for d in data:
+                    for d in self.data:
                         try:
                             if d[self.metricNames.trialNumber] == t and d[self.metricNames.numImaginaryRobots] == r and d[self.metricNames.numGens] == g:
                                 totalTimeTaken = d[self.metricNames.timeToCrossFinishLine]
@@ -107,10 +110,27 @@ class ProgramAnalytics:
         print('\n\n--- Displaying averages across trials')
         for a in self.allData:
             print('Avg: ', round(statistics.mean(self.allData[a]), self.roundingAccuracy), "  numTrials:",len(self.allData[a]), a, self.allData[a])
-        self.performHypothesisTesting()
+        self.performHypothesisTesting(ciNames)
     
-    def performHypothesisTesting(self):
-        pass
+    def performHypothesisTesting(self, ciNames):
+        dat = {} #dat{'DE': [], 'PSO': [], 'Random': []}
+        for c in ciNames:
+            dat[c] = []
+        #---get each CI into a separate array
+        for d in self.data:
+            dat[d[self.metricNames.runWhichCI]].append(float(d[self.metricNames.timeToCrossFinishLine]))
+        #---check for normal distribution
+        numsForHypoTesting = []
+        for c in ciNames:
+            nums = dat[c]
+            numsForHypoTesting.append(nums)
+#             nums.sort()
+#             pdf = stats.norm.pdf(nums, np.mean(nums), np.std(nums))
+#             plt.plot(nums, pdf); plt.show()     
+        stat, p = f_oneway(numsForHypoTesting[0], numsForHypoTesting[1], numsForHypoTesting[2])
+        print('stat=%.3f, p=%.3f' % (stat, p))
+        if p > 0.05: print('Probably the same distribution')
+        else: print('Probably different distributions')        
     
 class FitnessAnalytics:
     def __init__(self):

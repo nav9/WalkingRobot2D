@@ -39,17 +39,17 @@ class MainSimulator(object):
         if simulationToRun == Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS:
             startTrialNum = 0
             trialRange = range(startTrialNum, MainProgramParameters.MAX_TRIALS_TO_RUN)
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, trialNum));
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.FLAT_GROUND, trialNum))
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.FLAT_GROUND, trialNum))
-              
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
+#             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.FLAT_GROUND, trialNum));
+#             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.FLAT_GROUND, trialNum))
+#             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.FLAT_GROUND, trialNum))
+#               
+#             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
+#             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
+#             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_BOXES_LOW_DENSE, trialNum))
                 
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
-            for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
+#             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
+#             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
+            for trialNum in range(8, MainProgramParameters.MAX_TRIALS_TO_RUN): self.worlds.append(ImaginationTwin(legs, RunCI.PSO, Terrains.RANDOM_SPHERES_LOW_DENSE, trialNum))
                
 #             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.RANDOM, Terrains.STAIRCASE_UP_DOWN, trialNum))
 #             for trialNum in trialRange: self.worlds.append(ImaginationTwin(legs, RunCI.DE, Terrains.STAIRCASE_UP_DOWN, trialNum))
@@ -85,22 +85,24 @@ if __name__ == '__main__':
     noErrors = True
     # - Single leg part, -- Two leg parts, # Chassis
     legs = MainProgramParameters.LEGS
+    sim = None
     #sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
     #sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
     #sim = MainSimulator(legs, Run.ACTUAL_IMAGINATION)
     #sim = MainSimulator(legs, Run.HEAVEN)
-    sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)
+    #sim = MainSimulator(legs, Run.MOVEMENT_ACCURACY_CHECKER)
     
     try:
-        while sim.nextWorld():
-            pass
+        if sim != None:
+            while sim.nextWorld():
+                pass
     except BaseException as e:
         noErrors = False
         print(e); os.system('spd-say '+"oh_no_the_program_crashed")
         logging.error(traceback.format_exc(None, True))        
     
-#     results = ProgramAnalytics()
-#     results.loadProgramRunData()    
+    ProgramAnalytics()
+  
     print('\n\n... Program complete ...')
     if noErrors: os.system('spd-say "Program_completed_successfully"')
     else: os.system('spd-say "Exiting_with_errors"')
