@@ -9,6 +9,7 @@ import logging
 import statistics
 import traceback
 import numpy as np
+import seaborn as sns
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 from scipy.stats import f_oneway
@@ -113,6 +114,9 @@ class ProgramAnalytics:
         self.performHypothesisTesting(ciNames)
     
     def performHypothesisTesting(self, ciNames):
+        fileOps = FileOperations()
+        directory = 'hypothesisTestingResults/'
+        fileOps.createDirectoryIfNotExisting(directory)
         dat = {} #dat{'DE': [], 'PSO': [], 'Random': []}
         for c in ciNames:
             dat[c] = []
@@ -120,13 +124,21 @@ class ProgramAnalytics:
         for d in self.data:
             dat[d[self.metricNames.runWhichCI]].append(float(d[self.metricNames.timeToCrossFinishLine]))
         #---check for normal distribution
-        numsForHypoTesting = []
+        numsForHypoTesting = []; names = []
         for c in ciNames:
-            nums = dat[c]
+            nums = dat[c]; names.append(c)
             numsForHypoTesting.append(nums)
-#             nums.sort()
-#             pdf = stats.norm.pdf(nums, np.mean(nums), np.std(nums))
-#             plt.plot(nums, pdf); plt.show()     
+        _, ax = plt.subplots()
+        sns.distplot(numsForHypoTesting[0], ax=ax, label=names[0])
+        sns.distplot(numsForHypoTesting[1], ax=ax, label=names[1])
+        sns.distplot(numsForHypoTesting[2], ax=ax, label=names[2])
+        ax.set(ylabel='pdf'); ax.set(xlabel='Completion time (s)')
+        plt.title('Distribution of completion time')
+        plt.legend()
+        #plt.show()        
+        plt.savefig(directory+'completionTimePDF.png')
+     
+        #---ANOVA hypothesis test
         stat, p = f_oneway(numsForHypoTesting[0], numsForHypoTesting[1], numsForHypoTesting[2])
         print('stat=%.3f, p=%.3f' % (stat, p))
         if p > 0.05: print('Probably the same distribution')
