@@ -11,9 +11,11 @@ import traceback
 import numpy as np
 import seaborn as sns
 import scipy.stats as stats
+from scipy.stats import skew
 import matplotlib.pyplot as plt
 from scipy.stats import f_oneway
-from Enums import Directories, ProgramMetrics, MainProgramParameters
+from scipy.stats import mannwhitneyu
+from Enums import Directories, ProgramMetrics, MainProgramParameters, RunCI
     
 class FileOperations:
     def __init__(self):
@@ -123,25 +125,34 @@ class ProgramAnalytics:
         for d in self.data:
             dat[d[self.metricNames.runWhichCI]].append(float(d[self.metricNames.timeToCrossFinishLine]))
         #---check for normal distribution
-        numsForHypoTesting = []; names = []
-        for c in ciNames:
-            nums = dat[c]; names.append(c)
-            numsForHypoTesting.append(nums)
         _, ax = plt.subplots()
-        sns.distplot(numsForHypoTesting[0], ax=ax, label=names[0])
-        sns.distplot(numsForHypoTesting[1], ax=ax, label=names[1])
-        sns.distplot(numsForHypoTesting[2], ax=ax, label=names[2])
+        sns.distplot(dat[RunCI.RANDOM], ax=ax, label=RunCI.RANDOM)
+        sns.distplot(dat[RunCI.DE], ax=ax, label=RunCI.DE)
+        sns.distplot(dat[RunCI.PSO], ax=ax, label=RunCI.PSO)
         ax.set(ylabel='pdf'); ax.set(xlabel='Completion time (s)')
         plt.title('Distribution of completion time')
         plt.legend()
         #plt.show()        
         plt.savefig(directory+'completionTimePDF.png')
-     
-        #---ANOVA hypothesis test
-        stat, p = f_oneway(numsForHypoTesting[0], numsForHypoTesting[1], numsForHypoTesting[2])
-        print('stat=%.3f, p=%.3f' % (stat, p))
+        
+        skewOfDistribution1 = skew(dat[RunCI.RANDOM])
+        skewOfDistribution2 = skew(dat[RunCI.DE])
+        skewOfDistribution3 = skew(dat[RunCI.PSO])
+        print('Skew for ',RunCI.RANDOM,'=',skewOfDistribution1, ', ',RunCI.DE,'=',skewOfDistribution2,' ,',RunCI.PSO,'=',skewOfDistribution3)
+        #---ANOVA hypothesis test (for normal distribution) Use only if skew is less than 1
+        stat, p = f_oneway(dat[RunCI.RANDOM], dat[RunCI.DE], dat[RunCI.PSO])
+        print('ANOVA between Random, DE and PSO: stat=%.3f, p=%.3f' % (stat, p))
         if p > 0.05: print('Probably the same distribution')
-        else: print('Probably different distributions')        
+        else: print('Probably different distributions')  
+        #---Mann Whitney U test (for independent and identially distributed data)
+        stat, p = mannwhitneyu(dat[RunCI.RANDOM], dat[RunCI.DE])   
+        print('Random vs. DE: stat=%.3f, p=%.3f' % (stat, p))
+        if p > 0.05: print('Probably the same distribution')
+        else: print('Probably different distributions')
+        stat, p = mannwhitneyu(dat[RunCI.RANDOM], dat[RunCI.PSO])   
+        print('Random vs. PSO: stat=%.3f, p=%.3f' % (stat, p))
+        if p > 0.05: print('Probably the same distribution')
+        else: print('Probably different distributions')                   
     
 class FitnessAnalytics:
     def __init__(self):

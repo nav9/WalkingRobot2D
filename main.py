@@ -86,7 +86,7 @@ if __name__ == '__main__':
     # - Single leg part, -- Two leg parts, # Chassis
     legs = MainProgramParameters.LEGS
     sim = None
-    sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
+    #sim = MainSimulator(legs, Run.IMAGINATION_TWIN)
     #sim = MainSimulator(legs, Run.IMAGINATION_TWIN_TRIAL_MULTI_RUNS)    
     #sim = MainSimulator(legs, Run.ACTUAL_IMAGINATION)
     #sim = MainSimulator(legs, Run.HEAVEN)
@@ -101,8 +101,8 @@ if __name__ == '__main__':
         print(e); os.system('spd-say '+"oh_no_the_program_crashed")
         logging.error(traceback.format_exc(None, True))        
     
-    #ana = ProgramAnalytics()
-    #ana.loadProgramRunData()    
+    ana = ProgramAnalytics()
+    ana.loadProgramRunData()    
   
     print('\n\n... Program complete ...')
     if noErrors: os.system('spd-say "Program_completed_successfully"')
