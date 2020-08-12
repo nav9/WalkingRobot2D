@@ -62,7 +62,6 @@ class ProgramAnalytics:
         self.fileOps = FileOperations()
         self.roundingAccuracy = 2 #digits after decimal
         self.data = []
-        self.loadProgramRunData()        
     
     def saveFinishingTime(self, numGens, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots, totalTimeTaken):
         filename = self.fileOps.getUniqueNameForFinishingTime(numGens, runWhichCI, runWhichTerrain, trialNumber, numImaginaryRobots)
