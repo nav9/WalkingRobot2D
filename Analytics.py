@@ -287,7 +287,7 @@ class TestAnalyticsForMovementAccuracy:
 #                 ax.set(xlabel='frames', ylabel='angle')
                 #ax.label_outer()                              
             #plt.xlabel('frames'); plt.ylabel('chassis angle'); plt.title('Trial'+str(t+1)+'. '+str(len(angles[t]))+' simulations', loc='center', pad=None)
-            plt.savefig(directory+' AnglesTouches_Trial'+str(t)+'.png')
+            plt.savefig(directory+'AnglesTouches_Trial'+str(t)+'.png')
             fig.tight_layout()
             plt.subplots_adjust(wspace=0.5, hspace=0.3)#height and width spacing between subplots
             plt.xlabel('Frames')
