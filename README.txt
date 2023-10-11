@@ -24,4 +24,5 @@ onto a robot.
 
 For the 30 generations trials, only the first two trials are being considered.
 The staircase terrain is not being considered for any trial.
-
+  
+[![Donate](https://raw.githubusercontent.com/nav9/VCF_contacts_merger/main/gallery/thankYouDonateButton.png)](https://nrecursions.blogspot.com/2020/08/saying-thank-you.html)  
